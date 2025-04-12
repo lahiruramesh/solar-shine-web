@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -13,6 +12,7 @@ import BlogSection from '@/components/home/BlogSection';
 import AppointmentSection from '@/components/home/AppointmentSection';
 import { HeroSection as HeroSectionType, ServiceCard, Project, Testimonial, BlogPost } from '@/types/payload-types';
 import { fetchHeroSection, fetchServiceCards, fetchProjects, fetchTestimonials, fetchBlogPosts } from '@/services/cmsService';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index: React.FC = () => {
   const { 
@@ -60,7 +60,33 @@ const Index: React.FC = () => {
     queryFn: fetchBlogPosts
   });
 
-  // Show error toasts for any fetch failures
+  useEffect(() => {
+    const addMissingService = async () => {
+      if (serviceCards && serviceCards.length < 4) {
+        try {
+          const existingService = serviceCards.find(card => card.title === "Energy Monitoring");
+          
+          if (!existingService) {
+            await supabase.from('service_cards').insert({
+              title: 'Energy Monitoring',
+              description: 'Real-time monitoring and analytics to track your solar system performance and energy savings.',
+              icon: 'bar-chart'
+            });
+            
+            setTimeout(() => {
+              toast.success("Service cards updated");
+              window.location.reload();
+            }, 1000);
+          }
+        } catch (error) {
+          console.error('Error adding missing service:', error);
+        }
+      }
+    };
+    
+    addMissingService();
+  }, [serviceCards]);
+
   useEffect(() => {
     if (heroError) toast.error("Failed to load hero section");
     if (servicesError) toast.error("Failed to load services");
