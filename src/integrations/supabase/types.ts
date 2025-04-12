@@ -9,7 +9,231 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      blog_posts: {
+        Row: {
+          author: string | null
+          content: string | null
+          cover_image: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          publish_date: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          content?: string | null
+          cover_image?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          publish_date?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          content?: string | null
+          cover_image?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          publish_date?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      global_settings: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          logo: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          site_name: string
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          logo?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          site_name: string
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          logo?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          site_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hero_sections: {
+        Row: {
+          background_image: string | null
+          created_at: string
+          cta_link: string | null
+          cta_text: string | null
+          id: string
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          background_image?: string | null
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
+          id?: string
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          background_image?: string | null
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
+          id?: string
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          category: string
+          client: string | null
+          completion_date: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          client?: string | null
+          completion_date?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          client?: string | null
+          completion_date?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      service_cards: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      specialized_areas: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      testimonials: {
+        Row: {
+          author: string
+          created_at: string
+          id: string
+          position: string | null
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          author: string
+          created_at?: string
+          id?: string
+          position?: string | null
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          created_at?: string
+          id?: string
+          position?: string | null
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

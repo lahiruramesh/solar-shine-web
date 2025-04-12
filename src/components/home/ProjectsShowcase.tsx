@@ -1,123 +1,64 @@
 
-import React, { useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React from 'react';
+import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Project } from '@/types/payload-types';
 
-// In a real implementation, these would come from the CMS
-const projects = [
-  {
-    id: 1,
-    title: 'ResidentialPlus Solar Installation',
-    location: 'Colombo, Sri Lanka',
-    description: 'A comprehensive solar power system for a luxury residential complex, providing clean energy for 50+ households.',
-    image: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    link: '/projects/residential-plus'
-  },
-  {
-    id: 2,
-    title: 'Commercial Mall Energy Solution',
-    location: 'Kandy, Sri Lanka',
-    description: 'Solar panel installation for a large shopping mall, reducing energy costs by 40% and providing sustainable power.',
-    image: 'https://images.unsplash.com/photo-1611365892117-00d770df8a5a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    link: '/projects/commercial-mall'
-  },
-  {
-    id: 3,
-    title: 'Industrial Solar Farm',
-    location: 'Galle, Sri Lanka',
-    description: 'Large-scale solar farm development that powers multiple facilities in an industrial zone with renewable energy.',
-    image: 'https://images.unsplash.com/photo-1559302504-64aae6ca6b6d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    link: '/projects/industrial-farm'
-  },
-  {
-    id: 4,
-    title: 'Agricultural Solar Integration',
-    location: 'Anuradhapura, Sri Lanka',
-    description: 'Solar power integration with agricultural systems, providing sustainable energy for irrigation and farming operations.',
-    image: 'https://images.unsplash.com/photo-1591271955631-2e277e40e395?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    link: '/projects/agricultural-solar'
-  }
-];
+interface ProjectsShowcaseProps {
+  projects: Project[];
+}
 
-const ProjectsShowcase: React.FC = () => {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = direction === 'left' ? -400 : 400;
-      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
-
+const ProjectsShowcase: React.FC<ProjectsShowcaseProps> = ({ projects }) => {
   return (
-    <section className="section bg-brand-light relative overflow-hidden">
+    <section className="section bg-white">
       <div className="container-custom">
-        <div className="flex justify-between items-center mb-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold">Our Featured Projects</h2>
-            <p className="text-brand-gray mt-2">Explore our successful solar installations across Sri Lanka</p>
+            <h2 className="section-title text-left">Our Recent Projects</h2>
+            <p className="section-subtitle text-left max-w-xl">
+              Explore our portfolio of successfully completed solar installations across Sri Lanka.
+            </p>
           </div>
-          
-          <div className="hidden md:flex gap-3">
-            <button 
-              onClick={() => scroll('left')}
-              className="p-3 rounded-full bg-white shadow-md hover:bg-gray-100 transition"
-              aria-label="Scroll left"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button 
-              onClick={() => scroll('right')}
-              className="p-3 rounded-full bg-white shadow-md hover:bg-gray-100 transition"
-              aria-label="Scroll right"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
+          <a 
+            href="/projects" 
+            className="btn-secondary mt-4 md:mt-0 group"
+          >
+            View All Projects
+            <ArrowRight className="ml-2 transition group-hover:translate-x-1" size={18} />
+          </a>
         </div>
 
-        {/* Project Cards Horizontal Scroll */}
-        <div 
-          ref={scrollContainerRef}
-          className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {projects.map((project) => (
-            <motion.div 
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {projects.slice(0, 3).map((project, index) => (
+            <motion.div
               key={project.id}
-              className="min-w-[300px] md:min-w-[400px] bg-white rounded-xl shadow-lg overflow-hidden flex-shrink-0 snap-center"
-              whileHover={{ y: -10, transition: { duration: 0.3 } }}
+              className="bg-white rounded-lg overflow-hidden shadow-lg"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: project.id * 0.1 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <div className="h-48 md:h-60 overflow-hidden">
+              <div className="h-48 overflow-hidden">
                 <img 
                   src={project.image} 
                   alt={project.title} 
-                  className="w-full h-full object-cover hover:scale-110 transition duration-500"
+                  className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
                 />
               </div>
               <div className="p-6">
-                <h3 className="text-xl font-bold mb-1">{project.title}</h3>
-                <p className="text-primary text-sm font-medium mb-3">{project.location}</p>
+                <div className="text-sm text-primary font-medium mb-2">{project.category}</div>
+                <h3 className="text-xl font-bold mb-2">{project.title}</h3>
                 <p className="text-brand-gray mb-4 line-clamp-2">{project.description}</p>
                 <a 
-                  href={project.link} 
-                  className="text-brand-black font-medium hover:text-primary transition-colors"
+                  href={`/projects/${project.id}`} 
+                  className="text-primary font-medium hover:underline flex items-center"
                 >
-                  View Project Details
+                  View Details
+                  <ArrowRight size={16} className="ml-1" />
                 </a>
               </div>
             </motion.div>
           ))}
-        </div>
-
-        <div className="text-center mt-8">
-          <a href="/projects" className="btn-outline inline-block">
-            View All Projects
-          </a>
         </div>
       </div>
     </section>

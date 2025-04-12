@@ -1,61 +1,43 @@
 
 import React from 'react';
+import { ArrowRight, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Calendar, User, ArrowRight } from 'lucide-react';
+import { BlogPost } from '@/types/payload-types';
 
-// In a real implementation, these would come from the CMS
-const blogs = [
-  {
-    id: 1,
-    title: 'The Future of Solar Energy in Sri Lanka',
-    excerpt: 'Exploring the potential and growth opportunities for solar power in the Sri Lankan energy landscape.',
-    date: '2023-04-15',
-    author: 'Dinesh Silva',
-    image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    slug: 'future-of-solar-energy-sri-lanka'
-  },
-  {
-    id: 2,
-    title: 'Solar vs. Traditional Energy: A Cost Comparison',
-    excerpt: 'A detailed analysis of the economic benefits of switching to solar energy for residential properties.',
-    date: '2023-03-22',
-    author: 'Priya Jayawardena',
-    image: 'https://images.unsplash.com/photo-1521618755572-156ae0cdd74d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    slug: 'solar-vs-traditional-energy'
-  },
-  {
-    id: 3,
-    title: 'Maintenance Tips for Your Solar Panels',
-    excerpt: 'Essential maintenance practices to ensure optimal performance and longevity of your solar panel installation.',
-    date: '2023-02-08',
-    author: 'Asanka Perera',
-    image: 'https://images.unsplash.com/photo-1595437287698-7b3a5b9c0be3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    slug: 'maintenance-tips-solar-panels'
-  }
-];
+interface BlogSectionProps {
+  posts: BlogPost[];
+}
 
 const formatDate = (dateString: string) => {
   const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
   return new Date(dateString).toLocaleDateString('en-US', options);
 };
 
-const BlogSection: React.FC = () => {
+const BlogSection: React.FC<BlogSectionProps> = ({ posts }) => {
   return (
-    <section className="section bg-brand-light">
+    <section className="section bg-white">
       <div className="container-custom">
-        <div className="flex justify-between items-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-bold">Latest from Our Blog</h2>
-          <a href="/blog" className="hidden md:flex items-center text-primary font-medium hover:underline">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12">
+          <div>
+            <h2 className="section-title text-left">Latest Insights</h2>
+            <p className="section-subtitle text-left max-w-xl">
+              Stay updated with the latest news and trends in solar energy.
+            </p>
+          </div>
+          <a 
+            href="/blog" 
+            className="btn-secondary mt-4 md:mt-0 group"
+          >
             View All Articles
-            <ArrowRight size={16} className="ml-1" />
+            <ArrowRight className="ml-2 transition group-hover:translate-x-1" size={18} />
           </a>
         </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {blogs.map((blog, index) => (
-            <motion.article 
-              key={blog.id}
-              className="bg-white rounded-xl shadow-md overflow-hidden"
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {posts.slice(0, 3).map((post, index) => (
+            <motion.article
+              key={post.id}
+              className="bg-white rounded-lg overflow-hidden shadow-md"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -63,26 +45,20 @@ const BlogSection: React.FC = () => {
             >
               <div className="h-48 overflow-hidden">
                 <img 
-                  src={blog.image} 
-                  alt={blog.title} 
-                  className="w-full h-full object-cover hover:scale-110 transition duration-500"
+                  src={post.coverImage} 
+                  alt={post.title} 
+                  className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
                 />
               </div>
               <div className="p-6">
                 <div className="flex items-center text-sm text-brand-gray mb-3">
-                  <div className="flex items-center mr-4">
-                    <Calendar size={14} className="mr-1" />
-                    <span>{formatDate(blog.date)}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <User size={14} className="mr-1" />
-                    <span>{blog.author}</span>
-                  </div>
+                  <Calendar size={14} className="mr-1" />
+                  <span>{formatDate(post.publishDate)}</span>
                 </div>
-                <h3 className="text-xl font-bold mb-2 line-clamp-2">{blog.title}</h3>
-                <p className="text-brand-gray mb-4 line-clamp-2">{blog.excerpt}</p>
+                <h3 className="text-xl font-bold mb-2 line-clamp-2">{post.title}</h3>
+                <p className="text-brand-gray mb-4 line-clamp-3">{post.excerpt}</p>
                 <a 
-                  href={`/blog/${blog.slug}`} 
+                  href={`/blog/${post.slug}`} 
                   className="text-primary font-medium hover:underline flex items-center"
                 >
                   Read More
@@ -91,12 +67,6 @@ const BlogSection: React.FC = () => {
               </div>
             </motion.article>
           ))}
-        </div>
-        
-        <div className="text-center mt-8 md:hidden">
-          <a href="/blog" className="btn-outline inline-block">
-            View All Articles
-          </a>
         </div>
       </div>
     </section>

@@ -2,40 +2,21 @@
 import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight, Sun, PieChart, BarChart, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ServiceCard } from '@/types/payload-types';
 
-// In a real project, these would come from the CMS
-const services = [
-  {
-    id: 1,
-    title: 'Solar Panel Installation',
-    description: 'Professional installation of high-efficiency solar panels for residential and commercial properties.',
-    icon: Sun,
-    color: 'bg-primary',
-  },
-  {
-    id: 2,
-    title: 'Energy Consultation',
-    description: 'Expert advice on renewable energy solutions tailored to your specific needs and goals.',
-    icon: PieChart,
-    color: 'bg-brand-black',
-  },
-  {
-    id: 3,
-    title: 'System Maintenance',
-    description: 'Regular maintenance and servicing to ensure optimal performance of your solar energy system.',
-    icon: BarChart,
-    color: 'bg-primary',
-  },
-  {
-    id: 4,
-    title: 'Power Optimization',
-    description: 'Advanced solutions to maximize energy efficiency and reduce power consumption costs.',
-    icon: Zap,
-    color: 'bg-brand-black',
-  },
-];
+// Map of icon names to Lucide React components
+const iconMap: Record<string, React.ElementType> = {
+  'solar-panel': Sun,
+  'lightbulb': PieChart,
+  'tool': BarChart,
+  'zap': Zap,
+};
 
-const ServiceCards: React.FC = () => {
+interface ServiceCardsProps {
+  services: ServiceCard[];
+}
+
+const ServiceCards: React.FC<ServiceCardsProps> = ({ services }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -77,30 +58,36 @@ const ServiceCards: React.FC = () => {
             className="flex overflow-x-auto gap-6 pb-6 scrollbar-hide snap-x snap-mandatory"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {services.map((service) => (
-              <motion.div 
-                key={service.id}
-                className="min-w-[300px] max-w-[350px] bg-white rounded-lg shadow-lg p-6 flex flex-col h-[280px] snap-center"
-                whileHover={{ y: -10, transition: { duration: 0.3 } }}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: service.id * 0.1 }}
-              >
-                <div className={`${service.color} w-14 h-14 rounded-lg flex items-center justify-center mb-4`}>
-                  <service.icon className="text-white" size={28} />
-                </div>
-                <h3 className="text-xl font-bold mb-2">{service.title}</h3>
-                <p className="text-brand-gray flex-grow">{service.description}</p>
-                <a 
-                  href={`/services#${service.title.toLowerCase().replace(/\s+/g, '-')}`}
-                  className="text-primary font-medium mt-4 flex items-center hover:underline"
+            {services.map((service, index) => {
+              // Default to Sun icon if the icon string doesn't match any in our map
+              const IconComponent = iconMap[service.icon] || Sun;
+              const cardColor = index % 2 === 0 ? 'bg-primary' : 'bg-brand-black';
+              
+              return (
+                <motion.div 
+                  key={service.id}
+                  className="min-w-[300px] max-w-[350px] bg-white rounded-lg shadow-lg p-6 flex flex-col h-[280px] snap-center"
+                  whileHover={{ y: -10, transition: { duration: 0.3 } }}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  Learn More
-                  <ChevronRight size={16} className="ml-1" />
-                </a>
-              </motion.div>
-            ))}
+                  <div className={`${cardColor} w-14 h-14 rounded-lg flex items-center justify-center mb-4`}>
+                    <IconComponent className="text-white" size={28} />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{service.title}</h3>
+                  <p className="text-brand-gray flex-grow">{service.description}</p>
+                  <a 
+                    href={`/services#${service.title.toLowerCase().replace(/\s+/g, '-')}`}
+                    className="text-primary font-medium mt-4 flex items-center hover:underline"
+                  >
+                    Learn More
+                    <ChevronRight size={16} className="ml-1" />
+                  </a>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </div>
