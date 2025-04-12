@@ -31,7 +31,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonials 
               <p className="text-brand-gray mb-6 relative z-10">{testimonial.text}</p>
               <div className="mt-auto">
                 <p className="font-bold">{testimonial.author}</p>
-                <p className="text-sm text-brand-gray">{testimonial.position || 'Client'}</p>
+                <p className="text-sm text-brand-gray">{testimonial.position}</p>
               </div>
             </motion.div>
           ))}

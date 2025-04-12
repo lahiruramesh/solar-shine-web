@@ -20,11 +20,10 @@ export async function fetchHeroSection(): Promise<HeroSection> {
     throw error;
   }
   
-  // Provide default placeholder image if none exists
   return {
     title: data.title,
     subtitle: data.subtitle,
-    backgroundImage: data.background_image || 'https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+    backgroundImage: data.background_image,
     ctaText: data.cta_text,
     ctaLink: data.cta_link
   };
@@ -44,7 +43,7 @@ export async function fetchServiceCards(): Promise<ServiceCard[]> {
     id: card.id,
     title: card.title,
     description: card.description,
-    icon: card.icon || 'zap' // Default icon if none provided
+    icon: card.icon
   }));
 }
 
@@ -63,7 +62,7 @@ export async function fetchProjects(): Promise<Project[]> {
     title: project.title,
     category: project.category as 'Residential' | 'Commercial' | 'Industrial',
     description: project.description,
-    image: project.image || 'https://images.unsplash.com/photo-1497440001374-f26997328c1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', // Default placeholder
+    image: project.image,
     client: project.client,
     completionDate: project.completion_date
   }));
@@ -83,7 +82,7 @@ export async function fetchTestimonials(): Promise<Testimonial[]> {
     id: testimonial.id,
     text: testimonial.text,
     author: testimonial.author,
-    position: testimonial.position || ''
+    position: testimonial.position
   }));
 }
 
@@ -104,7 +103,7 @@ export async function fetchBlogPosts(): Promise<BlogPost[]> {
     content: post.content,
     author: post.author,
     publishDate: post.publish_date,
-    coverImage: post.cover_image || 'https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', // Default placeholder
+    coverImage: post.cover_image,
     slug: post.slug
   }));
 }
@@ -122,7 +121,7 @@ export async function fetchGlobalSettings(): Promise<GlobalSettings> {
   
   return {
     siteName: data.site_name,
-    logo: data.logo || '/logo.svg', // Default logo if missing
+    logo: data.logo,
     primaryColor: data.primary_color,
     secondaryColor: data.secondary_color,
     contactEmail: data.contact_email,
