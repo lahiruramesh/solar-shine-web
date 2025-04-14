@@ -46,6 +46,7 @@ const AboutEditor: React.FC = () => {
     if (!aboutContent) return;
     
     const formData = new FormData();
+    formData.append('id', aboutContent.id);
     formData.append('title', aboutContent.title);
     formData.append('subtitle', aboutContent.subtitle || '');
     formData.append('content', aboutContent.content || '');
@@ -88,7 +89,10 @@ const AboutEditor: React.FC = () => {
                   <Input 
                     id="about-title"
                     value={aboutContent.title} 
-                    onChange={(e) => updateMutation.mutate({...aboutContent, title: e.target.value})}
+                    onChange={(e) => {
+                      const updatedContent = { ...aboutContent, title: e.target.value };
+                      updateMutation.mutate(updatedContent);
+                    }}
                   />
                 </div>
                 
@@ -97,7 +101,10 @@ const AboutEditor: React.FC = () => {
                   <Input 
                     id="about-subtitle"
                     value={aboutContent.subtitle || ''} 
-                    onChange={(e) => updateMutation.mutate({...aboutContent, subtitle: e.target.value})}
+                    onChange={(e) => {
+                      const updatedContent = { ...aboutContent, subtitle: e.target.value };
+                      updateMutation.mutate(updatedContent);
+                    }}
                   />
                 </div>
                 
@@ -106,7 +113,10 @@ const AboutEditor: React.FC = () => {
                   <Textarea 
                     id="about-content"
                     value={aboutContent.content || ''} 
-                    onChange={(e) => updateMutation.mutate({...aboutContent, content: e.target.value})}
+                    onChange={(e) => {
+                      const updatedContent = { ...aboutContent, content: e.target.value };
+                      updateMutation.mutate(updatedContent);
+                    }}
                     rows={6}
                   />
                 </div>
@@ -156,7 +166,10 @@ const AboutEditor: React.FC = () => {
                     <Input 
                       id="mission-title"
                       value={aboutContent.missionTitle || ''} 
-                      onChange={(e) => updateMutation.mutate({...aboutContent, missionTitle: e.target.value})}
+                      onChange={(e) => {
+                        const updatedContent = { ...aboutContent, missionTitle: e.target.value };
+                        updateMutation.mutate(updatedContent);
+                      }}
                     />
                   </div>
                   
@@ -165,7 +178,10 @@ const AboutEditor: React.FC = () => {
                     <Textarea 
                       id="mission-description"
                       value={aboutContent.missionDescription || ''} 
-                      onChange={(e) => updateMutation.mutate({...aboutContent, missionDescription: e.target.value})}
+                      onChange={(e) => {
+                        const updatedContent = { ...aboutContent, missionDescription: e.target.value };
+                        updateMutation.mutate(updatedContent);
+                      }}
                       rows={4}
                     />
                   </div>
@@ -177,7 +193,10 @@ const AboutEditor: React.FC = () => {
                     <Input 
                       id="vision-title"
                       value={aboutContent.visionTitle || ''} 
-                      onChange={(e) => updateMutation.mutate({...aboutContent, visionTitle: e.target.value})}
+                      onChange={(e) => {
+                        const updatedContent = { ...aboutContent, visionTitle: e.target.value };
+                        updateMutation.mutate(updatedContent);
+                      }}
                     />
                   </div>
                   
@@ -186,7 +205,10 @@ const AboutEditor: React.FC = () => {
                     <Textarea 
                       id="vision-description"
                       value={aboutContent.visionDescription || ''} 
-                      onChange={(e) => updateMutation.mutate({...aboutContent, visionDescription: e.target.value})}
+                      onChange={(e) => {
+                        const updatedContent = { ...aboutContent, visionDescription: e.target.value };
+                        updateMutation.mutate(updatedContent);
+                      }}
                       rows={4}
                     />
                   </div>

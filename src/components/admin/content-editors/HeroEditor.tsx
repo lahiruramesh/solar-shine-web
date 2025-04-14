@@ -39,6 +39,7 @@ const HeroEditor: React.FC = () => {
     if (!hero) return;
     
     const formData = new FormData();
+    formData.append('id', hero.id || '');
     formData.append('title', hero.title);
     formData.append('subtitle', hero.subtitle || '');
     formData.append('ctaText', hero.ctaText || '');
@@ -68,7 +69,10 @@ const HeroEditor: React.FC = () => {
               <Input 
                 id="hero-title"
                 value={hero.title} 
-                onChange={(e) => updateMutation.mutate({...hero, title: e.target.value})}
+                onChange={(e) => {
+                  const updatedHero = { ...hero, title: e.target.value };
+                  updateMutation.mutate(updatedHero);
+                }}
               />
             </div>
             
@@ -77,7 +81,10 @@ const HeroEditor: React.FC = () => {
               <Textarea 
                 id="hero-subtitle"
                 value={hero.subtitle || ''} 
-                onChange={(e) => updateMutation.mutate({...hero, subtitle: e.target.value})}
+                onChange={(e) => {
+                  const updatedHero = { ...hero, subtitle: e.target.value };
+                  updateMutation.mutate(updatedHero);
+                }}
                 rows={3}
               />
             </div>
@@ -87,7 +94,10 @@ const HeroEditor: React.FC = () => {
               <Input 
                 id="hero-cta-text"
                 value={hero.ctaText || ''} 
-                onChange={(e) => updateMutation.mutate({...hero, ctaText: e.target.value})}
+                onChange={(e) => {
+                  const updatedHero = { ...hero, ctaText: e.target.value };
+                  updateMutation.mutate(updatedHero);
+                }}
               />
             </div>
             
@@ -96,7 +106,10 @@ const HeroEditor: React.FC = () => {
               <Input 
                 id="hero-cta-link"
                 value={hero.ctaLink || ''} 
-                onChange={(e) => updateMutation.mutate({...hero, ctaLink: e.target.value})}
+                onChange={(e) => {
+                  const updatedHero = { ...hero, ctaLink: e.target.value };
+                  updateMutation.mutate(updatedHero);
+                }}
               />
             </div>
             

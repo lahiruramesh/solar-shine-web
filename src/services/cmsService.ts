@@ -5,7 +5,12 @@ import {
   Project, 
   Testimonial, 
   BlogPost,
-  GlobalSettings
+  GlobalSettings,
+  NavigationItem,
+  CompanyInfo,
+  SocialLink,
+  FooterLink,
+  AboutContent
 } from '@/types/payload-types';
 
 export async function fetchHeroSection(): Promise<HeroSection> {
@@ -210,36 +215,27 @@ export async function updateAppointmentStatus(id: string, status: string): Promi
   return true;
 }
 
-export interface NavigationItem {
-  id: string;
-  title: string;
-  path: string;
-  order: number;
-}
-
 export async function fetchNavigationItems(): Promise<NavigationItem[]> {
   const { data, error } = await supabase
-    .from('navigation_items')
-    .select('*')
-    .order('order', { ascending: true });
+    .rpc('get_navigation_items')
+    .select('id, title, path, order');
   
   if (error) {
     console.error('Error fetching navigation items:', error);
     throw error;
   }
   
-  return data;
+  return data || [];
 }
 
 export async function updateNavigationItem(item: NavigationItem): Promise<boolean> {
   const { error } = await supabase
-    .from('navigation_items')
-    .update({
-      title: item.title,
-      path: item.path,
-      order: item.order
-    })
-    .eq('id', item.id);
+    .rpc('update_navigation_item', {
+      item_id: item.id,
+      item_title: item.title,
+      item_path: item.path,
+      item_order: item.order
+    });
   
   if (error) {
     console.error('Error updating navigation item:', error);
@@ -251,24 +247,20 @@ export async function updateNavigationItem(item: NavigationItem): Promise<boolea
 
 export async function addNavigationItem(item: { title: string; path: string }): Promise<boolean> {
   const { data: navItems, error: fetchError } = await supabase
-    .from('navigation_items')
-    .select('order')
-    .order('order', { ascending: false })
-    .limit(1);
+    .rpc('get_max_navigation_order');
   
   if (fetchError) {
     console.error('Error fetching navigation items for order:', fetchError);
     return false;
   }
   
-  const newOrder = navItems && navItems.length > 0 ? navItems[0].order + 1 : 1;
+  const newOrder = navItems && navItems.length > 0 ? navItems[0].max_order + 1 : 1;
   
   const { error } = await supabase
-    .from('navigation_items')
-    .insert({
-      title: item.title,
-      path: item.path,
-      order: newOrder
+    .rpc('add_navigation_item', {
+      item_title: item.title,
+      item_path: item.path,
+      item_order: newOrder
     });
   
   if (error) {
@@ -281,9 +273,9 @@ export async function addNavigationItem(item: { title: string; path: string }): 
 
 export async function deleteNavigationItem(id: string): Promise<boolean> {
   const { error } = await supabase
-    .from('navigation_items')
-    .delete()
-    .eq('id', id);
+    .rpc('delete_navigation_item', {
+      item_id: id
+    });
   
   if (error) {
     console.error('Error deleting navigation item:', error);
@@ -293,33 +285,9 @@ export async function deleteNavigationItem(id: string): Promise<boolean> {
   return true;
 }
 
-export interface CompanyInfo {
-  id: string;
-  name: string;
-  description: string;
-  address: string;
-  email: string;
-  phone: string;
-}
-
-export interface SocialLink {
-  id: string;
-  name: string;
-  icon: string;
-  url: string;
-}
-
-export interface FooterLink {
-  id: string;
-  name: string;
-  url: string;
-  category: string;
-}
-
 export async function fetchFooterData(): Promise<CompanyInfo> {
   const { data, error } = await supabase
-    .from('company_info')
-    .select('*')
+    .rpc('get_company_info')
     .single();
   
   if (error) {
@@ -327,20 +295,26 @@ export async function fetchFooterData(): Promise<CompanyInfo> {
     throw error;
   }
   
-  return data;
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    address: data.address,
+    email: data.email,
+    phone: data.phone
+  };
 }
 
 export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
   const { error } = await supabase
-    .from('company_info')
-    .update({
-      name: info.name,
-      description: info.description,
-      address: info.address,
-      email: info.email,
-      phone: info.phone
-    })
-    .eq('id', info.id);
+    .rpc('update_company_info', {
+      company_id: info.id,
+      company_name: info.name,
+      company_description: info.description,
+      company_address: info.address,
+      company_email: info.email,
+      company_phone: info.phone
+    });
   
   if (error) {
     console.error('Error updating company info:', error);
@@ -352,26 +326,24 @@ export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
 
 export async function fetchSocialLinks(): Promise<SocialLink[]> {
   const { data, error } = await supabase
-    .from('social_links')
-    .select('*');
+    .rpc('get_social_links');
   
   if (error) {
     console.error('Error fetching social links:', error);
     throw error;
   }
   
-  return data;
+  return data || [];
 }
 
 export async function updateSocialLink(link: SocialLink): Promise<boolean> {
   const { error } = await supabase
-    .from('social_links')
-    .update({
-      name: link.name,
-      icon: link.icon,
-      url: link.url
-    })
-    .eq('id', link.id);
+    .rpc('update_social_link', {
+      link_id: link.id,
+      link_name: link.name,
+      link_icon: link.icon,
+      link_url: link.url
+    });
   
   if (error) {
     console.error('Error updating social link:', error);
@@ -383,8 +355,11 @@ export async function updateSocialLink(link: SocialLink): Promise<boolean> {
 
 export async function addSocialLink(link: { name: string; icon: string; url: string }): Promise<boolean> {
   const { error } = await supabase
-    .from('social_links')
-    .insert(link);
+    .rpc('add_social_link', {
+      link_name: link.name,
+      link_icon: link.icon,
+      link_url: link.url
+    });
   
   if (error) {
     console.error('Error adding social link:', error);
@@ -396,9 +371,9 @@ export async function addSocialLink(link: { name: string; icon: string; url: str
 
 export async function deleteSocialLink(id: string): Promise<boolean> {
   const { error } = await supabase
-    .from('social_links')
-    .delete()
-    .eq('id', id);
+    .rpc('delete_social_link', {
+      link_id: id
+    });
   
   if (error) {
     console.error('Error deleting social link:', error);
@@ -410,26 +385,24 @@ export async function deleteSocialLink(id: string): Promise<boolean> {
 
 export async function fetchFooterLinks(): Promise<FooterLink[]> {
   const { data, error } = await supabase
-    .from('footer_links')
-    .select('*');
+    .rpc('get_footer_links');
   
   if (error) {
     console.error('Error fetching footer links:', error);
     throw error;
   }
   
-  return data;
+  return data || [];
 }
 
 export async function updateFooterLink(link: FooterLink): Promise<boolean> {
   const { error } = await supabase
-    .from('footer_links')
-    .update({
-      name: link.name,
-      url: link.url,
-      category: link.category
-    })
-    .eq('id', link.id);
+    .rpc('update_footer_link', {
+      link_id: link.id,
+      link_name: link.name,
+      link_url: link.url,
+      link_category: link.category
+    });
   
   if (error) {
     console.error('Error updating footer link:', error);
@@ -441,8 +414,11 @@ export async function updateFooterLink(link: FooterLink): Promise<boolean> {
 
 export async function addFooterLink(link: { name: string; url: string; category: string }): Promise<boolean> {
   const { error } = await supabase
-    .from('footer_links')
-    .insert(link);
+    .rpc('add_footer_link', {
+      link_name: link.name,
+      link_url: link.url,
+      link_category: link.category
+    });
   
   if (error) {
     console.error('Error adding footer link:', error);
@@ -454,9 +430,9 @@ export async function addFooterLink(link: { name: string; url: string; category:
 
 export async function deleteFooterLink(id: string): Promise<boolean> {
   const { error } = await supabase
-    .from('footer_links')
-    .delete()
-    .eq('id', id);
+    .rpc('delete_footer_link', {
+      link_id: id
+    });
   
   if (error) {
     console.error('Error deleting footer link:', error);

@@ -9,6 +9,7 @@ export interface GlobalSettings {
 }
 
 export interface HeroSection {
+  id?: string;
   title: string;
   subtitle: string;
   backgroundImage: string;
