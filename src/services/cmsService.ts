@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { 
   HeroSection, 
@@ -10,7 +11,7 @@ import {
   CompanyInfo,
   SocialLink,
   FooterLink,
-  AboutContent
+  AboutContent as AboutContentType
 } from '@/types/payload-types';
 
 export async function fetchHeroSection(): Promise<HeroSection> {
@@ -25,6 +26,7 @@ export async function fetchHeroSection(): Promise<HeroSection> {
   }
   
   return {
+    id: data.id,
     title: data.title,
     subtitle: data.subtitle,
     backgroundImage: data.background_image,
@@ -217,15 +219,14 @@ export async function updateAppointmentStatus(id: string, status: string): Promi
 
 export async function fetchNavigationItems(): Promise<NavigationItem[]> {
   const { data, error } = await supabase
-    .rpc('get_navigation_items')
-    .select('id, title, path, order');
+    .rpc('get_navigation_items');
   
   if (error) {
     console.error('Error fetching navigation items:', error);
     throw error;
   }
   
-  return data || [];
+  return data as NavigationItem[] || [];
 }
 
 export async function updateNavigationItem(item: NavigationItem): Promise<boolean> {
@@ -246,7 +247,7 @@ export async function updateNavigationItem(item: NavigationItem): Promise<boolea
 }
 
 export async function addNavigationItem(item: { title: string; path: string }): Promise<boolean> {
-  const { data: navItems, error: fetchError } = await supabase
+  const { data, error: fetchError } = await supabase
     .rpc('get_max_navigation_order');
   
   if (fetchError) {
@@ -254,7 +255,7 @@ export async function addNavigationItem(item: { title: string; path: string }): 
     return false;
   }
   
-  const newOrder = navItems && navItems.length > 0 ? navItems[0].max_order + 1 : 1;
+  const newOrder = data && data.length > 0 ? data[0].max_order + 1 : 1;
   
   const { error } = await supabase
     .rpc('add_navigation_item', {
@@ -287,21 +288,24 @@ export async function deleteNavigationItem(id: string): Promise<boolean> {
 
 export async function fetchFooterData(): Promise<CompanyInfo> {
   const { data, error } = await supabase
-    .rpc('get_company_info')
-    .single();
+    .rpc('get_company_info');
   
   if (error) {
     console.error('Error fetching company info:', error);
     throw error;
   }
   
+  if (!data || data.length === 0) {
+    throw new Error('No company info found');
+  }
+  
   return {
-    id: data.id,
-    name: data.name,
-    description: data.description,
-    address: data.address,
-    email: data.email,
-    phone: data.phone
+    id: data[0].id,
+    name: data[0].name,
+    description: data[0].description,
+    address: data[0].address,
+    email: data[0].email,
+    phone: data[0].phone
   };
 }
 
@@ -333,7 +337,7 @@ export async function fetchSocialLinks(): Promise<SocialLink[]> {
     throw error;
   }
   
-  return data || [];
+  return data as SocialLink[] || [];
 }
 
 export async function updateSocialLink(link: SocialLink): Promise<boolean> {
@@ -392,7 +396,7 @@ export async function fetchFooterLinks(): Promise<FooterLink[]> {
     throw error;
   }
   
-  return data || [];
+  return data as FooterLink[] || [];
 }
 
 export async function updateFooterLink(link: FooterLink): Promise<boolean> {
@@ -655,21 +659,7 @@ export async function deleteTestimonial(id: string): Promise<boolean> {
   return true;
 }
 
-export interface AboutContent {
-  id: string;
-  title: string;
-  subtitle: string;
-  content: string;
-  mainImage: string;
-  missionTitle: string;
-  missionDescription: string;
-  visionTitle: string;
-  visionDescription: string;
-  imageOne: string;
-  imageTwo: string;
-}
-
-export async function fetchAboutContent(): Promise<AboutContent> {
+export async function fetchAboutContent(): Promise<AboutContentType> {
   const { data, error } = await supabase
     .from('about_content')
     .select('*')
@@ -680,7 +670,19 @@ export async function fetchAboutContent(): Promise<AboutContent> {
     throw error;
   }
   
-  return data;
+  return {
+    id: data.id,
+    title: data.title,
+    subtitle: data.subtitle,
+    content: data.content,
+    mainImage: data.main_image,
+    missionTitle: data.mission_title,
+    missionDescription: data.mission_description,
+    visionTitle: data.vision_title,
+    visionDescription: data.vision_description,
+    imageOne: data.image_one,
+    imageTwo: data.image_two
+  };
 }
 
 export async function updateAboutContent(formData: FormData): Promise<boolean> {

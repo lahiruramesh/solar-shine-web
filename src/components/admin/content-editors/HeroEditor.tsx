@@ -51,6 +51,27 @@ const HeroEditor: React.FC = () => {
     
     updateMutation.mutate(formData);
   };
+
+  const handleFieldUpdate = (field: string, value: string) => {
+    if (!hero) return;
+    
+    // Create a new hero object with the updated field
+    const updatedHero = { 
+      ...hero, 
+      [field]: value 
+    };
+    
+    // Create a FormData object for the update
+    const formData = new FormData();
+    formData.append('id', updatedHero.id || '');
+    formData.append('title', updatedHero.title);
+    formData.append('subtitle', updatedHero.subtitle || '');
+    formData.append('ctaText', updatedHero.ctaText || '');
+    formData.append('ctaLink', updatedHero.ctaLink || '');
+    
+    // Submit the update
+    updateMutation.mutate(formData);
+  };
   
   if (isLoading) {
     return <div className="flex justify-center p-6">Loading hero section data...</div>;
@@ -69,10 +90,7 @@ const HeroEditor: React.FC = () => {
               <Input 
                 id="hero-title"
                 value={hero.title} 
-                onChange={(e) => {
-                  const updatedHero = { ...hero, title: e.target.value };
-                  updateMutation.mutate(updatedHero);
-                }}
+                onChange={(e) => handleFieldUpdate('title', e.target.value)}
               />
             </div>
             
@@ -81,10 +99,7 @@ const HeroEditor: React.FC = () => {
               <Textarea 
                 id="hero-subtitle"
                 value={hero.subtitle || ''} 
-                onChange={(e) => {
-                  const updatedHero = { ...hero, subtitle: e.target.value };
-                  updateMutation.mutate(updatedHero);
-                }}
+                onChange={(e) => handleFieldUpdate('subtitle', e.target.value)}
                 rows={3}
               />
             </div>
@@ -94,10 +109,7 @@ const HeroEditor: React.FC = () => {
               <Input 
                 id="hero-cta-text"
                 value={hero.ctaText || ''} 
-                onChange={(e) => {
-                  const updatedHero = { ...hero, ctaText: e.target.value };
-                  updateMutation.mutate(updatedHero);
-                }}
+                onChange={(e) => handleFieldUpdate('ctaText', e.target.value)}
               />
             </div>
             
@@ -106,10 +118,7 @@ const HeroEditor: React.FC = () => {
               <Input 
                 id="hero-cta-link"
                 value={hero.ctaLink || ''} 
-                onChange={(e) => {
-                  const updatedHero = { ...hero, ctaLink: e.target.value };
-                  updateMutation.mutate(updatedHero);
-                }}
+                onChange={(e) => handleFieldUpdate('ctaLink', e.target.value)}
               />
             </div>
             

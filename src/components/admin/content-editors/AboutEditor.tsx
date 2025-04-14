@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Save, Upload } from 'lucide-react';
 import { fetchAboutContent, updateAboutContent } from '@/services/cmsService';
+import { AboutContent } from '@/types/payload-types';
 
 const AboutEditor: React.FC = () => {
   const queryClient = useQueryClient();
@@ -69,6 +70,24 @@ const AboutEditor: React.FC = () => {
     
     updateMutation.mutate(formData);
   };
+
+  const handleFieldUpdate = (field: keyof AboutContent, value: string) => {
+    if (!aboutContent) return;
+    
+    // Create a FormData object for the update
+    const formData = new FormData();
+    formData.append('id', aboutContent.id);
+    formData.append('title', field === 'title' ? value : aboutContent.title);
+    formData.append('subtitle', field === 'subtitle' ? value : (aboutContent.subtitle || ''));
+    formData.append('content', field === 'content' ? value : (aboutContent.content || ''));
+    formData.append('missionTitle', field === 'missionTitle' ? value : (aboutContent.missionTitle || ''));
+    formData.append('missionDescription', field === 'missionDescription' ? value : (aboutContent.missionDescription || ''));
+    formData.append('visionTitle', field === 'visionTitle' ? value : (aboutContent.visionTitle || ''));
+    formData.append('visionDescription', field === 'visionDescription' ? value : (aboutContent.visionDescription || ''));
+    
+    // Submit the update
+    updateMutation.mutate(formData);
+  };
   
   if (isLoading) {
     return <div className="flex justify-center p-6">Loading about page content...</div>;
@@ -89,10 +108,7 @@ const AboutEditor: React.FC = () => {
                   <Input 
                     id="about-title"
                     value={aboutContent.title} 
-                    onChange={(e) => {
-                      const updatedContent = { ...aboutContent, title: e.target.value };
-                      updateMutation.mutate(updatedContent);
-                    }}
+                    onChange={(e) => handleFieldUpdate('title', e.target.value)}
                   />
                 </div>
                 
@@ -101,10 +117,7 @@ const AboutEditor: React.FC = () => {
                   <Input 
                     id="about-subtitle"
                     value={aboutContent.subtitle || ''} 
-                    onChange={(e) => {
-                      const updatedContent = { ...aboutContent, subtitle: e.target.value };
-                      updateMutation.mutate(updatedContent);
-                    }}
+                    onChange={(e) => handleFieldUpdate('subtitle', e.target.value)}
                   />
                 </div>
                 
@@ -113,10 +126,7 @@ const AboutEditor: React.FC = () => {
                   <Textarea 
                     id="about-content"
                     value={aboutContent.content || ''} 
-                    onChange={(e) => {
-                      const updatedContent = { ...aboutContent, content: e.target.value };
-                      updateMutation.mutate(updatedContent);
-                    }}
+                    onChange={(e) => handleFieldUpdate('content', e.target.value)}
                     rows={6}
                   />
                 </div>
@@ -166,10 +176,7 @@ const AboutEditor: React.FC = () => {
                     <Input 
                       id="mission-title"
                       value={aboutContent.missionTitle || ''} 
-                      onChange={(e) => {
-                        const updatedContent = { ...aboutContent, missionTitle: e.target.value };
-                        updateMutation.mutate(updatedContent);
-                      }}
+                      onChange={(e) => handleFieldUpdate('missionTitle', e.target.value)}
                     />
                   </div>
                   
@@ -178,10 +185,7 @@ const AboutEditor: React.FC = () => {
                     <Textarea 
                       id="mission-description"
                       value={aboutContent.missionDescription || ''} 
-                      onChange={(e) => {
-                        const updatedContent = { ...aboutContent, missionDescription: e.target.value };
-                        updateMutation.mutate(updatedContent);
-                      }}
+                      onChange={(e) => handleFieldUpdate('missionDescription', e.target.value)}
                       rows={4}
                     />
                   </div>
@@ -193,10 +197,7 @@ const AboutEditor: React.FC = () => {
                     <Input 
                       id="vision-title"
                       value={aboutContent.visionTitle || ''} 
-                      onChange={(e) => {
-                        const updatedContent = { ...aboutContent, visionTitle: e.target.value };
-                        updateMutation.mutate(updatedContent);
-                      }}
+                      onChange={(e) => handleFieldUpdate('visionTitle', e.target.value)}
                     />
                   </div>
                   
@@ -205,10 +206,7 @@ const AboutEditor: React.FC = () => {
                     <Textarea 
                       id="vision-description"
                       value={aboutContent.visionDescription || ''} 
-                      onChange={(e) => {
-                        const updatedContent = { ...aboutContent, visionDescription: e.target.value };
-                        updateMutation.mutate(updatedContent);
-                      }}
+                      onChange={(e) => handleFieldUpdate('visionDescription', e.target.value)}
                       rows={4}
                     />
                   </div>
