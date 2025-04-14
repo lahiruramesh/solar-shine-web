@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   HeroSection, 
@@ -11,7 +10,7 @@ import {
   CompanyInfo,
   SocialLink,
   FooterLink,
-  AboutContent as AboutContentType
+  AboutContent
 } from '@/types/payload-types';
 
 export async function fetchHeroSection(): Promise<HeroSection> {
@@ -218,100 +217,121 @@ export async function updateAppointmentStatus(id: string, status: string): Promi
 }
 
 export async function fetchNavigationItems(): Promise<NavigationItem[]> {
-  const { data, error } = await supabase
-    .rpc('get_navigation_items');
-  
-  if (error) {
-    console.error('Error fetching navigation items:', error);
+  try {
+    const { data, error } = await supabase.rpc('get_navigation_items');
+    
+    if (error) {
+      console.error('Error fetching navigation items:', error);
+      throw error;
+    }
+    
+    return (data || []) as NavigationItem[];
+  } catch (error) {
+    console.error('Error in fetchNavigationItems:', error);
     throw error;
   }
-  
-  return data as NavigationItem[] || [];
 }
 
 export async function updateNavigationItem(item: NavigationItem): Promise<boolean> {
-  const { error } = await supabase
-    .rpc('update_navigation_item', {
+  try {
+    const { error } = await supabase.rpc('update_navigation_item', {
       item_id: item.id,
       item_title: item.title,
       item_path: item.path,
       item_order: item.order
     });
-  
-  if (error) {
-    console.error('Error updating navigation item:', error);
+    
+    if (error) {
+      console.error('Error updating navigation item:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in updateNavigationItem:', error);
     return false;
   }
-  
-  return true;
 }
 
 export async function addNavigationItem(item: { title: string; path: string }): Promise<boolean> {
-  const { data, error: fetchError } = await supabase
-    .rpc('get_max_navigation_order');
-  
-  if (fetchError) {
-    console.error('Error fetching navigation items for order:', fetchError);
-    return false;
-  }
-  
-  const newOrder = data && data.length > 0 ? data[0].max_order + 1 : 1;
-  
-  const { error } = await supabase
-    .rpc('add_navigation_item', {
+  try {
+    const { data, error: fetchError } = await supabase.rpc('get_max_navigation_order');
+    
+    if (fetchError) {
+      console.error('Error fetching navigation items for order:', fetchError);
+      return false;
+    }
+    
+    const newOrder = data ? data + 1 : 1;
+    
+    const { error } = await supabase.rpc('add_navigation_item', {
       item_title: item.title,
       item_path: item.path,
       item_order: newOrder
     });
-  
-  if (error) {
-    console.error('Error adding navigation item:', error);
+    
+    if (error) {
+      console.error('Error adding navigation item:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in addNavigationItem:', error);
     return false;
   }
-  
-  return true;
 }
 
 export async function deleteNavigationItem(id: string): Promise<boolean> {
-  const { error } = await supabase
-    .rpc('delete_navigation_item', {
+  try {
+    const { error } = await supabase.rpc('delete_navigation_item', {
       item_id: id
     });
-  
-  if (error) {
-    console.error('Error deleting navigation item:', error);
+    
+    if (error) {
+      console.error('Error deleting navigation item:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in deleteNavigationItem:', error);
     return false;
   }
-  
-  return true;
 }
 
 export async function fetchFooterData(): Promise<CompanyInfo> {
-  const { data, error } = await supabase
-    .rpc('get_company_info');
-  
-  if (error) {
-    console.error('Error fetching company info:', error);
+  try {
+    const { data, error } = await supabase.rpc('get_company_info');
+    
+    if (error) {
+      console.error('Error fetching company info:', error);
+      throw error;
+    }
+    
+    if (!data || data.length === 0) {
+      throw new Error('No company info found');
+    }
+    
+    const companyInfo = data[0];
+    
+    return {
+      id: companyInfo.id,
+      name: companyInfo.name,
+      description: companyInfo.description,
+      address: companyInfo.address,
+      email: companyInfo.email,
+      phone: companyInfo.phone
+    };
+  } catch (error) {
+    console.error('Error in fetchFooterData:', error);
     throw error;
   }
-  
-  if (!data || data.length === 0) {
-    throw new Error('No company info found');
-  }
-  
-  return {
-    id: data[0].id,
-    name: data[0].name,
-    description: data[0].description,
-    address: data[0].address,
-    email: data[0].email,
-    phone: data[0].phone
-  };
 }
 
 export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
-  const { error } = await supabase
-    .rpc('update_company_info', {
+  try {
+    const { error } = await supabase.rpc('update_company_info', {
       company_id: info.id,
       company_name: info.name,
       company_description: info.description,
@@ -319,173 +339,214 @@ export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
       company_email: info.email,
       company_phone: info.phone
     });
-  
-  if (error) {
-    console.error('Error updating company info:', error);
-    return false;
-  }
-  
-  return true;
-}
-
-export async function fetchSocialLinks(): Promise<SocialLink[]> {
-  const { data, error } = await supabase
-    .rpc('get_social_links');
-  
-  if (error) {
-    console.error('Error fetching social links:', error);
-    throw error;
-  }
-  
-  return data as SocialLink[] || [];
-}
-
-export async function updateSocialLink(link: SocialLink): Promise<boolean> {
-  const { error } = await supabase
-    .rpc('update_social_link', {
-      link_id: link.id,
-      link_name: link.name,
-      link_icon: link.icon,
-      link_url: link.url
-    });
-  
-  if (error) {
-    console.error('Error updating social link:', error);
-    return false;
-  }
-  
-  return true;
-}
-
-export async function addSocialLink(link: { name: string; icon: string; url: string }): Promise<boolean> {
-  const { error } = await supabase
-    .rpc('add_social_link', {
-      link_name: link.name,
-      link_icon: link.icon,
-      link_url: link.url
-    });
-  
-  if (error) {
-    console.error('Error adding social link:', error);
-    return false;
-  }
-  
-  return true;
-}
-
-export async function deleteSocialLink(id: string): Promise<boolean> {
-  const { error } = await supabase
-    .rpc('delete_social_link', {
-      link_id: id
-    });
-  
-  if (error) {
-    console.error('Error deleting social link:', error);
-    return false;
-  }
-  
-  return true;
-}
-
-export async function fetchFooterLinks(): Promise<FooterLink[]> {
-  const { data, error } = await supabase
-    .rpc('get_footer_links');
-  
-  if (error) {
-    console.error('Error fetching footer links:', error);
-    throw error;
-  }
-  
-  return data as FooterLink[] || [];
-}
-
-export async function updateFooterLink(link: FooterLink): Promise<boolean> {
-  const { error } = await supabase
-    .rpc('update_footer_link', {
-      link_id: link.id,
-      link_name: link.name,
-      link_url: link.url,
-      link_category: link.category
-    });
-  
-  if (error) {
-    console.error('Error updating footer link:', error);
-    return false;
-  }
-  
-  return true;
-}
-
-export async function addFooterLink(link: { name: string; url: string; category: string }): Promise<boolean> {
-  const { error } = await supabase
-    .rpc('add_footer_link', {
-      link_name: link.name,
-      link_url: link.url,
-      link_category: link.category
-    });
-  
-  if (error) {
-    console.error('Error adding footer link:', error);
-    return false;
-  }
-  
-  return true;
-}
-
-export async function deleteFooterLink(id: string): Promise<boolean> {
-  const { error } = await supabase
-    .rpc('delete_footer_link', {
-      link_id: id
-    });
-  
-  if (error) {
-    console.error('Error deleting footer link:', error);
-    return false;
-  }
-  
-  return true;
-}
-
-export async function updateHeroSection(formData: FormData): Promise<boolean> {
-  let backgroundImageUrl = '';
-  const backgroundImage = formData.get('backgroundImage') as File;
-  
-  if (backgroundImage && backgroundImage.size > 0) {
-    const fileName = `hero_${Date.now()}_${backgroundImage.name.replace(/\s/g, '_')}`;
     
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('images')
-      .upload(fileName, backgroundImage);
-    
-    if (uploadError) {
-      console.error('Error uploading hero background image:', uploadError);
+    if (error) {
+      console.error('Error updating company info:', error);
       return false;
     }
     
-    const { data: urlData } = supabase.storage
-      .from('images')
-      .getPublicUrl(fileName);
-    
-    backgroundImageUrl = urlData.publicUrl;
-  }
-  
-  const { error } = await supabase
-    .from('hero_sections')
-    .update({
-      title: formData.get('title') as string,
-      subtitle: formData.get('subtitle') as string,
-      cta_text: formData.get('ctaText') as string,
-      cta_link: formData.get('ctaLink') as string,
-      ...(backgroundImageUrl && { background_image: backgroundImageUrl })
-    })
-    .eq('id', formData.get('id') as string);
-  
-  if (error) {
-    console.error('Error updating hero section:', error);
+    return true;
+  } catch (error) {
+    console.error('Error in updateCompanyInfo:', error);
     return false;
   }
-  
-  return true;
+}
+
+export async function fetchSocialLinks(): Promise<SocialLink[]> {
+  try {
+    const { data, error } = await supabase.rpc('get_social_links');
+    
+    if (error) {
+      console.error('Error fetching social links:', error);
+      throw error;
+    }
+    
+    return (data || []) as SocialLink[];
+  } catch (error) {
+    console.error('Error in fetchSocialLinks:', error);
+    throw error;
+  }
+}
+
+export async function updateSocialLink(link: SocialLink): Promise<boolean> {
+  try {
+    const { error } = await supabase.rpc('update_social_link', {
+      link_id: link.id,
+      link_name: link.name,
+      link_icon: link.icon,
+      link_url: link.url
+    });
+    
+    if (error) {
+      console.error('Error updating social link:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in updateSocialLink:', error);
+    return false;
+  }
+}
+
+export async function addSocialLink(link: { name: string; icon: string; url: string }): Promise<boolean> {
+  try {
+    const { error } = await supabase.rpc('add_social_link', {
+      link_name: link.name,
+      link_icon: link.icon,
+      link_url: link.url
+    });
+    
+    if (error) {
+      console.error('Error adding social link:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in addSocialLink:', error);
+    return false;
+  }
+}
+
+export async function deleteSocialLink(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.rpc('delete_social_link', {
+      link_id: id
+    });
+    
+    if (error) {
+      console.error('Error deleting social link:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in deleteSocialLink:', error);
+    return false;
+  }
+}
+
+export async function fetchFooterLinks(): Promise<FooterLink[]> {
+  try {
+    const { data, error } = await supabase.rpc('get_footer_links');
+    
+    if (error) {
+      console.error('Error fetching footer links:', error);
+      throw error;
+    }
+    
+    return (data || []) as FooterLink[];
+  } catch (error) {
+    console.error('Error in fetchFooterLinks:', error);
+    throw error;
+  }
+}
+
+export async function updateFooterLink(link: FooterLink): Promise<boolean> {
+  try {
+    const { error } = await supabase.rpc('update_footer_link', {
+      link_id: link.id,
+      link_name: link.name,
+      link_url: link.url,
+      link_category: link.category
+    });
+    
+    if (error) {
+      console.error('Error updating footer link:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in updateFooterLink:', error);
+    return false;
+  }
+}
+
+export async function addFooterLink(link: { name: string; url: string; category: string }): Promise<boolean> {
+  try {
+    const { error } = await supabase.rpc('add_footer_link', {
+      link_name: link.name,
+      link_url: link.url,
+      link_category: link.category
+    });
+    
+    if (error) {
+      console.error('Error adding footer link:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in addFooterLink:', error);
+    return false;
+  }
+}
+
+export async function deleteFooterLink(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.rpc('delete_footer_link', {
+      link_id: id
+    });
+    
+    if (error) {
+      console.error('Error deleting footer link:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in deleteFooterLink:', error);
+    return false;
+  }
+}
+
+export async function updateHeroSection(formData: FormData): Promise<boolean> {
+  try {
+    let backgroundImageUrl = '';
+    const backgroundImage = formData.get('backgroundImage') as File;
+    
+    if (backgroundImage && backgroundImage.size > 0) {
+      const fileName = `hero_${Date.now()}_${backgroundImage.name.replace(/\s/g, '_')}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(fileName, backgroundImage);
+      
+      if (uploadError) {
+        console.error('Error uploading hero background image:', uploadError);
+        return false;
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(fileName);
+      
+      backgroundImageUrl = urlData.publicUrl;
+    }
+    
+    const { error } = await supabase
+      .from('hero_sections')
+      .update({
+        title: formData.get('title') as string,
+        subtitle: formData.get('subtitle') as string,
+        cta_text: formData.get('ctaText') as string,
+        cta_link: formData.get('ctaLink') as string,
+        ...(backgroundImageUrl && { background_image: backgroundImageUrl })
+      })
+      .eq('id', formData.get('id') as string);
+    
+    if (error) {
+      console.error('Error updating hero section:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in updateHeroSection:', error);
+    return false;
+  }
 }
 
 export async function updateServiceCard(service: ServiceCard): Promise<boolean> {
@@ -659,81 +720,91 @@ export async function deleteTestimonial(id: string): Promise<boolean> {
   return true;
 }
 
-export async function fetchAboutContent(): Promise<AboutContentType> {
-  const { data, error } = await supabase
-    .from('about_content')
-    .select('*')
-    .single();
-  
-  if (error) {
-    console.error('Error fetching about content:', error);
+export async function fetchAboutContent(): Promise<AboutContent> {
+  try {
+    const { data, error } = await supabase
+      .from('about_content')
+      .select('*')
+      .single();
+    
+    if (error) {
+      console.error('Error fetching about content:', error);
+      throw error;
+    }
+    
+    return {
+      id: data.id,
+      title: data.title,
+      subtitle: data.subtitle,
+      content: data.content,
+      mainImage: data.main_image,
+      missionTitle: data.mission_title,
+      missionDescription: data.mission_description,
+      visionTitle: data.vision_title,
+      visionDescription: data.vision_description,
+      imageOne: data.image_one,
+      imageTwo: data.image_two
+    };
+  } catch (error) {
+    console.error('Error in fetchAboutContent:', error);
     throw error;
   }
-  
-  return {
-    id: data.id,
-    title: data.title,
-    subtitle: data.subtitle,
-    content: data.content,
-    mainImage: data.main_image,
-    missionTitle: data.mission_title,
-    missionDescription: data.mission_description,
-    visionTitle: data.vision_title,
-    visionDescription: data.vision_description,
-    imageOne: data.image_one,
-    imageTwo: data.image_two
-  };
 }
 
 export async function updateAboutContent(formData: FormData): Promise<boolean> {
-  const updateData: any = {
-    title: formData.get('title') as string,
-    subtitle: formData.get('subtitle') as string,
-    content: formData.get('content') as string,
-    mission_title: formData.get('missionTitle') as string,
-    mission_description: formData.get('missionDescription') as string,
-    vision_title: formData.get('visionTitle') as string,
-    vision_description: formData.get('visionDescription') as string
-  };
-  
-  const imageFields = [
-    { formKey: 'mainImage', dbKey: 'main_image' },
-    { formKey: 'imageOne', dbKey: 'image_one' },
-    { formKey: 'imageTwo', dbKey: 'image_two' }
-  ];
-  
-  for (const field of imageFields) {
-    const image = formData.get(field.formKey) as File;
+  try {
+    const updateData: any = {
+      title: formData.get('title') as string,
+      subtitle: formData.get('subtitle') as string,
+      content: formData.get('content') as string,
+      mission_title: formData.get('missionTitle') as string,
+      mission_description: formData.get('missionDescription') as string,
+      vision_title: formData.get('visionTitle') as string,
+      vision_description: formData.get('visionDescription') as string
+    };
     
-    if (image && image.size > 0) {
-      const fileName = `about_${field.formKey}_${Date.now()}_${image.name.replace(/\s/g, '_')}`;
+    const imageFields = [
+      { formKey: 'mainImage', dbKey: 'main_image' },
+      { formKey: 'imageOne', dbKey: 'image_one' },
+      { formKey: 'imageTwo', dbKey: 'image_two' }
+    ];
+    
+    for (const field of imageFields) {
+      const image = formData.get(field.formKey) as File;
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('images')
-        .upload(fileName, image);
-      
-      if (uploadError) {
-        console.error(`Error uploading ${field.formKey}:`, uploadError);
-        continue;
+      if (image && image instanceof File && image.size > 0) {
+        const fileName = `about_${field.formKey}_${Date.now()}_${image.name.replace(/\s/g, '_')}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('images')
+          .upload(fileName, image);
+        
+        if (uploadError) {
+          console.error(`Error uploading ${field.formKey}:`, uploadError);
+          continue;
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('images')
+          .getPublicUrl(fileName);
+        
+        updateData[field.dbKey] = urlData.publicUrl;
       }
-      
-      const { data: urlData } = supabase.storage
-        .from('images')
-        .getPublicUrl(fileName);
-      
-      updateData[field.dbKey] = urlData.publicUrl;
     }
-  }
-  
-  const { error } = await supabase
-    .from('about_content')
-    .update(updateData)
-    .eq('id', formData.get('id') as string);
-  
-  if (error) {
-    console.error('Error updating about content:', error);
+    
+    const { error } = await supabase
+      .from('about_content')
+      .update(updateData)
+      .eq('id', formData.get('id') as string);
+    
+    if (error) {
+      console.error('Error updating about content:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in updateAboutContent:', error);
     return false;
   }
-  
-  return true;
 }
