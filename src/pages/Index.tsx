@@ -11,6 +11,7 @@ import ProjectsShowcase from '@/components/home/ProjectsShowcase';
 import TestimonialsSection from '@/components/home/TestimonialsSection';
 import BlogSection from '@/components/home/BlogSection';
 import AppointmentSection from '@/components/home/AppointmentSection';
+import SEOHead from '@/components/common/SEOHead';
 import { HeroSection as HeroSectionType, ServiceCard, Project, Testimonial, BlogPost } from '@/types/payload-types';
 import { fetchHeroSection, fetchServiceCards, fetchProjects, fetchTestimonials, fetchBlogPosts } from '@/services/cmsService';
 
@@ -77,6 +78,7 @@ const Index: React.FC = () => {
 
   return (
     <>
+      <SEOHead pagePath="/" />
       <Header />
       <main>
         {heroData && <HeroSection data={heroData} />}

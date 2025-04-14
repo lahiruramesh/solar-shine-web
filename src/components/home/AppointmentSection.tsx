@@ -1,10 +1,117 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, User, Phone, Mail, MessageSquare } from 'lucide-react';
+import { format } from 'date-fns';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 const AppointmentSection: React.FC = () => {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<{id: string, time_slot: string}[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    service: '',
+    timeSlot: '',
+    message: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  // Fetch available time slots when a date is selected
+  useEffect(() => {
+    if (!selectedDate) return;
+
+    const fetchAvailableTimeSlots = async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('available_time_slots')
+        .select('id, time_slot')
+        .eq('date', format(selectedDate, 'yyyy-MM-dd'))
+        .eq('is_booked', false);
+
+      if (error) {
+        console.error('Error fetching time slots:', error);
+        toast.error('Failed to fetch available time slots');
+      } else {
+        setAvailableTimeSlots(data || []);
+      }
+      setIsLoading(false);
+    };
+
+    fetchAvailableTimeSlots();
+  }, [selectedDate]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate form data
+    if (!formData.name || !formData.phone || !formData.email || !formData.service || !selectedDate || !formData.timeSlot) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      // Save the appointment to the database
+      const { error } = await supabase
+        .from('appointments')
+        .insert({
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          service: formData.service,
+          date: format(selectedDate, 'yyyy-MM-dd'),
+          time_slot: formData.timeSlot,
+          message: formData.message,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      // Update the time slot as booked
+      const { error: updateError } = await supabase
+        .from('available_time_slots')
+        .update({ is_booked: true })
+        .eq('id', formData.timeSlot);
+
+      if (updateError) throw updateError;
+
+      // Reset form
+      setFormData({
+        name: '',
+        phone: '',
+        email: '',
+        service: '',
+        timeSlot: '',
+        message: ''
+      });
+      setSelectedDate(undefined);
+      
+      toast.success('Appointment booked successfully! We will contact you shortly.');
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      toast.error('Failed to book appointment. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <section className="section bg-brand-dark text-white">
       <div className="container-custom">
@@ -28,7 +135,7 @@ const AppointmentSection: React.FC = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="grid md:grid-cols-2 gap-6">
               {/* Name Input */}
               <div className="form-group">
@@ -40,6 +147,8 @@ const AppointmentSection: React.FC = () => {
                   <input
                     type="text"
                     id="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Your name"
                     required
@@ -57,6 +166,8 @@ const AppointmentSection: React.FC = () => {
                   <input
                     type="tel"
                     id="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Your phone number"
                     required
@@ -74,6 +185,8 @@ const AppointmentSection: React.FC = () => {
                   <input
                     type="email"
                     id="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Your email address"
                     required
@@ -86,6 +199,8 @@ const AppointmentSection: React.FC = () => {
                 <label htmlFor="service" className="block text-sm font-medium mb-2">Service Interested In</label>
                 <select
                   id="service"
+                  value={formData.service}
+                  onChange={handleInputChange}
                   className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
                   required
                 >
@@ -101,34 +216,62 @@ const AppointmentSection: React.FC = () => {
               <div className="form-group">
                 <label htmlFor="date" className="block text-sm font-medium mb-2">Preferred Date</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Calendar size={18} className="text-gray-400" />
-                  </div>
-                  <input
-                    type="date"
-                    id="date"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full pl-10 pr-4 py-6 h-auto justify-start text-left font-normal border border-gray-300 rounded-md",
+                          !selectedDate && "text-muted-foreground"
+                        )}
+                      >
+                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                        {selectedDate ? format(selectedDate, "PPP") : <span>Select a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        disabled={(date) => date < new Date()}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 
               {/* Preferred Time */}
               <div className="form-group">
-                <label htmlFor="time" className="block text-sm font-medium mb-2">Preferred Time</label>
+                <label htmlFor="timeSlot" className="block text-sm font-medium mb-2">Preferred Time</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Clock size={18} className="text-gray-400" />
                   </div>
                   <select
-                    id="time"
+                    id="timeSlot"
+                    value={formData.timeSlot}
+                    onChange={handleInputChange}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     required
+                    disabled={!selectedDate || isLoading || availableTimeSlots.length === 0}
                   >
-                    <option value="">Select a time</option>
-                    <option value="morning">Morning (9AM - 12PM)</option>
-                    <option value="afternoon">Afternoon (12PM - 3PM)</option>
-                    <option value="evening">Evening (3PM - 6PM)</option>
+                    <option value="">
+                      {isLoading 
+                        ? 'Loading time slots...' 
+                        : !selectedDate 
+                          ? 'Select a date first' 
+                          : availableTimeSlots.length === 0 
+                            ? 'No available slots for this date' 
+                            : 'Select a time'}
+                    </option>
+                    {availableTimeSlots.map(slot => (
+                      <option key={slot.id} value={slot.id}>
+                        {slot.time_slot}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -143,6 +286,8 @@ const AppointmentSection: React.FC = () => {
                 </div>
                 <textarea
                   id="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Tell us about your project or any specific requirements..."
                   rows={4}
@@ -152,8 +297,12 @@ const AppointmentSection: React.FC = () => {
 
             {/* Submit Button */}
             <div className="mt-6">
-              <Button className="w-full bg-primary text-black hover:bg-primary/90 py-3" type="submit">
-                Book Appointment
+              <Button 
+                className="w-full bg-primary text-black hover:bg-primary/90 py-3" 
+                type="submit"
+                disabled={submitting}
+              >
+                {submitting ? 'Booking...' : 'Book Appointment'}
               </Button>
               <p className="text-xs text-center text-brand-gray mt-2">
                 We'll get back to you within 24 hours to confirm your appointment.

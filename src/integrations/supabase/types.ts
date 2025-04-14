@@ -9,6 +9,66 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          created_at: string
+          date: string
+          email: string
+          id: string
+          message: string | null
+          name: string
+          phone: string
+          service: string
+          status: string
+          time_slot: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          email: string
+          id?: string
+          message?: string | null
+          name: string
+          phone: string
+          service: string
+          status?: string
+          time_slot: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string
+          service?: string
+          status?: string
+          time_slot?: string
+        }
+        Relationships: []
+      }
+      available_time_slots: {
+        Row: {
+          date: string
+          id: string
+          is_booked: boolean
+          time_slot: string
+        }
+        Insert: {
+          date: string
+          id?: string
+          is_booked?: boolean
+          time_slot: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          is_booked?: boolean
+          time_slot?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author: string | null
@@ -148,6 +208,39 @@ export type Database = {
           description?: string | null
           id?: string
           image?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      seo_settings: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          keywords: string | null
+          og_image: string | null
+          page_path: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          keywords?: string | null
+          og_image?: string | null
+          page_path: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          keywords?: string | null
+          og_image?: string | null
+          page_path?: string
           title?: string
           updated_at?: string
         }
