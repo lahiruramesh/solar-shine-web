@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { 
   HeroSection, 
@@ -226,7 +227,10 @@ export async function updateAppointmentStatus(id: string, status: string): Promi
 // Navigation Functions
 export async function fetchNavigationItems(): Promise<NavigationItem[]> {
   try {
-    const { data, error } = await supabase.rpc('get_navigation_items');
+    const { data, error } = await supabase
+      .from('navigation_items')
+      .select('*')
+      .order('order', { ascending: true });
     
     if (error) {
       console.error('Error fetching navigation items:', error);
@@ -237,7 +241,12 @@ export async function fetchNavigationItems(): Promise<NavigationItem[]> {
       return [];
     }
     
-    return data as NavigationItem[];
+    return data.map(item => ({
+      id: item.id,
+      title: item.title,
+      path: item.path,
+      order: item.order
+    }));
   } catch (error) {
     console.error('Error in fetchNavigationItems:', error);
     return [];
@@ -246,12 +255,14 @@ export async function fetchNavigationItems(): Promise<NavigationItem[]> {
 
 export async function updateNavigationItem(item: NavigationItem): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc('update_navigation_item', {
-      item_id: item.id,
-      item_title: item.title,
-      item_path: item.path,
-      item_order: item.order
-    });
+    const { error } = await supabase
+      .from('navigation_items')
+      .update({
+        title: item.title,
+        path: item.path,
+        order: item.order
+      })
+      .eq('id', item.id);
     
     if (error) {
       console.error('Error updating navigation item:', error);
@@ -267,20 +278,27 @@ export async function updateNavigationItem(item: NavigationItem): Promise<boolea
 
 export async function addNavigationItem(item: { title: string; path: string }): Promise<boolean> {
   try {
-    const { data, error: fetchError } = await supabase.rpc('get_max_navigation_order');
+    // Get the current max order value
+    const { data: orderData, error: orderError } = await supabase
+      .from('navigation_items')
+      .select('order')
+      .order('order', { ascending: false })
+      .limit(1);
     
-    if (fetchError) {
-      console.error('Error fetching navigation items for order:', fetchError);
+    if (orderError) {
+      console.error('Error fetching navigation items for order:', orderError);
       return false;
     }
     
-    const newOrder = data ? data + 1 : 1;
+    const newOrder = (orderData && orderData.length > 0) ? orderData[0].order + 1 : 1;
     
-    const { error } = await supabase.rpc('add_navigation_item', {
-      item_title: item.title,
-      item_path: item.path,
-      item_order: newOrder
-    });
+    const { error } = await supabase
+      .from('navigation_items')
+      .insert({
+        title: item.title,
+        path: item.path,
+        order: newOrder
+      });
     
     if (error) {
       console.error('Error adding navigation item:', error);
@@ -296,9 +314,10 @@ export async function addNavigationItem(item: { title: string; path: string }): 
 
 export async function deleteNavigationItem(id: string): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc('delete_navigation_item', {
-      item_id: id
-    });
+    const { error } = await supabase
+      .from('navigation_items')
+      .delete()
+      .eq('id', id);
     
     if (error) {
       console.error('Error deleting navigation item:', error);
@@ -315,7 +334,10 @@ export async function deleteNavigationItem(id: string): Promise<boolean> {
 // Footer/Company Info Functions
 export async function fetchFooterData(): Promise<CompanyInfo> {
   try {
-    const { data, error } = await supabase.rpc('get_company_info');
+    const { data, error } = await supabase
+      .from('company_info')
+      .select('*')
+      .limit(1);
     
     if (error) {
       console.error('Error fetching company info:', error);
@@ -344,14 +366,17 @@ export async function fetchFooterData(): Promise<CompanyInfo> {
 
 export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc('update_company_info', {
-      company_id: info.id,
-      company_name: info.name,
-      company_description: info.description,
-      company_address: info.address,
-      company_email: info.email,
-      company_phone: info.phone
-    });
+    const { error } = await supabase
+      .from('company_info')
+      .update({
+        name: info.name,
+        description: info.description,
+        address: info.address,
+        email: info.email,
+        phone: info.phone,
+        updated_at: new Date()
+      })
+      .eq('id', info.id);
     
     if (error) {
       console.error('Error updating company info:', error);
@@ -368,14 +393,21 @@ export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
 // Social Links Functions
 export async function fetchSocialLinks(): Promise<SocialLink[]> {
   try {
-    const { data, error } = await supabase.rpc('get_social_links');
+    const { data, error } = await supabase
+      .from('social_links')
+      .select('*');
     
     if (error) {
       console.error('Error fetching social links:', error);
       throw error;
     }
     
-    return (data || []) as SocialLink[];
+    return (data || []).map(link => ({
+      id: link.id,
+      name: link.name,
+      icon: link.icon,
+      url: link.url
+    }));
   } catch (error) {
     console.error('Error in fetchSocialLinks:', error);
     return [];
@@ -384,12 +416,15 @@ export async function fetchSocialLinks(): Promise<SocialLink[]> {
 
 export async function updateSocialLink(link: SocialLink): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc('update_social_link', {
-      link_id: link.id,
-      link_name: link.name,
-      link_icon: link.icon,
-      link_url: link.url
-    });
+    const { error } = await supabase
+      .from('social_links')
+      .update({
+        name: link.name,
+        icon: link.icon,
+        url: link.url,
+        updated_at: new Date()
+      })
+      .eq('id', link.id);
     
     if (error) {
       console.error('Error updating social link:', error);
@@ -405,11 +440,13 @@ export async function updateSocialLink(link: SocialLink): Promise<boolean> {
 
 export async function addSocialLink(link: { name: string; icon: string; url: string }): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc('add_social_link', {
-      link_name: link.name,
-      link_icon: link.icon,
-      link_url: link.url
-    });
+    const { error } = await supabase
+      .from('social_links')
+      .insert({
+        name: link.name,
+        icon: link.icon,
+        url: link.url
+      });
     
     if (error) {
       console.error('Error adding social link:', error);
@@ -425,9 +462,10 @@ export async function addSocialLink(link: { name: string; icon: string; url: str
 
 export async function deleteSocialLink(id: string): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc('delete_social_link', {
-      link_id: id
-    });
+    const { error } = await supabase
+      .from('social_links')
+      .delete()
+      .eq('id', id);
     
     if (error) {
       console.error('Error deleting social link:', error);
@@ -444,14 +482,21 @@ export async function deleteSocialLink(id: string): Promise<boolean> {
 // Footer Links Functions
 export async function fetchFooterLinks(): Promise<FooterLink[]> {
   try {
-    const { data, error } = await supabase.rpc('get_footer_links');
+    const { data, error } = await supabase
+      .from('footer_links')
+      .select('*');
     
     if (error) {
       console.error('Error fetching footer links:', error);
       throw error;
     }
     
-    return (data || []) as FooterLink[];
+    return (data || []).map(link => ({
+      id: link.id,
+      name: link.name,
+      url: link.url,
+      category: link.category
+    }));
   } catch (error) {
     console.error('Error in fetchFooterLinks:', error);
     return [];
@@ -460,12 +505,15 @@ export async function fetchFooterLinks(): Promise<FooterLink[]> {
 
 export async function updateFooterLink(link: FooterLink): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc('update_footer_link', {
-      link_id: link.id,
-      link_name: link.name,
-      link_url: link.url,
-      link_category: link.category
-    });
+    const { error } = await supabase
+      .from('footer_links')
+      .update({
+        name: link.name,
+        url: link.url,
+        category: link.category,
+        updated_at: new Date()
+      })
+      .eq('id', link.id);
     
     if (error) {
       console.error('Error updating footer link:', error);
@@ -481,11 +529,13 @@ export async function updateFooterLink(link: FooterLink): Promise<boolean> {
 
 export async function addFooterLink(link: { name: string; url: string; category: string }): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc('add_footer_link', {
-      link_name: link.name,
-      link_url: link.url,
-      link_category: link.category
-    });
+    const { error } = await supabase
+      .from('footer_links')
+      .insert({
+        name: link.name,
+        url: link.url,
+        category: link.category
+      });
     
     if (error) {
       console.error('Error adding footer link:', error);
@@ -501,9 +551,10 @@ export async function addFooterLink(link: { name: string; url: string; category:
 
 export async function deleteFooterLink(id: string): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc('delete_footer_link', {
-      link_id: id
-    });
+    const { error } = await supabase
+      .from('footer_links')
+      .delete()
+      .eq('id', id);
     
     if (error) {
       console.error('Error deleting footer link:', error);
@@ -742,8 +793,10 @@ export async function deleteTestimonial(id: string): Promise<boolean> {
 // About Content Functions
 export async function fetchAboutContent(): Promise<AboutContent> {
   try {
-    // Use RPC call instead of direct table access
-    const { data, error } = await supabase.rpc('get_about_content');
+    const { data, error } = await supabase
+      .from('about_content')
+      .select('*')
+      .limit(1);
     
     if (error) {
       console.error('Error fetching about content:', error);
@@ -816,19 +869,10 @@ export async function updateAboutContent(formData: FormData): Promise<boolean> {
       }
     }
     
-    const { error } = await supabase.rpc('update_about_content', {
-      about_id: formData.get('id') as string,
-      about_title: updateData.title,
-      about_subtitle: updateData.subtitle,
-      about_content: updateData.content,
-      about_main_image: updateData.main_image,
-      about_mission_title: updateData.mission_title,
-      about_mission_description: updateData.mission_description,
-      about_vision_title: updateData.vision_title,
-      about_vision_description: updateData.vision_description,
-      about_image_one: updateData.image_one,
-      about_image_two: updateData.image_two
-    });
+    const { error } = await supabase
+      .from('about_content')
+      .update(updateData)
+      .eq('id', formData.get('id') as string);
     
     if (error) {
       console.error('Error updating about content:', error);
