@@ -36,7 +36,7 @@ export async function updateSEOData(pagePath: string, seoData: Partial<SEOData>)
       description: seoData.description,
       keywords: seoData.keywords,
       og_image: seoData.ogImage,
-      updated_at: new Date()
+      updated_at: new Date().toISOString() // Convert Date to string
     })
     .eq('page_path', pagePath);
   

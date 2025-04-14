@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { fetchAppointments, AppointmentData, fetchSEOData, updateAppointmentStatus } from '@/services/cmsService';
+import { fetchAppointments, AppointmentData, updateAppointmentStatus } from '@/services/cmsService';
 import { toast } from 'sonner';
 import { Calendar, Clock, User, Phone, Mail, MessageSquare, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
@@ -14,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { fetchSEOData as getSEOData, updateSEOData } from '@/services/seoService';
+import { fetchSEOData, updateSEOData } from '@/services/seoService';
 
 const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState('appointments');
@@ -46,7 +45,7 @@ const Admin: React.FC = () => {
 
   const handleSEOEdit = async (pagePath: string) => {
     try {
-      const seoData = await getSEOData(pagePath);
+      const seoData = await fetchSEOData(pagePath);
       if (seoData) {
         setEditingSEO({ pagePath, data: seoData });
       } else {
