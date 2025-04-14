@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { 
   HeroSection, 
@@ -13,6 +14,7 @@ import {
   AboutContent
 } from '@/types/payload-types';
 
+// Hero Section Functions
 export async function fetchHeroSection(): Promise<HeroSection> {
   const { data, error } = await supabase
     .from('hero_sections')
@@ -34,6 +36,7 @@ export async function fetchHeroSection(): Promise<HeroSection> {
   };
 }
 
+// Service Cards Functions
 export async function fetchServiceCards(): Promise<ServiceCard[]> {
   const { data, error } = await supabase
     .from('service_cards')
@@ -52,6 +55,7 @@ export async function fetchServiceCards(): Promise<ServiceCard[]> {
   }));
 }
 
+// Projects Functions
 export async function fetchProjects(): Promise<Project[]> {
   const { data, error } = await supabase
     .from('projects')
@@ -73,6 +77,7 @@ export async function fetchProjects(): Promise<Project[]> {
   }));
 }
 
+// Testimonials Functions
 export async function fetchTestimonials(): Promise<Testimonial[]> {
   const { data, error } = await supabase
     .from('testimonials')
@@ -91,6 +96,7 @@ export async function fetchTestimonials(): Promise<Testimonial[]> {
   }));
 }
 
+// Blog Posts Functions
 export async function fetchBlogPosts(): Promise<BlogPost[]> {
   const { data, error } = await supabase
     .from('blog_posts')
@@ -113,6 +119,7 @@ export async function fetchBlogPosts(): Promise<BlogPost[]> {
   }));
 }
 
+// Global Settings Functions
 export async function fetchGlobalSettings(): Promise<GlobalSettings> {
   const { data, error } = await supabase
     .from('global_settings')
@@ -134,6 +141,7 @@ export async function fetchGlobalSettings(): Promise<GlobalSettings> {
   };
 }
 
+// Appointments Functions
 export interface AppointmentData {
   id: string;
   name: string;
@@ -216,6 +224,7 @@ export async function updateAppointmentStatus(id: string, status: string): Promi
   return true;
 }
 
+// Navigation Functions
 export async function fetchNavigationItems(): Promise<NavigationItem[]> {
   try {
     const { data, error } = await supabase.rpc('get_navigation_items');
@@ -225,10 +234,14 @@ export async function fetchNavigationItems(): Promise<NavigationItem[]> {
       throw error;
     }
     
-    return (data || []) as NavigationItem[];
+    if (!data) {
+      return [];
+    }
+    
+    return data as NavigationItem[];
   } catch (error) {
     console.error('Error in fetchNavigationItems:', error);
-    throw error;
+    return [];
   }
 }
 
@@ -300,6 +313,7 @@ export async function deleteNavigationItem(id: string): Promise<boolean> {
   }
 }
 
+// Footer/Company Info Functions
 export async function fetchFooterData(): Promise<CompanyInfo> {
   try {
     const { data, error } = await supabase.rpc('get_company_info');
@@ -352,6 +366,7 @@ export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
   }
 }
 
+// Social Links Functions
 export async function fetchSocialLinks(): Promise<SocialLink[]> {
   try {
     const { data, error } = await supabase.rpc('get_social_links');
@@ -364,7 +379,7 @@ export async function fetchSocialLinks(): Promise<SocialLink[]> {
     return (data || []) as SocialLink[];
   } catch (error) {
     console.error('Error in fetchSocialLinks:', error);
-    throw error;
+    return [];
   }
 }
 
@@ -427,6 +442,7 @@ export async function deleteSocialLink(id: string): Promise<boolean> {
   }
 }
 
+// Footer Links Functions
 export async function fetchFooterLinks(): Promise<FooterLink[]> {
   try {
     const { data, error } = await supabase.rpc('get_footer_links');
@@ -439,7 +455,7 @@ export async function fetchFooterLinks(): Promise<FooterLink[]> {
     return (data || []) as FooterLink[];
   } catch (error) {
     console.error('Error in fetchFooterLinks:', error);
-    throw error;
+    return [];
   }
 }
 
@@ -502,12 +518,13 @@ export async function deleteFooterLink(id: string): Promise<boolean> {
   }
 }
 
+// Hero Section Update
 export async function updateHeroSection(formData: FormData): Promise<boolean> {
   try {
     let backgroundImageUrl = '';
     const backgroundImage = formData.get('backgroundImage') as File;
     
-    if (backgroundImage && backgroundImage.size > 0) {
+    if (backgroundImage && backgroundImage instanceof File && backgroundImage.size > 0) {
       const fileName = `hero_${Date.now()}_${backgroundImage.name.replace(/\s/g, '_')}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -549,6 +566,7 @@ export async function updateHeroSection(formData: FormData): Promise<boolean> {
   }
 }
 
+// Service Cards CRUD
 export async function updateServiceCard(service: ServiceCard): Promise<boolean> {
   const { error } = await supabase
     .from('service_cards')
@@ -594,6 +612,7 @@ export async function deleteServiceCard(id: string): Promise<boolean> {
   return true;
 }
 
+// Projects CRUD
 export async function updateProject(project: Project): Promise<boolean> {
   const { error } = await supabase
     .from('projects')
@@ -618,7 +637,7 @@ export async function addProject(formData: FormData): Promise<boolean> {
   let imageUrl = '';
   const projectImage = formData.get('image') as File;
   
-  if (projectImage && projectImage.size > 0) {
+  if (projectImage && projectImage instanceof File && projectImage.size > 0) {
     const fileName = `project_${Date.now()}_${projectImage.name.replace(/\s/g, '_')}`;
     
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -675,6 +694,7 @@ export async function deleteProject(id: string): Promise<boolean> {
   return true;
 }
 
+// Testimonials CRUD
 export async function updateTestimonial(testimonial: Testimonial): Promise<boolean> {
   const { error } = await supabase
     .from('testimonials')
@@ -720,30 +740,35 @@ export async function deleteTestimonial(id: string): Promise<boolean> {
   return true;
 }
 
+// About Content Functions
 export async function fetchAboutContent(): Promise<AboutContent> {
   try {
-    const { data, error } = await supabase
-      .from('about_content')
-      .select('*')
-      .single();
+    // Use RPC call instead of direct table access
+    const { data, error } = await supabase.rpc('get_about_content');
     
     if (error) {
       console.error('Error fetching about content:', error);
       throw error;
     }
     
+    if (!data || data.length === 0) {
+      throw new Error('No about content found');
+    }
+    
+    const aboutContent = data[0];
+    
     return {
-      id: data.id,
-      title: data.title,
-      subtitle: data.subtitle,
-      content: data.content,
-      mainImage: data.main_image,
-      missionTitle: data.mission_title,
-      missionDescription: data.mission_description,
-      visionTitle: data.vision_title,
-      visionDescription: data.vision_description,
-      imageOne: data.image_one,
-      imageTwo: data.image_two
+      id: aboutContent.id,
+      title: aboutContent.title,
+      subtitle: aboutContent.subtitle,
+      content: aboutContent.content,
+      mainImage: aboutContent.main_image,
+      missionTitle: aboutContent.mission_title,
+      missionDescription: aboutContent.mission_description,
+      visionTitle: aboutContent.vision_title,
+      visionDescription: aboutContent.vision_description,
+      imageOne: aboutContent.image_one,
+      imageTwo: aboutContent.image_two
     };
   } catch (error) {
     console.error('Error in fetchAboutContent:', error);
@@ -792,10 +817,19 @@ export async function updateAboutContent(formData: FormData): Promise<boolean> {
       }
     }
     
-    const { error } = await supabase
-      .from('about_content')
-      .update(updateData)
-      .eq('id', formData.get('id') as string);
+    const { error } = await supabase.rpc('update_about_content', {
+      about_id: formData.get('id') as string,
+      about_title: updateData.title,
+      about_subtitle: updateData.subtitle,
+      about_content: updateData.content,
+      about_main_image: updateData.main_image,
+      about_mission_title: updateData.mission_title,
+      about_mission_description: updateData.mission_description,
+      about_vision_title: updateData.vision_title,
+      about_vision_description: updateData.vision_description,
+      about_image_one: updateData.image_one,
+      about_image_two: updateData.image_two
+    });
     
     if (error) {
       console.error('Error updating about content:', error);

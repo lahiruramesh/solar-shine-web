@@ -7,19 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Save, Upload } from 'lucide-react';
 import { fetchAboutContent, updateAboutContent } from '@/services/cmsService';
-import { AboutContent } from '@/types/payload-types';
 
 const AboutEditor: React.FC = () => {
   const queryClient = useQueryClient();
-  const [selectedImages, setSelectedImages] = useState<{
-    mainImage?: File,
-    imageOne?: File,
-    imageTwo?: File
-  }>({});
+  const [selectedImages, setSelectedImages] = useState<Record<string, File | null>>({
+    mainImage: null,
+    imageOne: null,
+    imageTwo: null
+  });
   
-  const { data: aboutContent, isLoading } = useQuery({
+  const { data: about, isLoading } = useQuery({
     queryKey: ['aboutContent'],
     queryFn: fetchAboutContent
   });
@@ -28,33 +28,37 @@ const AboutEditor: React.FC = () => {
     mutationFn: updateAboutContent,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['aboutContent'] });
-      setSelectedImages({});
-      toast.success('About page content updated');
+      setSelectedImages({
+        mainImage: null,
+        imageOne: null,
+        imageTwo: null
+      });
+      toast.success('About content updated');
     },
-    onError: () => toast.error('Failed to update about page content')
+    onError: () => toast.error('Failed to update about content')
   });
   
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, imageKey: string) => {
+  const handleImageChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedImages({
-        ...selectedImages,
-        [imageKey]: e.target.files[0]
-      });
+      setSelectedImages(prev => ({
+        ...prev,
+        [field]: e.target.files?.[0] || null
+      }));
     }
   };
   
-  const handleUpdateContent = () => {
-    if (!aboutContent) return;
+  const handleUpdateAbout = () => {
+    if (!about) return;
     
     const formData = new FormData();
-    formData.append('id', aboutContent.id);
-    formData.append('title', aboutContent.title);
-    formData.append('subtitle', aboutContent.subtitle || '');
-    formData.append('content', aboutContent.content || '');
-    formData.append('missionTitle', aboutContent.missionTitle || '');
-    formData.append('missionDescription', aboutContent.missionDescription || '');
-    formData.append('visionTitle', aboutContent.visionTitle || '');
-    formData.append('visionDescription', aboutContent.visionDescription || '');
+    formData.append('id', about.id || '');
+    formData.append('title', about.title);
+    formData.append('subtitle', about.subtitle || '');
+    formData.append('content', about.content || '');
+    formData.append('missionTitle', about.missionTitle || '');
+    formData.append('missionDescription', about.missionDescription || '');
+    formData.append('visionTitle', about.visionTitle || '');
+    formData.append('visionDescription', about.visionDescription || '');
     
     if (selectedImages.mainImage) {
       formData.append('mainImage', selectedImages.mainImage);
@@ -71,74 +75,136 @@ const AboutEditor: React.FC = () => {
     updateMutation.mutate(formData);
   };
 
-  const handleFieldUpdate = (field: keyof AboutContent, value: string) => {
-    if (!aboutContent) return;
+  const handleFieldUpdate = (field: keyof typeof about, value: string) => {
+    if (!about) return;
     
-    // Create a FormData object for the update
     const formData = new FormData();
-    formData.append('id', aboutContent.id);
-    formData.append('title', field === 'title' ? value : aboutContent.title);
-    formData.append('subtitle', field === 'subtitle' ? value : (aboutContent.subtitle || ''));
-    formData.append('content', field === 'content' ? value : (aboutContent.content || ''));
-    formData.append('missionTitle', field === 'missionTitle' ? value : (aboutContent.missionTitle || ''));
-    formData.append('missionDescription', field === 'missionDescription' ? value : (aboutContent.missionDescription || ''));
-    formData.append('visionTitle', field === 'visionTitle' ? value : (aboutContent.visionTitle || ''));
-    formData.append('visionDescription', field === 'visionDescription' ? value : (aboutContent.visionDescription || ''));
+    formData.append('id', about.id || '');
     
-    // Submit the update
+    // Add all existing fields
+    const updatedAbout = { ...about, [field]: value };
+    
+    Object.entries(updatedAbout).forEach(([key, val]) => {
+      if (key !== 'id' && typeof val === 'string') {
+        formData.append(key, val);
+      }
+    });
+    
     updateMutation.mutate(formData);
   };
   
   if (isLoading) {
-    return <div className="flex justify-center p-6">Loading about page content...</div>;
+    return <div className="flex justify-center p-6">Loading about content...</div>;
   }
   
   return (
     <Card>
       <CardHeader>
-        <CardTitle>About Page Content</CardTitle>
+        <CardTitle>About Us Content</CardTitle>
       </CardHeader>
       <CardContent>
-        {aboutContent && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="about-title">Main Title</Label>
-                  <Input 
-                    id="about-title"
-                    value={aboutContent.title} 
-                    onChange={(e) => handleFieldUpdate('title', e.target.value)}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="about-subtitle">Subtitle</Label>
-                  <Input 
-                    id="about-subtitle"
-                    value={aboutContent.subtitle || ''} 
-                    onChange={(e) => handleFieldUpdate('subtitle', e.target.value)}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="about-content">Main Content</Label>
-                  <Textarea 
-                    id="about-content"
-                    value={aboutContent.content || ''} 
-                    onChange={(e) => handleFieldUpdate('content', e.target.value)}
-                    rows={6}
-                  />
-                </div>
+        {about && (
+          <Tabs defaultValue="main" className="w-full">
+            <TabsList className="mb-6">
+              <TabsTrigger value="main">Main Content</TabsTrigger>
+              <TabsTrigger value="mission">Mission & Vision</TabsTrigger>
+              <TabsTrigger value="images">Images</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="main" className="space-y-5">
+              <div>
+                <Label htmlFor="about-title">Title</Label>
+                <Input 
+                  id="about-title"
+                  value={about.title} 
+                  onChange={(e) => handleFieldUpdate('title', e.target.value)}
+                />
               </div>
               
               <div>
-                <Label>Main Image</Label>
+                <Label htmlFor="about-subtitle">Subtitle</Label>
+                <Input 
+                  id="about-subtitle"
+                  value={about.subtitle || ''} 
+                  onChange={(e) => handleFieldUpdate('subtitle', e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="about-content">Content</Label>
+                <Textarea 
+                  id="about-content"
+                  value={about.content || ''} 
+                  onChange={(e) => handleFieldUpdate('content', e.target.value)}
+                  rows={6}
+                />
+              </div>
+              
+              <Button 
+                onClick={handleUpdateAbout}
+                className="mt-4"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+              </Button>
+            </TabsContent>
+            
+            <TabsContent value="mission" className="space-y-5">
+              <div>
+                <Label htmlFor="mission-title">Mission Title</Label>
+                <Input 
+                  id="mission-title"
+                  value={about.missionTitle || ''} 
+                  onChange={(e) => handleFieldUpdate('missionTitle', e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="mission-description">Mission Description</Label>
+                <Textarea 
+                  id="mission-description"
+                  value={about.missionDescription || ''} 
+                  onChange={(e) => handleFieldUpdate('missionDescription', e.target.value)}
+                  rows={4}
+                />
+              </div>
+              
+              <div className="pt-4">
+                <Label htmlFor="vision-title">Vision Title</Label>
+                <Input 
+                  id="vision-title"
+                  value={about.visionTitle || ''} 
+                  onChange={(e) => handleFieldUpdate('visionTitle', e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="vision-description">Vision Description</Label>
+                <Textarea 
+                  id="vision-description"
+                  value={about.visionDescription || ''} 
+                  onChange={(e) => handleFieldUpdate('visionDescription', e.target.value)}
+                  rows={4}
+                />
+              </div>
+              
+              <Button 
+                onClick={handleUpdateAbout}
+                className="mt-4"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+              </Button>
+            </TabsContent>
+            
+            <TabsContent value="images" className="space-y-5">
+              <div>
+                <Label htmlFor="main-image">Main Image</Label>
                 <div className="mt-2">
                   <div className="mb-4">
                     <img 
-                      src={aboutContent.mainImage || '/placeholder.svg'} 
-                      alt="About page main" 
+                      src={about.mainImage || '/placeholder.svg'} 
+                      alt="Main about us image" 
                       className="h-40 object-cover rounded-md border"
                     />
                   </div>
@@ -155,7 +221,7 @@ const AboutEditor: React.FC = () => {
                       type="file" 
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => handleImageChange(e, 'mainImage')}
+                      onChange={handleImageChange('mainImage')}
                     />
                     {selectedImages.mainImage && (
                       <span className="text-sm text-green-600">
@@ -165,66 +231,16 @@ const AboutEditor: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="border-t pt-6 mt-8">
-              <h3 className="text-lg font-medium mb-4">Mission & Vision</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="mission-title">Mission Title</Label>
-                    <Input 
-                      id="mission-title"
-                      value={aboutContent.missionTitle || ''} 
-                      onChange={(e) => handleFieldUpdate('missionTitle', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="mission-description">Mission Description</Label>
-                    <Textarea 
-                      id="mission-description"
-                      value={aboutContent.missionDescription || ''} 
-                      onChange={(e) => handleFieldUpdate('missionDescription', e.target.value)}
-                      rows={4}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="vision-title">Vision Title</Label>
-                    <Input 
-                      id="vision-title"
-                      value={aboutContent.visionTitle || ''} 
-                      onChange={(e) => handleFieldUpdate('visionTitle', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="vision-description">Vision Description</Label>
-                    <Textarea 
-                      id="vision-description"
-                      value={aboutContent.visionDescription || ''} 
-                      onChange={(e) => handleFieldUpdate('visionDescription', e.target.value)}
-                      rows={4}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="border-t pt-6 mt-8">
-              <h3 className="text-lg font-medium mb-4">Additional Images</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label>Image One</Label>
+              
+              <div className="flex flex-col sm:flex-row gap-6 pt-4">
+                <div className="flex-1">
+                  <Label htmlFor="image-one">Image One</Label>
                   <div className="mt-2">
                     <div className="mb-4">
                       <img 
-                        src={aboutContent.imageOne || '/placeholder.svg'} 
-                        alt="About page additional 1" 
-                        className="h-40 object-cover rounded-md border"
+                        src={about.imageOne || '/placeholder.svg'} 
+                        alt="Additional image one" 
+                        className="h-40 object-cover rounded-md border w-full"
                       />
                     </div>
                     <div className="flex items-center gap-3">
@@ -240,7 +256,7 @@ const AboutEditor: React.FC = () => {
                         type="file" 
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => handleImageChange(e, 'imageOne')}
+                        onChange={handleImageChange('imageOne')}
                       />
                       {selectedImages.imageOne && (
                         <span className="text-sm text-green-600">
@@ -251,14 +267,14 @@ const AboutEditor: React.FC = () => {
                   </div>
                 </div>
                 
-                <div>
-                  <Label>Image Two</Label>
+                <div className="flex-1">
+                  <Label htmlFor="image-two">Image Two</Label>
                   <div className="mt-2">
                     <div className="mb-4">
                       <img 
-                        src={aboutContent.imageTwo || '/placeholder.svg'} 
-                        alt="About page additional 2" 
-                        className="h-40 object-cover rounded-md border"
+                        src={about.imageTwo || '/placeholder.svg'} 
+                        alt="Additional image two" 
+                        className="h-40 object-cover rounded-md border w-full"
                       />
                     </div>
                     <div className="flex items-center gap-3">
@@ -274,7 +290,7 @@ const AboutEditor: React.FC = () => {
                         type="file" 
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => handleImageChange(e, 'imageTwo')}
+                        onChange={handleImageChange('imageTwo')}
                       />
                       {selectedImages.imageTwo && (
                         <span className="text-sm text-green-600">
@@ -285,16 +301,16 @@ const AboutEditor: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <Button 
-              onClick={handleUpdateContent}
-              className="mt-6"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              Save Changes
-            </Button>
-          </div>
+              
+              <Button 
+                onClick={handleUpdateAbout}
+                className="mt-6"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+              </Button>
+            </TabsContent>
+          </Tabs>
         )}
       </CardContent>
     </Card>

@@ -52,24 +52,18 @@ const HeroEditor: React.FC = () => {
     updateMutation.mutate(formData);
   };
 
-  const handleFieldUpdate = (field: string, value: string) => {
+  const handleFieldUpdate = (field: keyof typeof hero, value: string) => {
     if (!hero) return;
     
-    // Create a new hero object with the updated field
-    const updatedHero = { 
-      ...hero, 
-      [field]: value 
-    };
-    
-    // Create a FormData object for the update
     const formData = new FormData();
-    formData.append('id', updatedHero.id || '');
-    formData.append('title', updatedHero.title);
-    formData.append('subtitle', updatedHero.subtitle || '');
-    formData.append('ctaText', updatedHero.ctaText || '');
-    formData.append('ctaLink', updatedHero.ctaLink || '');
+    formData.append('id', hero.id || '');
     
-    // Submit the update
+    // Add all existing fields
+    formData.append('title', field === 'title' ? value : hero.title);
+    formData.append('subtitle', field === 'subtitle' ? value : (hero.subtitle || ''));
+    formData.append('ctaText', field === 'ctaText' ? value : (hero.ctaText || ''));
+    formData.append('ctaLink', field === 'ctaLink' ? value : (hero.ctaLink || ''));
+    
     updateMutation.mutate(formData);
   };
   
