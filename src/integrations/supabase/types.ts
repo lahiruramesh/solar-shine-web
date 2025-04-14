@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      about_content: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          image_one: string | null
+          image_two: string | null
+          main_image: string | null
+          mission_description: string
+          mission_title: string
+          subtitle: string
+          title: string
+          updated_at: string
+          vision_description: string
+          vision_title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          image_one?: string | null
+          image_two?: string | null
+          main_image?: string | null
+          mission_description: string
+          mission_title: string
+          subtitle: string
+          title: string
+          updated_at?: string
+          vision_description: string
+          vision_title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          image_one?: string | null
+          image_two?: string | null
+          main_image?: string | null
+          mission_description?: string
+          mission_title?: string
+          subtitle?: string
+          title?: string
+          updated_at?: string
+          vision_description?: string
+          vision_title?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           created_at: string
@@ -108,6 +156,66 @@ export type Database = {
         }
         Relationships: []
       }
+      company_info: {
+        Row: {
+          address: string
+          created_at: string
+          description: string
+          email: string
+          id: string
+          name: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          description: string
+          email: string
+          id?: string
+          name: string
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          description?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      footer_links: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       global_settings: {
         Row: {
           contact_email: string | null
@@ -172,6 +280,33 @@ export type Database = {
           cta_text?: string | null
           id?: string
           subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      navigation_items: {
+        Row: {
+          created_at: string
+          id: string
+          order: number
+          path: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order: number
+          path: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order?: number
+          path?: string
           title?: string
           updated_at?: string
         }
@@ -270,6 +405,33 @@ export type Database = {
           id?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      social_links: {
+        Row: {
+          created_at: string
+          icon: string
+          id: string
+          name: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          icon: string
+          id?: string
+          name: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          url?: string
         }
         Relationships: []
       }

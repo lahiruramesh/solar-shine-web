@@ -100,7 +100,8 @@ export async function fetchTestimonials(): Promise<Testimonial[]> {
 export async function fetchBlogPosts(): Promise<BlogPost[]> {
   const { data, error } = await supabase
     .from('blog_posts')
-    .select('*');
+    .select('*')
+    .order('publish_date', { ascending: false });
   
   if (error) {
     console.error('Error fetching blog posts:', error);
@@ -174,7 +175,7 @@ export async function fetchAppointments(): Promise<AppointmentData[]> {
     throw error;
   }
   
-  return data;
+  return data || [];
 }
 
 export async function fetchAvailableTimeSlots(date?: string): Promise<TimeSlot[]> {
@@ -194,7 +195,7 @@ export async function fetchAvailableTimeSlots(date?: string): Promise<TimeSlot[]
     throw error;
   }
   
-  return data;
+  return data || [];
 }
 
 export async function addAvailableTimeSlot(date: string, timeSlot: string): Promise<boolean> {
@@ -332,7 +333,7 @@ export async function deleteNavigationItem(id: string): Promise<boolean> {
 }
 
 // Footer/Company Info Functions
-export async function fetchFooterData(): Promise<CompanyInfo> {
+export async function fetchCompanyInfo(): Promise<CompanyInfo> {
   try {
     const { data, error } = await supabase
       .from('company_info')
@@ -359,7 +360,7 @@ export async function fetchFooterData(): Promise<CompanyInfo> {
       phone: companyInfo.phone
     };
   } catch (error) {
-    console.error('Error in fetchFooterData:', error);
+    console.error('Error in fetchCompanyInfo:', error);
     throw error;
   }
 }
@@ -884,4 +885,139 @@ export async function updateAboutContent(formData: FormData): Promise<boolean> {
     console.error('Error in updateAboutContent:', error);
     return false;
   }
+}
+
+// Blog Posts CRUD functions
+export async function createBlogPost(formData: FormData): Promise<string | null> {
+  try {
+    let coverImageUrl = '';
+    const coverImage = formData.get('coverImage') as File;
+    
+    if (coverImage && coverImage instanceof File && coverImage.size > 0) {
+      const fileName = `blog_${Date.now()}_${coverImage.name.replace(/\s/g, '_')}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(fileName, coverImage);
+      
+      if (uploadError) {
+        console.error('Error uploading blog cover image:', uploadError);
+        return null;
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(fileName);
+      
+      coverImageUrl = urlData.publicUrl;
+    }
+    
+    const title = formData.get('title') as string;
+    const slug = createSlug(title);
+    
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .insert({
+        title: title,
+        excerpt: formData.get('excerpt') as string,
+        content: formData.get('content') as string,
+        author: formData.get('author') as string,
+        publish_date: formData.get('publishDate') as string,
+        cover_image: coverImageUrl,
+        slug: slug
+      })
+      .select();
+    
+    if (error) {
+      console.error('Error creating blog post:', error);
+      return null;
+    }
+    
+    return data[0].id;
+  } catch (error) {
+    console.error('Error in createBlogPost:', error);
+    return null;
+  }
+}
+
+export async function updateBlogPost(id: string, formData: FormData): Promise<boolean> {
+  try {
+    const updateData: any = {
+      title: formData.get('title') as string,
+      excerpt: formData.get('excerpt') as string,
+      content: formData.get('content') as string,
+      author: formData.get('author') as string,
+      publish_date: formData.get('publishDate') as string
+    };
+    
+    // If title changed, update slug
+    const title = formData.get('title') as string;
+    const originalTitle = formData.get('originalTitle') as string;
+    if (title !== originalTitle) {
+      updateData.slug = createSlug(title);
+    }
+    
+    const coverImage = formData.get('coverImage') as File;
+    if (coverImage && coverImage instanceof File && coverImage.size > 0) {
+      const fileName = `blog_${Date.now()}_${coverImage.name.replace(/\s/g, '_')}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(fileName, coverImage);
+      
+      if (uploadError) {
+        console.error('Error uploading blog cover image:', uploadError);
+        return false;
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(fileName);
+      
+      updateData.cover_image = urlData.publicUrl;
+    }
+    
+    const { error } = await supabase
+      .from('blog_posts')
+      .update(updateData)
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error updating blog post:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in updateBlogPost:', error);
+    return false;
+  }
+}
+
+export async function deleteBlogPost(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('blog_posts')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting blog post:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in deleteBlogPost:', error);
+    return false;
+  }
+}
+
+// Helper function to create URL-friendly slugs
+function createSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove non-word chars
+    .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 }
