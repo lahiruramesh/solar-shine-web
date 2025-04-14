@@ -50,3 +50,47 @@ export interface BlogPost {
   coverImage: string;
   slug: string;
 }
+
+export interface NavigationItem {
+  id: string;
+  title: string;
+  path: string;
+  order: number;
+}
+
+export interface SocialLink {
+  id: string;
+  name: string;
+  icon: string;
+  url: string;
+}
+
+export interface FooterLink {
+  id: string;
+  name: string;
+  url: string;
+  category: string;
+}
+
+export interface CompanyInfo {
+  id: string;
+  name: string;
+  description: string;
+  address: string;
+  email: string;
+  phone: string;
+}
+
+export interface AboutContent {
+  id: string;
+  title: string;
+  subtitle: string;
+  content: string;
+  mainImage: string;
+  missionTitle: string;
+  missionDescription: string;
+  visionTitle: string;
+  visionDescription: string;
+  imageOne: string;
+  imageTwo: string;
+}

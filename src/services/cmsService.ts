@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   HeroSection, 
@@ -129,7 +128,6 @@ export async function fetchGlobalSettings(): Promise<GlobalSettings> {
   };
 }
 
-// New functions for appointment management
 export interface AppointmentData {
   id: string;
   name: string;
@@ -206,6 +204,556 @@ export async function updateAppointmentStatus(id: string, status: string): Promi
   
   if (error) {
     console.error('Error updating appointment status:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export interface NavigationItem {
+  id: string;
+  title: string;
+  path: string;
+  order: number;
+}
+
+export async function fetchNavigationItems(): Promise<NavigationItem[]> {
+  const { data, error } = await supabase
+    .from('navigation_items')
+    .select('*')
+    .order('order', { ascending: true });
+  
+  if (error) {
+    console.error('Error fetching navigation items:', error);
+    throw error;
+  }
+  
+  return data;
+}
+
+export async function updateNavigationItem(item: NavigationItem): Promise<boolean> {
+  const { error } = await supabase
+    .from('navigation_items')
+    .update({
+      title: item.title,
+      path: item.path,
+      order: item.order
+    })
+    .eq('id', item.id);
+  
+  if (error) {
+    console.error('Error updating navigation item:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function addNavigationItem(item: { title: string; path: string }): Promise<boolean> {
+  const { data: navItems, error: fetchError } = await supabase
+    .from('navigation_items')
+    .select('order')
+    .order('order', { ascending: false })
+    .limit(1);
+  
+  if (fetchError) {
+    console.error('Error fetching navigation items for order:', fetchError);
+    return false;
+  }
+  
+  const newOrder = navItems && navItems.length > 0 ? navItems[0].order + 1 : 1;
+  
+  const { error } = await supabase
+    .from('navigation_items')
+    .insert({
+      title: item.title,
+      path: item.path,
+      order: newOrder
+    });
+  
+  if (error) {
+    console.error('Error adding navigation item:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function deleteNavigationItem(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('navigation_items')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting navigation item:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export interface CompanyInfo {
+  id: string;
+  name: string;
+  description: string;
+  address: string;
+  email: string;
+  phone: string;
+}
+
+export interface SocialLink {
+  id: string;
+  name: string;
+  icon: string;
+  url: string;
+}
+
+export interface FooterLink {
+  id: string;
+  name: string;
+  url: string;
+  category: string;
+}
+
+export async function fetchFooterData(): Promise<CompanyInfo> {
+  const { data, error } = await supabase
+    .from('company_info')
+    .select('*')
+    .single();
+  
+  if (error) {
+    console.error('Error fetching company info:', error);
+    throw error;
+  }
+  
+  return data;
+}
+
+export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
+  const { error } = await supabase
+    .from('company_info')
+    .update({
+      name: info.name,
+      description: info.description,
+      address: info.address,
+      email: info.email,
+      phone: info.phone
+    })
+    .eq('id', info.id);
+  
+  if (error) {
+    console.error('Error updating company info:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function fetchSocialLinks(): Promise<SocialLink[]> {
+  const { data, error } = await supabase
+    .from('social_links')
+    .select('*');
+  
+  if (error) {
+    console.error('Error fetching social links:', error);
+    throw error;
+  }
+  
+  return data;
+}
+
+export async function updateSocialLink(link: SocialLink): Promise<boolean> {
+  const { error } = await supabase
+    .from('social_links')
+    .update({
+      name: link.name,
+      icon: link.icon,
+      url: link.url
+    })
+    .eq('id', link.id);
+  
+  if (error) {
+    console.error('Error updating social link:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function addSocialLink(link: { name: string; icon: string; url: string }): Promise<boolean> {
+  const { error } = await supabase
+    .from('social_links')
+    .insert(link);
+  
+  if (error) {
+    console.error('Error adding social link:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function deleteSocialLink(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('social_links')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting social link:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function fetchFooterLinks(): Promise<FooterLink[]> {
+  const { data, error } = await supabase
+    .from('footer_links')
+    .select('*');
+  
+  if (error) {
+    console.error('Error fetching footer links:', error);
+    throw error;
+  }
+  
+  return data;
+}
+
+export async function updateFooterLink(link: FooterLink): Promise<boolean> {
+  const { error } = await supabase
+    .from('footer_links')
+    .update({
+      name: link.name,
+      url: link.url,
+      category: link.category
+    })
+    .eq('id', link.id);
+  
+  if (error) {
+    console.error('Error updating footer link:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function addFooterLink(link: { name: string; url: string; category: string }): Promise<boolean> {
+  const { error } = await supabase
+    .from('footer_links')
+    .insert(link);
+  
+  if (error) {
+    console.error('Error adding footer link:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function deleteFooterLink(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('footer_links')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting footer link:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function updateHeroSection(formData: FormData): Promise<boolean> {
+  let backgroundImageUrl = '';
+  const backgroundImage = formData.get('backgroundImage') as File;
+  
+  if (backgroundImage && backgroundImage.size > 0) {
+    const fileName = `hero_${Date.now()}_${backgroundImage.name.replace(/\s/g, '_')}`;
+    
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('images')
+      .upload(fileName, backgroundImage);
+    
+    if (uploadError) {
+      console.error('Error uploading hero background image:', uploadError);
+      return false;
+    }
+    
+    const { data: urlData } = supabase.storage
+      .from('images')
+      .getPublicUrl(fileName);
+    
+    backgroundImageUrl = urlData.publicUrl;
+  }
+  
+  const { error } = await supabase
+    .from('hero_sections')
+    .update({
+      title: formData.get('title') as string,
+      subtitle: formData.get('subtitle') as string,
+      cta_text: formData.get('ctaText') as string,
+      cta_link: formData.get('ctaLink') as string,
+      ...(backgroundImageUrl && { background_image: backgroundImageUrl })
+    })
+    .eq('id', formData.get('id') as string);
+  
+  if (error) {
+    console.error('Error updating hero section:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function updateServiceCard(service: ServiceCard): Promise<boolean> {
+  const { error } = await supabase
+    .from('service_cards')
+    .update({
+      title: service.title,
+      description: service.description,
+      icon: service.icon
+    })
+    .eq('id', service.id);
+  
+  if (error) {
+    console.error('Error updating service card:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function addServiceCard(service: { title: string; description: string; icon: string }): Promise<boolean> {
+  const { error } = await supabase
+    .from('service_cards')
+    .insert(service);
+  
+  if (error) {
+    console.error('Error adding service card:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function deleteServiceCard(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('service_cards')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting service card:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function updateProject(project: Project): Promise<boolean> {
+  const { error } = await supabase
+    .from('projects')
+    .update({
+      title: project.title,
+      description: project.description,
+      category: project.category,
+      client: project.client,
+      completion_date: project.completionDate
+    })
+    .eq('id', project.id);
+  
+  if (error) {
+    console.error('Error updating project:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function addProject(formData: FormData): Promise<boolean> {
+  let imageUrl = '';
+  const projectImage = formData.get('image') as File;
+  
+  if (projectImage && projectImage.size > 0) {
+    const fileName = `project_${Date.now()}_${projectImage.name.replace(/\s/g, '_')}`;
+    
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('images')
+      .upload(fileName, projectImage);
+    
+    if (uploadError) {
+      console.error('Error uploading project image:', uploadError);
+      return false;
+    }
+    
+    const { data: urlData } = supabase.storage
+      .from('images')
+      .getPublicUrl(fileName);
+    
+    imageUrl = urlData.publicUrl;
+  }
+  
+  if (!imageUrl) {
+    console.error('Failed to upload project image');
+    return false;
+  }
+  
+  const { error } = await supabase
+    .from('projects')
+    .insert({
+      title: formData.get('title') as string,
+      description: formData.get('description') as string,
+      category: formData.get('category') as string,
+      client: formData.get('client') as string,
+      completion_date: formData.get('completionDate') as string,
+      image: imageUrl
+    });
+  
+  if (error) {
+    console.error('Error adding project:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function deleteProject(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('projects')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting project:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function updateTestimonial(testimonial: Testimonial): Promise<boolean> {
+  const { error } = await supabase
+    .from('testimonials')
+    .update({
+      text: testimonial.text,
+      author: testimonial.author,
+      position: testimonial.position
+    })
+    .eq('id', testimonial.id);
+  
+  if (error) {
+    console.error('Error updating testimonial:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function addTestimonial(testimonial: { text: string; author: string; position: string }): Promise<boolean> {
+  const { error } = await supabase
+    .from('testimonials')
+    .insert(testimonial);
+  
+  if (error) {
+    console.error('Error adding testimonial:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function deleteTestimonial(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('testimonials')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting testimonial:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export interface AboutContent {
+  id: string;
+  title: string;
+  subtitle: string;
+  content: string;
+  mainImage: string;
+  missionTitle: string;
+  missionDescription: string;
+  visionTitle: string;
+  visionDescription: string;
+  imageOne: string;
+  imageTwo: string;
+}
+
+export async function fetchAboutContent(): Promise<AboutContent> {
+  const { data, error } = await supabase
+    .from('about_content')
+    .select('*')
+    .single();
+  
+  if (error) {
+    console.error('Error fetching about content:', error);
+    throw error;
+  }
+  
+  return data;
+}
+
+export async function updateAboutContent(formData: FormData): Promise<boolean> {
+  const updateData: any = {
+    title: formData.get('title') as string,
+    subtitle: formData.get('subtitle') as string,
+    content: formData.get('content') as string,
+    mission_title: formData.get('missionTitle') as string,
+    mission_description: formData.get('missionDescription') as string,
+    vision_title: formData.get('visionTitle') as string,
+    vision_description: formData.get('visionDescription') as string
+  };
+  
+  const imageFields = [
+    { formKey: 'mainImage', dbKey: 'main_image' },
+    { formKey: 'imageOne', dbKey: 'image_one' },
+    { formKey: 'imageTwo', dbKey: 'image_two' }
+  ];
+  
+  for (const field of imageFields) {
+    const image = formData.get(field.formKey) as File;
+    
+    if (image && image.size > 0) {
+      const fileName = `about_${field.formKey}_${Date.now()}_${image.name.replace(/\s/g, '_')}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(fileName, image);
+      
+      if (uploadError) {
+        console.error(`Error uploading ${field.formKey}:`, uploadError);
+        continue;
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(fileName);
+      
+      updateData[field.dbKey] = urlData.publicUrl;
+    }
+  }
+  
+  const { error } = await supabase
+    .from('about_content')
+    .update(updateData)
+    .eq('id', formData.get('id') as string);
+  
+  if (error) {
+    console.error('Error updating about content:', error);
     return false;
   }
   
