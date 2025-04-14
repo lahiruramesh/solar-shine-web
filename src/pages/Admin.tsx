@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -5,7 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { fetchAppointments, AppointmentData, updateAppointmentStatus } from '@/services/cmsService';
 import { toast } from 'sonner';
-import { Calendar, Clock, User, Phone, Mail, MessageSquare, Check, X } from 'lucide-react';
+import { Calendar, Clock, User, Phone, Mail, MessageSquare, Check, X, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,10 +15,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { fetchSEOData, updateSEOData } from '@/services/seoService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState('appointments');
   const [editingSEO, setEditingSEO] = useState<{pagePath: string, data: any} | null>(null);
+  const { user, logout } = useAuth();
 
   const { 
     data: appointments,
@@ -74,24 +77,42 @@ const Admin: React.FC = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await logout();
+  };
+
   if (appointmentsLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
   return (
     <>
-      <Header />
-      <main className="min-h-screen pt-20 pb-12 px-4">
-        <div className="container-custom">
-          <div className="flex flex-col items-start mb-8">
-            <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-            <p className="text-brand-gray">Manage your website content, appointments, and SEO settings.</p>
+      <div className="bg-primary shadow-md py-2 px-4">
+        <div className="container-custom flex justify-between items-center">
+          <h1 className="text-lg md:text-xl font-semibold text-white">Admin Dashboard</h1>
+          <div className="flex items-center gap-3">
+            <span className="text-white text-sm hidden md:inline-block">
+              Logged in as: {user?.email}
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-white border-white hover:bg-primary-foreground hover:text-primary"
+              onClick={handleLogout}
+            >
+              <LogOut size={16} className="mr-2" />
+              Logout
+            </Button>
           </div>
-
+        </div>
+      </div>
+      <main className="min-h-screen pt-8 pb-12 px-4">
+        <div className="container-custom">
           <Tabs defaultValue="appointments" value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-8">
               <TabsTrigger value="appointments">Appointments</TabsTrigger>
               <TabsTrigger value="seo">SEO Settings</TabsTrigger>
+              <TabsTrigger value="content">Content Management</TabsTrigger>
             </TabsList>
             
             <TabsContent value="appointments" className="space-y-6">
@@ -318,6 +339,108 @@ const Admin: React.FC = () => {
                       ))}
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="content" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content Management</CardTitle>
+                  <CardDescription>Edit website content for different sections.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-lg">Hero Section</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => toast.info('Feature coming soon')}
+                        >
+                          Edit Hero Content
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-lg">Service Cards</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => toast.info('Feature coming soon')}
+                        >
+                          Manage Services
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-lg">Projects</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => toast.info('Feature coming soon')}
+                        >
+                          Manage Projects
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-lg">Testimonials</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => toast.info('Feature coming soon')}
+                        >
+                          Manage Testimonials
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-lg">Blog Posts</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => toast.info('Feature coming soon')}
+                        >
+                          Manage Blog Posts
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-lg">Available Time Slots</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => toast.info('Feature coming soon')}
+                        >
+                          Manage Time Slots
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
