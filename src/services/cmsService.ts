@@ -333,31 +333,53 @@ export async function deleteNavigationItem(id: string): Promise<boolean> {
 }
 
 // Footer/Company Info Functions
-export async function fetchCompanyInfo(): Promise<CompanyInfo> {
+export async function fetchFooterData(): Promise<CompanyInfo> {
   try {
     const { data, error } = await supabase
       .from('company_info')
       .select('*')
-      .limit(1);
+      .limit(1)
+      .single();
     
     if (error) {
       console.error('Error fetching company info:', error);
       throw error;
     }
     
-    if (!data || data.length === 0) {
-      throw new Error('No company info found');
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      address: data.address,
+      email: data.email,
+      phone: data.phone
+    };
+  } catch (error) {
+    console.error('Error in fetchFooterData:', error);
+    throw error;
+  }
+}
+
+export async function fetchCompanyInfo(): Promise<CompanyInfo> {
+  try {
+    const { data, error } = await supabase
+      .from('company_info')
+      .select('*')
+      .limit(1)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching company info:', error);
+      throw error;
     }
     
-    const companyInfo = data[0];
-    
     return {
-      id: companyInfo.id,
-      name: companyInfo.name,
-      description: companyInfo.description,
-      address: companyInfo.address,
-      email: companyInfo.email,
-      phone: companyInfo.phone
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      address: data.address,
+      email: data.email,
+      phone: data.phone
     };
   } catch (error) {
     console.error('Error in fetchCompanyInfo:', error);
@@ -375,7 +397,7 @@ export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
         address: info.address,
         email: info.email,
         phone: info.phone,
-        updated_at: new Date()
+        updated_at: new Date().toISOString()
       })
       .eq('id', info.id);
     
@@ -423,7 +445,7 @@ export async function updateSocialLink(link: SocialLink): Promise<boolean> {
         name: link.name,
         icon: link.icon,
         url: link.url,
-        updated_at: new Date()
+        updated_at: new Date().toISOString()
       })
       .eq('id', link.id);
     
@@ -512,7 +534,7 @@ export async function updateFooterLink(link: FooterLink): Promise<boolean> {
         name: link.name,
         url: link.url,
         category: link.category,
-        updated_at: new Date()
+        updated_at: new Date().toISOString()
       })
       .eq('id', link.id);
     
@@ -797,31 +819,26 @@ export async function fetchAboutContent(): Promise<AboutContent> {
     const { data, error } = await supabase
       .from('about_content')
       .select('*')
-      .limit(1);
+      .limit(1)
+      .single();
     
     if (error) {
       console.error('Error fetching about content:', error);
       throw error;
     }
     
-    if (!data || data.length === 0) {
-      throw new Error('No about content found');
-    }
-    
-    const aboutContent = data[0];
-    
     return {
-      id: aboutContent.id,
-      title: aboutContent.title,
-      subtitle: aboutContent.subtitle,
-      content: aboutContent.content,
-      mainImage: aboutContent.main_image,
-      missionTitle: aboutContent.mission_title,
-      missionDescription: aboutContent.mission_description,
-      visionTitle: aboutContent.vision_title,
-      visionDescription: aboutContent.vision_description,
-      imageOne: aboutContent.image_one,
-      imageTwo: aboutContent.image_two
+      id: data.id,
+      title: data.title,
+      subtitle: data.subtitle,
+      content: data.content,
+      mainImage: data.main_image,
+      missionTitle: data.mission_title,
+      missionDescription: data.mission_description,
+      visionTitle: data.vision_title,
+      visionDescription: data.vision_description,
+      imageOne: data.image_one,
+      imageTwo: data.image_two
     };
   } catch (error) {
     console.error('Error in fetchAboutContent:', error);

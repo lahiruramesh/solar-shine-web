@@ -21,20 +21,7 @@ import {
   addFooterLink,
   deleteFooterLink
 } from '@/services/cmsService';
-
-interface SocialLink {
-  id: string;
-  name: string;
-  icon: string;
-  url: string;
-}
-
-interface FooterLink {
-  id: string;
-  name: string;
-  url: string;
-  category: string;
-}
+import { CompanyInfo, SocialLink, FooterLink } from '@/types/payload-types';
 
 const FooterEditor: React.FC = () => {
   const queryClient = useQueryClient();
@@ -172,7 +159,10 @@ const FooterEditor: React.FC = () => {
                     <Input 
                       id="company-name"
                       value={companyInfo.name} 
-                      onChange={(e) => updateCompanyMutation.mutate({...companyInfo, name: e.target.value})}
+                      onChange={(e) => {
+                        const updatedInfo = {...companyInfo, name: e.target.value};
+                        updateCompanyMutation.mutate(updatedInfo);
+                      }}
                     />
                   </div>
                   
@@ -181,7 +171,10 @@ const FooterEditor: React.FC = () => {
                     <Textarea 
                       id="company-description"
                       value={companyInfo.description} 
-                      onChange={(e) => updateCompanyMutation.mutate({...companyInfo, description: e.target.value})}
+                      onChange={(e) => {
+                        const updatedInfo = {...companyInfo, description: e.target.value};
+                        updateCompanyMutation.mutate(updatedInfo);
+                      }}
                       rows={3}
                     />
                   </div>
@@ -191,7 +184,10 @@ const FooterEditor: React.FC = () => {
                     <Input 
                       id="company-address"
                       value={companyInfo.address} 
-                      onChange={(e) => updateCompanyMutation.mutate({...companyInfo, address: e.target.value})}
+                      onChange={(e) => {
+                        const updatedInfo = {...companyInfo, address: e.target.value};
+                        updateCompanyMutation.mutate(updatedInfo);
+                      }}
                     />
                   </div>
                   
@@ -201,7 +197,10 @@ const FooterEditor: React.FC = () => {
                       id="company-email"
                       type="email"
                       value={companyInfo.email} 
-                      onChange={(e) => updateCompanyMutation.mutate({...companyInfo, email: e.target.value})}
+                      onChange={(e) => {
+                        const updatedInfo = {...companyInfo, email: e.target.value};
+                        updateCompanyMutation.mutate(updatedInfo);
+                      }}
                     />
                   </div>
                   
@@ -210,7 +209,10 @@ const FooterEditor: React.FC = () => {
                     <Input 
                       id="company-phone"
                       value={companyInfo.phone} 
-                      onChange={(e) => updateCompanyMutation.mutate({...companyInfo, phone: e.target.value})}
+                      onChange={(e) => {
+                        const updatedInfo = {...companyInfo, phone: e.target.value};
+                        updateCompanyMutation.mutate(updatedInfo);
+                      }}
                     />
                   </div>
                   
