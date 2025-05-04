@@ -7,6 +7,7 @@ export async function fetchHeroSection(): Promise<HeroSection> {
   const { data, error } = await supabase
     .from('hero_sections')
     .select('*')
+    .limit(1)
     .single();
   
   if (error) {
@@ -17,7 +18,7 @@ export async function fetchHeroSection(): Promise<HeroSection> {
   return {
     id: data.id,
     title: data.title,
-    subtitle: data.subtitle,
+    subtitle: data.subtitle || '',
     backgroundImage: data.background_image,
     ctaText: data.cta_text,
     ctaLink: data.cta_link
@@ -26,27 +27,45 @@ export async function fetchHeroSection(): Promise<HeroSection> {
 
 export async function updateHeroSection(formData: FormData): Promise<boolean> {
   try {
-    let backgroundImageUrl = '';
-    const backgroundImage = formData.get('backgroundImage');
+    const updateData: Record<string, any> = {
+      title: formData.get('title') as string,
+      subtitle: formData.get('subtitle') as string,
+      cta_text: formData.get('ctaText') as string,
+      cta_link: formData.get('ctaLink') as string
+    };
     
+    // Handle background image upload
+    const backgroundImage = formData.get('backgroundImage');
     if (backgroundImage && backgroundImage instanceof File && backgroundImage.size > 0) {
-      backgroundImageUrl = await uploadFileToStorage(backgroundImage, 'hero', 'content_images') || '';
+      const imageUrl = await uploadFileToStorage(backgroundImage, 'hero_background', 'content_images');
+      if (imageUrl) {
+        updateData.background_image = imageUrl;
+      }
     }
     
-    const { error } = await supabase
-      .from('hero_sections')
-      .update({
-        title: formData.get('title') as string,
-        subtitle: formData.get('subtitle') as string,
-        cta_text: formData.get('ctaText') as string,
-        cta_link: formData.get('ctaLink') as string,
-        ...(backgroundImageUrl && { background_image: backgroundImageUrl })
-      })
-      .eq('id', formData.get('id') as string);
+    const id = formData.get('id') as string;
     
-    if (error) {
-      console.error('Error updating hero section:', error);
-      return false;
+    if (id) {
+      // Update existing hero section
+      const { error } = await supabase
+        .from('hero_sections')
+        .update(updateData)
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error updating hero section:', error);
+        return false;
+      }
+    } else {
+      // Create new hero section
+      const { error } = await supabase
+        .from('hero_sections')
+        .insert(updateData);
+      
+      if (error) {
+        console.error('Error creating hero section:', error);
+        return false;
+      }
     }
     
     return true;
