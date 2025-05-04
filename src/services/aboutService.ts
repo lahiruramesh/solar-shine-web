@@ -37,7 +37,7 @@ export async function fetchAboutContent(): Promise<AboutContent> {
 
 export async function updateAboutContent(formData: FormData): Promise<boolean> {
   try {
-    const updateData: any = {
+    const updateData: Record<string, string> = {
       title: formData.get('title') as string,
       subtitle: formData.get('subtitle') as string,
       content: formData.get('content') as string,
@@ -65,7 +65,8 @@ export async function updateAboutContent(formData: FormData): Promise<boolean> {
     }
     
     // Check if this is a create or update operation
-    const id = formData.get('id');
+    const idValue = formData.get('id');
+    const id = idValue ? String(idValue) : null;
     
     if (id) {
       // Update existing record

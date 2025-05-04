@@ -27,11 +27,19 @@ export async function fetchHeroSection(): Promise<HeroSection> {
 
 export async function updateHeroSection(formData: FormData): Promise<boolean> {
   try {
-    const updateData: Record<string, any> = {
-      title: formData.get('title') as string,
-      subtitle: formData.get('subtitle') as string,
-      cta_text: formData.get('ctaText') as string,
-      cta_link: formData.get('ctaLink') as string
+    // Ensure we have the required title field
+    const title = formData.get('title');
+    
+    if (!title || typeof title !== 'string') {
+      console.error('Title is required and must be a string');
+      return false;
+    }
+    
+    const updateData: Record<string, string> = {
+      title: title,
+      subtitle: formData.get('subtitle') as string || '',
+      cta_text: formData.get('ctaText') as string || '',
+      cta_link: formData.get('ctaLink') as string || ''
     };
     
     // Handle background image upload
@@ -43,7 +51,8 @@ export async function updateHeroSection(formData: FormData): Promise<boolean> {
       }
     }
     
-    const id = formData.get('id') as string;
+    const idValue = formData.get('id');
+    const id = idValue ? String(idValue) : null;
     
     if (id) {
       // Update existing hero section
