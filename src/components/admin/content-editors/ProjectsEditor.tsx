@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Save, Trash2, Upload } from 'lucide-react';
-import { fetchProjects, updateProject, addProject, deleteProject } from '@/services/cmsService';
+import { fetchProjects, updateProject, addProject, deleteProject } from '@/services/projectService';
 import { Project } from '@/types/payload-types';
 
 const ProjectsEditor: React.FC = () => {

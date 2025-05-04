@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Save, Trash2 } from 'lucide-react';
-import { fetchServiceCards, updateServiceCard, addServiceCard, deleteServiceCard } from '@/services/cmsService';
+import { fetchServiceCards, updateServiceCard, addServiceCard, deleteServiceCard } from '@/services/serviceCardService';
 import { ServiceCard } from '@/types/payload-types';
 
 const ServicesEditor: React.FC = () => {

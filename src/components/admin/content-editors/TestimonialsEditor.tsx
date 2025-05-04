@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -8,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Trash2 } from 'lucide-react';
-import { fetchTestimonials, updateTestimonial, addTestimonial, deleteTestimonial } from '@/services/cmsService';
+import { fetchTestimonials, updateTestimonial, addTestimonial, deleteTestimonial } from '@/services/testimonialService';
 import { Testimonial } from '@/types/payload-types';
 
 const TestimonialsEditor: React.FC = () => {
