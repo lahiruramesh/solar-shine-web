@@ -14,4 +14,5 @@ export * from './projectService';
 export * from './serviceCardService';
 export * from './settingsService';
 export * from './testimonialService';
+export * from './specializedAreaService';
 export * from './serviceUtils';

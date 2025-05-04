@@ -19,22 +19,32 @@ export async function uploadFileToStorage(
       return null;
     }
     
-    const fileName = `${prefix}_${Date.now()}_${file.name.replace(/\s/g, '_')}`;
+    // Generate a random unique ID for the file to avoid cache issues
+    const uniqueId = Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+    const fileName = `${prefix}_${uniqueId}_${file.name.replace(/\s/g, '_')}`;
     
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(bucketName)
-      .upload(fileName, file);
+      .upload(fileName, file, {
+        cacheControl: 'no-cache', // Prevent caching
+        upsert: true // Replace if exists
+      });
     
     if (uploadError) {
       console.error(`Error uploading file ${prefix}:`, uploadError);
       return null;
     }
     
+    // Add a cache-busting parameter to the URL to prevent browser caching
     const { data: urlData } = supabase.storage
       .from(bucketName)
       .getPublicUrl(fileName);
     
-    return urlData.publicUrl;
+    const publicUrl = urlData.publicUrl;
+    // Add cache-busting parameter
+    const urlWithCacheBusting = `${publicUrl}?t=${Date.now()}`;
+    
+    return urlWithCacheBusting;
   } catch (error) {
     console.error(`Error in uploadFileToStorage:`, error);
     return null;
@@ -93,4 +103,29 @@ export function createSlug(text: string): string {
     .replace(/[^\w\s-]/g, '') // Remove non-word chars
     .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
     .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+}
+
+/**
+ * Check if a file is an image by extension
+ * 
+ * @param file The file to check
+ * @returns boolean indicating if the file is an image
+ */
+export function isImageFile(file: File): boolean {
+  const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
+  return validImageTypes.includes(file.type);
+}
+
+/**
+ * Force browser to reload an image by appending a cache-busting parameter
+ * 
+ * @param url The original image URL
+ * @returns URL with cache-busting parameter
+ */
+export function getImageWithCacheBusting(url: string): string {
+  if (!url) return url;
+  
+  // If the URL already has parameters, append the cache-busting parameter
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}t=${Date.now()}`;
 }

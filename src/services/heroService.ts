@@ -27,13 +27,22 @@ export async function fetchHeroSection(): Promise<HeroSection> {
 
 export async function updateHeroSection(formData: FormData): Promise<boolean> {
   try {
-    // Ensure we have the required title field
-    const title = formData.get('title');
+    // Extract and validate the title field
+    const titleValue = formData.get('title');
     
-    if (!title || typeof title !== 'string') {
+    if (!titleValue || typeof titleValue !== 'string') {
       console.error('Title is required and must be a string');
       return false;
     }
+    
+    // Extract other string fields with validation
+    const subtitleValue = formData.get('subtitle');
+    const ctaTextValue = formData.get('ctaText');
+    const ctaLinkValue = formData.get('ctaLink');
+    
+    const subtitle = subtitleValue && typeof subtitleValue === 'string' ? subtitleValue : '';
+    const ctaText = ctaTextValue && typeof ctaTextValue === 'string' ? ctaTextValue : '';
+    const ctaLink = ctaLinkValue && typeof ctaLinkValue === 'string' ? ctaLinkValue : '';
     
     // Create the update data object with the validated title
     const updateData: { 
@@ -43,10 +52,10 @@ export async function updateHeroSection(formData: FormData): Promise<boolean> {
       cta_link: string;
       background_image?: string;
     } = {
-      title: title,
-      subtitle: formData.get('subtitle') as string || '',
-      cta_text: formData.get('ctaText') as string || '',
-      cta_link: formData.get('ctaLink') as string || ''
+      title: titleValue,
+      subtitle: subtitle,
+      cta_text: ctaText,
+      cta_link: ctaLink
     };
     
     // Handle background image upload
@@ -58,6 +67,7 @@ export async function updateHeroSection(formData: FormData): Promise<boolean> {
       }
     }
     
+    // Extract and validate the ID
     const idValue = formData.get('id');
     const id = idValue ? String(idValue) : null;
     

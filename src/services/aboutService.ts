@@ -37,32 +37,35 @@ export async function fetchAboutContent(): Promise<AboutContent> {
 
 export async function updateAboutContent(formData: FormData): Promise<boolean> {
   try {
-    // Validate required fields
-    const title = formData.get('title');
-    const subtitle = formData.get('subtitle');
-    const content = formData.get('content');
-    const missionTitle = formData.get('missionTitle');
-    const missionDescription = formData.get('missionDescription');
-    const visionTitle = formData.get('visionTitle');
-    const visionDescription = formData.get('visionDescription');
+    // Validate and extract required fields
+    const titleValue = formData.get('title');
+    const subtitleValue = formData.get('subtitle');
+    const contentValue = formData.get('content');
+    const missionTitleValue = formData.get('missionTitle');
+    const missionDescriptionValue = formData.get('missionDescription');
+    const visionTitleValue = formData.get('visionTitle');
+    const visionDescriptionValue = formData.get('visionDescription');
+    
+    // Convert to strings and validate
+    const title = titleValue && typeof titleValue === 'string' ? titleValue : null;
+    const subtitle = subtitleValue && typeof subtitleValue === 'string' ? subtitleValue : null;
+    const content = contentValue && typeof contentValue === 'string' ? contentValue : null;
+    const missionTitle = missionTitleValue && typeof missionTitleValue === 'string' ? missionTitleValue : null;
+    const missionDescription = missionDescriptionValue && typeof missionDescriptionValue === 'string' ? missionDescriptionValue : null;
+    const visionTitle = visionTitleValue && typeof visionTitleValue === 'string' ? visionTitleValue : null;
+    const visionDescription = visionDescriptionValue && typeof visionDescriptionValue === 'string' ? visionDescriptionValue : null;
     
     // Check if required fields exist and are strings
-    if (!title || typeof title !== 'string' ||
-        !subtitle || typeof subtitle !== 'string' ||
-        !content || typeof content !== 'string' ||
-        !missionTitle || typeof missionTitle !== 'string' ||
-        !missionDescription || typeof missionDescription !== 'string' ||
-        !visionTitle || typeof visionTitle !== 'string' ||
-        !visionDescription || typeof visionDescription !== 'string') {
+    if (!title || !subtitle || !content || !missionTitle || !missionDescription || !visionTitle || !visionDescription) {
       console.error('Required fields are missing or invalid');
       return false;
     }
     
     // Create update data object with required fields
     const updateData = {
-      title: title,
-      subtitle: subtitle,
-      content: content,
+      title,
+      subtitle,
+      content,
       mission_title: missionTitle,
       mission_description: missionDescription,
       vision_title: visionTitle,
@@ -77,10 +80,10 @@ export async function updateAboutContent(formData: FormData): Promise<boolean> {
     ];
     
     for (const field of imageFields) {
-      const image = formData.get(field.formKey);
+      const imageValue = formData.get(field.formKey);
       
-      if (image && image instanceof File && image.size > 0) {
-        const imageUrl = await uploadFileToStorage(image, `about_${field.formKey}`, 'content_images');
+      if (imageValue && imageValue instanceof File && imageValue.size > 0) {
+        const imageUrl = await uploadFileToStorage(imageValue, `about_${field.formKey}`, 'content_images');
         if (imageUrl) {
           updateData[field.dbKey] = imageUrl;
         }

@@ -10,6 +10,7 @@ import ProjectsEditor from './content-editors/ProjectsEditor';
 import TestimonialsEditor from './content-editors/TestimonialsEditor';
 import AboutEditor from './content-editors/AboutEditor';
 import BlogEditor from './content-editors/BlogEditor';
+import SpecializedAreasEditor from './content-editors/SpecializedAreasEditor';
 
 const ContentSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState('navigation');
@@ -22,10 +23,11 @@ const ContentSection: React.FC = () => {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 mb-6 gap-1">
+          <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 mb-6 gap-1">
             <TabsTrigger value="navigation">Navigation</TabsTrigger>
             <TabsTrigger value="footer">Footer</TabsTrigger>
-            <TabsTrigger value="home">Home Page</TabsTrigger>
+            <TabsTrigger value="home">Home Hero</TabsTrigger>
+            <TabsTrigger value="specialized">Areas</TabsTrigger>
             <TabsTrigger value="about">About Us</TabsTrigger>
             <TabsTrigger value="services">Services</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
@@ -43,6 +45,10 @@ const ContentSection: React.FC = () => {
           
           <TabsContent value="home">
             <HeroEditor />
+          </TabsContent>
+          
+          <TabsContent value="specialized">
+            <SpecializedAreasEditor />
           </TabsContent>
           
           <TabsContent value="about">
