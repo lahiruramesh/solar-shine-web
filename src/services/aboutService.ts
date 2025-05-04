@@ -57,7 +57,6 @@ export async function updateAboutContent(formData: FormData): Promise<boolean> {
       const image = formData.get(field.formKey);
       
       if (image && image instanceof File && image.size > 0) {
-        // This is the line causing the error - we need to ensure image is a File
         const imageUrl = await uploadFileToStorage(image, `about_${field.formKey}`, 'content_images');
         if (imageUrl) {
           updateData[field.dbKey] = imageUrl;
