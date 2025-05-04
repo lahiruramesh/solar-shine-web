@@ -37,16 +37,39 @@ export async function fetchAboutContent(): Promise<AboutContent> {
 
 export async function updateAboutContent(formData: FormData): Promise<boolean> {
   try {
-    const updateData: Record<string, string> = {
-      title: formData.get('title') as string,
-      subtitle: formData.get('subtitle') as string,
-      content: formData.get('content') as string,
-      mission_title: formData.get('missionTitle') as string,
-      mission_description: formData.get('missionDescription') as string,
-      vision_title: formData.get('visionTitle') as string,
-      vision_description: formData.get('visionDescription') as string
+    // Validate required fields
+    const title = formData.get('title');
+    const subtitle = formData.get('subtitle');
+    const content = formData.get('content');
+    const missionTitle = formData.get('missionTitle');
+    const missionDescription = formData.get('missionDescription');
+    const visionTitle = formData.get('visionTitle');
+    const visionDescription = formData.get('visionDescription');
+    
+    // Check if required fields exist and are strings
+    if (!title || typeof title !== 'string' ||
+        !subtitle || typeof subtitle !== 'string' ||
+        !content || typeof content !== 'string' ||
+        !missionTitle || typeof missionTitle !== 'string' ||
+        !missionDescription || typeof missionDescription !== 'string' ||
+        !visionTitle || typeof visionTitle !== 'string' ||
+        !visionDescription || typeof visionDescription !== 'string') {
+      console.error('Required fields are missing or invalid');
+      return false;
+    }
+    
+    // Create update data object with required fields
+    const updateData = {
+      title: title,
+      subtitle: subtitle,
+      content: content,
+      mission_title: missionTitle,
+      mission_description: missionDescription,
+      vision_title: visionTitle,
+      vision_description: visionDescription
     };
     
+    // Handle image uploads
     const imageFields = [
       { formKey: 'mainImage', dbKey: 'main_image' },
       { formKey: 'imageOne', dbKey: 'image_one' },

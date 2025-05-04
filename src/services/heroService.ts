@@ -35,7 +35,8 @@ export async function updateHeroSection(formData: FormData): Promise<boolean> {
       return false;
     }
     
-    const updateData: Record<string, string> = {
+    // Create the update data object with the validated title
+    const updateData = {
       title: title,
       subtitle: formData.get('subtitle') as string || '',
       cta_text: formData.get('ctaText') as string || '',
