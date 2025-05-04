@@ -21,7 +21,11 @@ const AboutEditor: React.FC = () => {
   
   const { data: about, isLoading } = useQuery({
     queryKey: ['aboutContent'],
-    queryFn: fetchAboutContent
+    queryFn: fetchAboutContent,
+    onError: (error) => {
+      console.error('Error fetching about content:', error);
+      toast.error('Failed to load About content');
+    }
   });
   
   const updateMutation = useMutation({
@@ -47,7 +51,9 @@ const AboutEditor: React.FC = () => {
     }
   };
   
-  const handleUpdateAbout = () => {
+  const handleUpdateAbout = (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!about) return;
     
     const formData = new FormData();
@@ -78,23 +84,54 @@ const AboutEditor: React.FC = () => {
   const handleFieldUpdate = (field: keyof typeof about, value: string) => {
     if (!about) return;
     
-    const formData = new FormData();
-    formData.append('id', about.id || '');
-    
-    // Add all existing fields
-    const updatedAbout = { ...about, [field]: value };
-    
-    Object.entries(updatedAbout).forEach(([key, val]) => {
-      if (key !== 'id' && typeof val === 'string') {
-        formData.append(key, val);
-      }
+    queryClient.setQueryData(['aboutContent'], {
+      ...about,
+      [field]: value
     });
-    
-    updateMutation.mutate(formData);
   };
   
   if (isLoading) {
     return <div className="flex justify-center p-6">Loading about content...</div>;
+  }
+  
+  // If about doesn't exist yet, show a message and option to create default content
+  if (!about) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>About Us Content</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center p-8">
+            <p className="text-center text-muted-foreground mb-4">
+              No About Us content found in the database. Please create initial content.
+            </p>
+            <Button 
+              onClick={() => {
+                const defaultAbout = {
+                  title: "About Our Company",
+                  subtitle: "Sustainable Energy Solutions",
+                  content: "We are a leading provider of renewable energy solutions, focused on helping individuals and businesses transition to clean, sustainable energy sources.",
+                  missionTitle: "Our Mission",
+                  missionDescription: "To accelerate the world's transition to sustainable energy through innovative solutions that are accessible to everyone.",
+                  visionTitle: "Our Vision",
+                  visionDescription: "A world powered by 100% renewable energy, with zero emissions and sustainable living for all."
+                };
+                
+                const formData = new FormData();
+                Object.entries(defaultAbout).forEach(([key, value]) => {
+                  formData.append(key, value);
+                });
+                
+                updateMutation.mutate(formData);
+              }}
+            >
+              Create Default Content
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
   
   return (
@@ -103,7 +140,7 @@ const AboutEditor: React.FC = () => {
         <CardTitle>About Us Content</CardTitle>
       </CardHeader>
       <CardContent>
-        {about && (
+        <form onSubmit={handleUpdateAbout}>
           <Tabs defaultValue="main" className="w-full">
             <TabsList className="mb-6">
               <TabsTrigger value="main">Main Content</TabsTrigger>
@@ -141,7 +178,7 @@ const AboutEditor: React.FC = () => {
               </div>
               
               <Button 
-                onClick={handleUpdateAbout}
+                type="submit"
                 className="mt-4"
               >
                 <Save className="mr-2 h-4 w-4" />
@@ -189,7 +226,7 @@ const AboutEditor: React.FC = () => {
               </div>
               
               <Button 
-                onClick={handleUpdateAbout}
+                type="submit"
                 className="mt-4"
               >
                 <Save className="mr-2 h-4 w-4" />
@@ -303,7 +340,7 @@ const AboutEditor: React.FC = () => {
               </div>
               
               <Button 
-                onClick={handleUpdateAbout}
+                type="submit"
                 className="mt-6"
               >
                 <Save className="mr-2 h-4 w-4" />
@@ -311,7 +348,7 @@ const AboutEditor: React.FC = () => {
               </Button>
             </TabsContent>
           </Tabs>
-        )}
+        </form>
       </CardContent>
     </Card>
   );

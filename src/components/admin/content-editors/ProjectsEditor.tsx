@@ -14,6 +14,7 @@ import { Project } from '@/types/payload-types';
 const ProjectsEditor: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [projectImages, setProjectImages] = useState<Record<string, File | null>>({});
   const [newProject, setNewProject] = useState({
     title: '',
     description: '',
@@ -65,6 +66,40 @@ const ProjectsEditor: React.FC = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedImage(e.target.files[0]);
+    }
+  };
+  
+  const handleProjectImageChange = (projectId: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setProjectImages(prev => ({
+        ...prev,
+        [projectId]: e.target.files?.[0] || null
+      }));
+    }
+  };
+  
+  const handleUpdateProject = (project: Project) => {
+    const projectImage = projectImages[project.id];
+    
+    if (projectImage) {
+      const formData = new FormData();
+      formData.append('id', project.id);
+      formData.append('title', project.title);
+      formData.append('description', project.description);
+      formData.append('category', project.category);
+      formData.append('client', project.client);
+      formData.append('completionDate', project.completionDate || '');
+      formData.append('image', projectImage);
+      
+      updateMutation.mutate(formData);
+      
+      // Clear the selected image after update
+      setProjectImages(prev => ({
+        ...prev,
+        [project.id]: null
+      }));
+    } else {
+      updateMutation.mutate(project);
     }
   };
   
@@ -159,13 +194,46 @@ const ProjectsEditor: React.FC = () => {
                   
                   <div>
                     <Label>Project Image</Label>
-                    <div className="mt-2">
+                    <div className="mt-2 mb-4">
                       <img 
                         src={project.image || '/placeholder.svg'} 
                         alt={project.title} 
                         className="w-full h-48 object-cover rounded-md border"
                       />
                     </div>
+                    
+                    <div className="flex items-center gap-3 mt-3">
+                      <Label 
+                        htmlFor={`project-image-${project.id}`} 
+                        className="cursor-pointer bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-md flex items-center gap-2"
+                      >
+                        <Upload size={16} />
+                        <span>Update Image</span>
+                      </Label>
+                      <Input 
+                        id={`project-image-${project.id}`}
+                        type="file" 
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleProjectImageChange(project.id)}
+                      />
+                      {projectImages[project.id] && (
+                        <span className="text-sm text-green-600">
+                          {projectImages[project.id]?.name} selected
+                        </span>
+                      )}
+                    </div>
+                    
+                    {projectImages[project.id] && (
+                      <Button 
+                        onClick={() => handleUpdateProject(project)}
+                        className="mt-2"
+                        size="sm"
+                      >
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Image
+                      </Button>
+                    )}
                   </div>
                 </div>
                 

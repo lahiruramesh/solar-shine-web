@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   HeroSection, 
@@ -686,24 +685,82 @@ export async function deleteServiceCard(id: string): Promise<boolean> {
 }
 
 // Projects CRUD
-export async function updateProject(project: Project): Promise<boolean> {
-  const { error } = await supabase
-    .from('projects')
-    .update({
-      title: project.title,
-      description: project.description,
-      category: project.category,
-      client: project.client,
-      completion_date: project.completionDate
-    })
-    .eq('id', project.id);
-  
-  if (error) {
-    console.error('Error updating project:', error);
+export async function updateProject(projectData: Project | FormData): Promise<boolean> {
+  try {
+    // Handle FormData case (with image)
+    if (projectData instanceof FormData) {
+      const projectId = projectData.get('id') as string;
+      let imageUrl = '';
+      
+      // Handle image upload if present
+      const projectImage = projectData.get('image') as File;
+      
+      if (projectImage && projectImage instanceof File && projectImage.size > 0) {
+        const fileName = `project_${Date.now()}_${projectImage.name.replace(/\s/g, '_')}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('images')
+          .upload(fileName, projectImage);
+        
+        if (uploadError) {
+          console.error('Error uploading project image:', uploadError);
+          return false;
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('images')
+          .getPublicUrl(fileName);
+        
+        imageUrl = urlData.publicUrl;
+      }
+      
+      // Create update object
+      const updateData: any = {
+        title: projectData.get('title') as string,
+        description: projectData.get('description') as string,
+        category: projectData.get('category') as string,
+        client: projectData.get('client') as string,
+        completion_date: projectData.get('completionDate') as string
+      };
+      
+      // Only add image field if we have a new image
+      if (imageUrl) {
+        updateData.image = imageUrl;
+      }
+      
+      const { error } = await supabase
+        .from('projects')
+        .update(updateData)
+        .eq('id', projectId);
+      
+      if (error) {
+        console.error('Error updating project with image:', error);
+        return false;
+      }
+    } else {
+      // Handle regular project update without image
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          title: projectData.title,
+          description: projectData.description,
+          category: projectData.category,
+          client: projectData.client,
+          completion_date: projectData.completionDate
+        })
+        .eq('id', projectData.id);
+      
+      if (error) {
+        console.error('Error updating project:', error);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in updateProject:', error);
     return false;
   }
-  
-  return true;
 }
 
 export async function addProject(formData: FormData): Promise<boolean> {
@@ -887,14 +944,30 @@ export async function updateAboutContent(formData: FormData): Promise<boolean> {
       }
     }
     
-    const { error } = await supabase
-      .from('about_content')
-      .update(updateData)
-      .eq('id', formData.get('id') as string);
+    // Check if this is a create or update operation
+    const id = formData.get('id');
     
-    if (error) {
-      console.error('Error updating about content:', error);
-      return false;
+    if (id) {
+      // Update existing record
+      const { error } = await supabase
+        .from('about_content')
+        .update(updateData)
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error updating about content:', error);
+        return false;
+      }
+    } else {
+      // Create new record
+      const { error } = await supabase
+        .from('about_content')
+        .insert(updateData);
+      
+      if (error) {
+        console.error('Error creating about content:', error);
+        return false;
+      }
     }
     
     return true;
