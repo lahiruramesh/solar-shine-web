@@ -22,8 +22,8 @@ const AboutEditor: React.FC = () => {
   const { data: about, isLoading } = useQuery({
     queryKey: ['aboutContent'],
     queryFn: fetchAboutContent,
-    onSettled: (data, error) => {
-      if (error) {
+    meta: {
+      onError: (error: Error) => {
         console.error('Error fetching about content:', error);
         toast.error('Failed to load About content');
       }

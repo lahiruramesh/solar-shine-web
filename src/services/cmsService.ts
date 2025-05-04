@@ -12,6 +12,7 @@ import {
   FooterLink,
   AboutContent
 } from '@/types/payload-types';
+import { uploadFileToStorage, processFormDataWithImages, createSlug } from './serviceUtils';
 
 // Hero Section Functions
 export async function fetchHeroSection(): Promise<HeroSection> {
@@ -590,17 +591,91 @@ export async function deleteFooterLink(id: string): Promise<boolean> {
   }
 }
 
-// Hero Section Update
+export async function updateAboutContent(formData: FormData): Promise<boolean> {
+  try {
+    const updateData: any = {
+      title: formData.get('title') as string,
+      subtitle: formData.get('subtitle') as string,
+      content: formData.get('content') as string,
+      mission_title: formData.get('missionTitle') as string,
+      mission_description: formData.get('missionDescription') as string,
+      vision_title: formData.get('visionTitle') as string,
+      vision_description: formData.get('visionDescription') as string
+    };
+    
+    const imageFields = [
+      { formKey: 'mainImage', dbKey: 'main_image' },
+      { formKey: 'imageOne', dbKey: 'image_one' },
+      { formKey: 'imageTwo', dbKey: 'image_two' }
+    ];
+    
+    for (const field of imageFields) {
+      const image = formData.get(field.formKey);
+      
+      if (image && image instanceof File && image.size > 0) {
+        const fileName = `about_${field.formKey}_${Date.now()}_${image.name.replace(/\s/g, '_')}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('content_images')
+          .upload(fileName, image);
+        
+        if (uploadError) {
+          console.error(`Error uploading ${field.formKey}:`, uploadError);
+          continue;
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('content_images')
+          .getPublicUrl(fileName);
+        
+        updateData[field.dbKey] = urlData.publicUrl;
+      }
+    }
+    
+    // Check if this is a create or update operation
+    const id = formData.get('id');
+    
+    if (id) {
+      // Update existing record
+      const { error } = await supabase
+        .from('about_content')
+        .update(updateData)
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error updating about content:', error);
+        return false;
+      }
+    } else {
+      // Create new record
+      const { error } = await supabase
+        .from('about_content')
+        .insert(updateData);
+      
+      if (error) {
+        console.error('Error creating about content:', error);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in updateAboutContent:', error);
+    return false;
+  }
+}
+
+// Hero Section Functions
 export async function updateHeroSection(formData: FormData): Promise<boolean> {
   try {
     let backgroundImageUrl = '';
-    const backgroundImage = formData.get('backgroundImage') as File;
+    const backgroundImage = formData.get('backgroundImage');
     
     if (backgroundImage && backgroundImage instanceof File && backgroundImage.size > 0) {
       const fileName = `hero_${Date.now()}_${backgroundImage.name.replace(/\s/g, '_')}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('images')
+        .from('content_images')
         .upload(fileName, backgroundImage);
       
       if (uploadError) {
@@ -609,7 +684,7 @@ export async function updateHeroSection(formData: FormData): Promise<boolean> {
       }
       
       const { data: urlData } = supabase.storage
-        .from('images')
+        .from('content_images')
         .getPublicUrl(fileName);
       
       backgroundImageUrl = urlData.publicUrl;
@@ -638,53 +713,7 @@ export async function updateHeroSection(formData: FormData): Promise<boolean> {
   }
 }
 
-// Service Cards CRUD
-export async function updateServiceCard(service: ServiceCard): Promise<boolean> {
-  const { error } = await supabase
-    .from('service_cards')
-    .update({
-      title: service.title,
-      description: service.description,
-      icon: service.icon
-    })
-    .eq('id', service.id);
-  
-  if (error) {
-    console.error('Error updating service card:', error);
-    return false;
-  }
-  
-  return true;
-}
-
-export async function addServiceCard(service: { title: string; description: string; icon: string }): Promise<boolean> {
-  const { error } = await supabase
-    .from('service_cards')
-    .insert(service);
-  
-  if (error) {
-    console.error('Error adding service card:', error);
-    return false;
-  }
-  
-  return true;
-}
-
-export async function deleteServiceCard(id: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('service_cards')
-    .delete()
-    .eq('id', id);
-  
-  if (error) {
-    console.error('Error deleting service card:', error);
-    return false;
-  }
-  
-  return true;
-}
-
-// Projects CRUD
+// Project Update Function
 export async function updateProject(projectData: Project | FormData): Promise<boolean> {
   try {
     // Handle FormData case (with image)
@@ -693,13 +722,13 @@ export async function updateProject(projectData: Project | FormData): Promise<bo
       let imageUrl = '';
       
       // Handle image upload if present
-      const projectImage = projectData.get('image') as File;
+      const projectImage = projectData.get('image');
       
       if (projectImage && projectImage instanceof File && projectImage.size > 0) {
         const fileName = `project_${Date.now()}_${projectImage.name.replace(/\s/g, '_')}`;
         
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('images')
+          .from('content_images')
           .upload(fileName, projectImage);
         
         if (uploadError) {
@@ -708,7 +737,7 @@ export async function updateProject(projectData: Project | FormData): Promise<bo
         }
         
         const { data: urlData } = supabase.storage
-          .from('images')
+          .from('content_images')
           .getPublicUrl(fileName);
         
         imageUrl = urlData.publicUrl;
@@ -765,13 +794,13 @@ export async function updateProject(projectData: Project | FormData): Promise<bo
 
 export async function addProject(formData: FormData): Promise<boolean> {
   let imageUrl = '';
-  const projectImage = formData.get('image') as File;
+  const projectImage = formData.get('image');
   
   if (projectImage && projectImage instanceof File && projectImage.size > 0) {
     const fileName = `project_${Date.now()}_${projectImage.name.replace(/\s/g, '_')}`;
     
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('images')
+      .from('content_images')
       .upload(fileName, projectImage);
     
     if (uploadError) {
@@ -780,7 +809,7 @@ export async function addProject(formData: FormData): Promise<boolean> {
     }
     
     const { data: urlData } = supabase.storage
-      .from('images')
+      .from('content_images')
       .getPublicUrl(fileName);
     
     imageUrl = urlData.publicUrl;
@@ -804,20 +833,6 @@ export async function addProject(formData: FormData): Promise<boolean> {
   
   if (error) {
     console.error('Error adding project:', error);
-    return false;
-  }
-  
-  return true;
-}
-
-export async function deleteProject(id: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('projects')
-    .delete()
-    .eq('id', id);
-  
-  if (error) {
-    console.error('Error deleting project:', error);
     return false;
   }
   
@@ -903,91 +918,17 @@ export async function fetchAboutContent(): Promise<AboutContent> {
   }
 }
 
-export async function updateAboutContent(formData: FormData): Promise<boolean> {
-  try {
-    const updateData: any = {
-      title: formData.get('title') as string,
-      subtitle: formData.get('subtitle') as string,
-      content: formData.get('content') as string,
-      mission_title: formData.get('missionTitle') as string,
-      mission_description: formData.get('missionDescription') as string,
-      vision_title: formData.get('visionTitle') as string,
-      vision_description: formData.get('visionDescription') as string
-    };
-    
-    const imageFields = [
-      { formKey: 'mainImage', dbKey: 'main_image' },
-      { formKey: 'imageOne', dbKey: 'image_one' },
-      { formKey: 'imageTwo', dbKey: 'image_two' }
-    ];
-    
-    for (const field of imageFields) {
-      const image = formData.get(field.formKey);
-      
-      if (image && image instanceof File && image.size > 0) {
-        const fileName = `about_${field.formKey}_${Date.now()}_${image.name.replace(/\s/g, '_')}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('images')
-          .upload(fileName, image);
-        
-        if (uploadError) {
-          console.error(`Error uploading ${field.formKey}:`, uploadError);
-          continue;
-        }
-        
-        const { data: urlData } = supabase.storage
-          .from('images')
-          .getPublicUrl(fileName);
-        
-        updateData[field.dbKey] = urlData.publicUrl;
-      }
-    }
-    
-    // Check if this is a create or update operation
-    const id = formData.get('id');
-    
-    if (id) {
-      // Update existing record
-      const { error } = await supabase
-        .from('about_content')
-        .update(updateData)
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error updating about content:', error);
-        return false;
-      }
-    } else {
-      // Create new record
-      const { error } = await supabase
-        .from('about_content')
-        .insert(updateData);
-      
-      if (error) {
-        console.error('Error creating about content:', error);
-        return false;
-      }
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in updateAboutContent:', error);
-    return false;
-  }
-}
-
-// Blog Posts CRUD functions
+// Blog CRUD functions
 export async function createBlogPost(formData: FormData): Promise<string | null> {
   try {
     let coverImageUrl = '';
-    const coverImage = formData.get('coverImage') as File;
+    const coverImage = formData.get('coverImage');
     
     if (coverImage && coverImage instanceof File && coverImage.size > 0) {
       const fileName = `blog_${Date.now()}_${coverImage.name.replace(/\s/g, '_')}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('images')
+        .from('content_images')
         .upload(fileName, coverImage);
       
       if (uploadError) {
@@ -996,7 +937,7 @@ export async function createBlogPost(formData: FormData): Promise<string | null>
       }
       
       const { data: urlData } = supabase.storage
-        .from('images')
+        .from('content_images')
         .getPublicUrl(fileName);
       
       coverImageUrl = urlData.publicUrl;
@@ -1047,12 +988,12 @@ export async function updateBlogPost(id: string, formData: FormData): Promise<bo
       updateData.slug = createSlug(title);
     }
     
-    const coverImage = formData.get('coverImage') as File;
+    const coverImage = formData.get('coverImage');
     if (coverImage && coverImage instanceof File && coverImage.size > 0) {
       const fileName = `blog_${Date.now()}_${coverImage.name.replace(/\s/g, '_')}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('images')
+        .from('content_images')
         .upload(fileName, coverImage);
       
       if (uploadError) {
@@ -1061,7 +1002,7 @@ export async function updateBlogPost(id: string, formData: FormData): Promise<bo
       }
       
       const { data: urlData } = supabase.storage
-        .from('images')
+        .from('content_images')
         .getPublicUrl(fileName);
       
       updateData.cover_image = urlData.publicUrl;
@@ -1082,32 +1023,4 @@ export async function updateBlogPost(id: string, formData: FormData): Promise<bo
     console.error('Error in updateBlogPost:', error);
     return false;
   }
-}
-
-export async function deleteBlogPost(id: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('blog_posts')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Error deleting blog post:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in deleteBlogPost:', error);
-    return false;
-  }
-}
-
-// Helper function to create URL-friendly slugs
-function createSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '') // Remove non-word chars
-    .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
-    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 }

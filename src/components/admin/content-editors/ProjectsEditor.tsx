@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -25,7 +24,13 @@ const ProjectsEditor: React.FC = () => {
   
   const { data: projects, isLoading } = useQuery({
     queryKey: ['projects'],
-    queryFn: fetchProjects
+    queryFn: fetchProjects,
+    meta: {
+      onError: (error: Error) => {
+        console.error('Error fetching projects:', error);
+        toast.error('Failed to load projects');
+      }
+    }
   });
   
   const updateMutation = useMutation({

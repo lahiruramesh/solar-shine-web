@@ -2,13 +2,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Save, Upload } from 'lucide-react';
 import { fetchHeroSection, updateHeroSection } from '@/services/cmsService';
+import { HeroSection } from '@/types/payload-types';
 
 const HeroEditor: React.FC = () => {
   const queryClient = useQueryClient();
@@ -16,7 +17,13 @@ const HeroEditor: React.FC = () => {
   
   const { data: hero, isLoading } = useQuery({
     queryKey: ['heroSection'],
-    queryFn: fetchHeroSection
+    queryFn: fetchHeroSection,
+    meta: {
+      onError: (error: Error) => {
+        console.error('Error fetching hero section:', error);
+        toast.error('Failed to load hero section');
+      }
+    }
   });
   
   const updateMutation = useMutation({
@@ -24,7 +31,7 @@ const HeroEditor: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['heroSection'] });
       setSelectedImage(null);
-      toast.success('Hero section updated');
+      toast.success('Hero section updated successfully');
     },
     onError: () => toast.error('Failed to update hero section')
   });
@@ -35,7 +42,9 @@ const HeroEditor: React.FC = () => {
     }
   };
   
-  const handleUpdateHero = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!hero) return;
     
     const formData = new FormData();
@@ -51,114 +60,151 @@ const HeroEditor: React.FC = () => {
     
     updateMutation.mutate(formData);
   };
-
-  const handleFieldUpdate = (field: keyof typeof hero, value: string) => {
+  
+  const handleFieldUpdate = (field: keyof HeroSection, value: string) => {
     if (!hero) return;
     
-    const formData = new FormData();
-    formData.append('id', hero.id || '');
-    
-    // Add all existing fields
-    formData.append('title', field === 'title' ? value : hero.title);
-    formData.append('subtitle', field === 'subtitle' ? value : (hero.subtitle || ''));
-    formData.append('ctaText', field === 'ctaText' ? value : (hero.ctaText || ''));
-    formData.append('ctaLink', field === 'ctaLink' ? value : (hero.ctaLink || ''));
-    
-    updateMutation.mutate(formData);
+    queryClient.setQueryData(['heroSection'], {
+      ...hero,
+      [field]: value
+    });
   };
   
   if (isLoading) {
     return <div className="flex justify-center p-6">Loading hero section data...</div>;
   }
   
+  if (!hero) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Hero Section</CardTitle>
+          <CardDescription>Create the hero section for your homepage</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center p-8">
+            <p className="text-center text-muted-foreground mb-4">
+              No hero section found in the database. Please create initial content.
+            </p>
+            <Button 
+              onClick={() => {
+                const defaultHero = {
+                  title: "Your Renewable Energy Partner",
+                  subtitle: "Professional solar solutions for homes and businesses across Sri Lanka",
+                  ctaText: "Get a Free Quote",
+                  ctaLink: "/contact"
+                };
+                
+                const formData = new FormData();
+                Object.entries(defaultHero).forEach(([key, value]) => {
+                  formData.append(key, value);
+                });
+                
+                updateMutation.mutate(formData);
+              }}
+            >
+              Create Default Content
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
   return (
     <Card>
       <CardHeader>
         <CardTitle>Hero Section</CardTitle>
+        <CardDescription>Edit your homepage hero section</CardDescription>
       </CardHeader>
       <CardContent>
-        {hero && (
-          <div className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <Label htmlFor="title">Title</Label>
+            <Input 
+              id="title"
+              value={hero.title} 
+              onChange={(e) => handleFieldUpdate('title', e.target.value)}
+              placeholder="Enter headline"
+              className="mt-1"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="subtitle">Subtitle</Label>
+            <Textarea 
+              id="subtitle"
+              value={hero.subtitle || ''} 
+              onChange={(e) => handleFieldUpdate('subtitle', e.target.value)}
+              placeholder="Enter subheadline"
+              className="mt-1"
+              rows={2}
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="hero-title">Title</Label>
+              <Label htmlFor="cta-text">CTA Button Text</Label>
               <Input 
-                id="hero-title"
-                value={hero.title} 
-                onChange={(e) => handleFieldUpdate('title', e.target.value)}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="hero-subtitle">Subtitle</Label>
-              <Textarea 
-                id="hero-subtitle"
-                value={hero.subtitle || ''} 
-                onChange={(e) => handleFieldUpdate('subtitle', e.target.value)}
-                rows={3}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="hero-cta-text">CTA Button Text</Label>
-              <Input 
-                id="hero-cta-text"
+                id="cta-text"
                 value={hero.ctaText || ''} 
                 onChange={(e) => handleFieldUpdate('ctaText', e.target.value)}
+                placeholder="Get Started"
+                className="mt-1"
               />
             </div>
-            
             <div>
-              <Label htmlFor="hero-cta-link">CTA Button Link</Label>
+              <Label htmlFor="cta-link">CTA Button Link</Label>
               <Input 
-                id="hero-cta-link"
+                id="cta-link"
                 value={hero.ctaLink || ''} 
                 onChange={(e) => handleFieldUpdate('ctaLink', e.target.value)}
+                placeholder="/contact"
+                className="mt-1"
               />
             </div>
-            
-            <div>
-              <Label htmlFor="hero-background">Background Image</Label>
-              <div className="mt-2">
-                <div className="mb-4">
-                  <img 
-                    src={hero.backgroundImage || '/placeholder.svg'} 
-                    alt="Hero background" 
-                    className="h-40 object-cover rounded-md border"
-                  />
-                </div>
-                <div className="flex items-center gap-3">
-                  <Label 
-                    htmlFor="hero-background-upload" 
-                    className="cursor-pointer bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-md flex items-center gap-2"
-                  >
-                    <Upload size={16} />
-                    <span>Choose Image</span>
-                  </Label>
-                  <Input 
-                    id="hero-background-upload"
-                    type="file" 
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
-                  />
-                  {selectedImage && (
-                    <span className="text-sm text-green-600">
-                      {selectedImage.name} selected
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            <Button 
-              onClick={handleUpdateHero}
-              className="mt-4"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              Save Changes
-            </Button>
           </div>
-        )}
+          
+          <div className="space-y-2">
+            <Label>Background Image</Label>
+            {hero.backgroundImage && (
+              <div className="mt-2 mb-4">
+                <img 
+                  src={hero.backgroundImage} 
+                  alt="Hero background" 
+                  className="w-full h-48 object-cover rounded-md border"
+                />
+              </div>
+            )}
+            
+            <div className="flex items-center gap-3">
+              <Label 
+                htmlFor="hero-image" 
+                className="cursor-pointer bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-md flex items-center gap-2"
+              >
+                <Upload size={16} />
+                <span>{hero.backgroundImage ? 'Change Image' : 'Upload Image'}</span>
+              </Label>
+              <Input 
+                id="hero-image"
+                type="file" 
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageChange}
+              />
+              {selectedImage && (
+                <span className="text-sm text-green-600">
+                  {selectedImage.name} selected
+                </span>
+              )}
+            </div>
+          </div>
+          
+          <Button type="submit" className="w-full sm:w-auto">
+            <Save className="mr-2 h-4 w-4" />
+            Save Changes
+          </Button>
+        </form>
       </CardContent>
     </Card>
   );
