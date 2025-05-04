@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { 
   HeroSection, 
@@ -53,6 +54,72 @@ export async function fetchServiceCards(): Promise<ServiceCard[]> {
     description: card.description,
     icon: card.icon
   }));
+}
+
+// Adding missing service card functions
+export async function updateServiceCard(serviceCard: ServiceCard): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('service_cards')
+      .update({
+        title: serviceCard.title,
+        description: serviceCard.description,
+        icon: serviceCard.icon,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', serviceCard.id);
+    
+    if (error) {
+      console.error('Error updating service card:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in updateServiceCard:', error);
+    return false;
+  }
+}
+
+export async function addServiceCard(serviceCard: { title: string; description: string; icon: string }): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('service_cards')
+      .insert({
+        title: serviceCard.title,
+        description: serviceCard.description,
+        icon: serviceCard.icon
+      });
+    
+    if (error) {
+      console.error('Error adding service card:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in addServiceCard:', error);
+    return false;
+  }
+}
+
+export async function deleteServiceCard(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('service_cards')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting service card:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in deleteServiceCard:', error);
+    return false;
+  }
 }
 
 // Projects Functions
@@ -839,6 +906,26 @@ export async function addProject(formData: FormData): Promise<boolean> {
   return true;
 }
 
+// Add missing deleteProject function
+export async function deleteProject(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting project:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in deleteProject:', error);
+    return false;
+  }
+}
+
 // Testimonials CRUD
 export async function updateTestimonial(testimonial: Testimonial): Promise<boolean> {
   const { error } = await supabase
@@ -1021,6 +1108,26 @@ export async function updateBlogPost(id: string, formData: FormData): Promise<bo
     return true;
   } catch (error) {
     console.error('Error in updateBlogPost:', error);
+    return false;
+  }
+}
+
+// Missing function: deleteBlogPost
+export async function deleteBlogPost(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('blog_posts')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting blog post:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in deleteBlogPost:', error);
     return false;
   }
 }

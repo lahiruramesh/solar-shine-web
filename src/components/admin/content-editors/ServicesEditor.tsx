@@ -76,7 +76,10 @@ const ServicesEditor: React.FC = () => {
                   <Input 
                     id={`title-${service.id}`}
                     value={service.title} 
-                    onChange={(e) => updateMutation.mutate({...service, title: e.target.value})}
+                    onChange={(e) => {
+                      const updatedService = {...service, title: e.target.value};
+                      updateMutation.mutate(updatedService);
+                    }}
                   />
                 </div>
                 
@@ -84,8 +87,11 @@ const ServicesEditor: React.FC = () => {
                   <Label htmlFor={`description-${service.id}`}>Description</Label>
                   <Textarea 
                     id={`description-${service.id}`}
-                    value={service.description} 
-                    onChange={(e) => updateMutation.mutate({...service, description: e.target.value})}
+                    value={service.description || ''} 
+                    onChange={(e) => {
+                      const updatedService = {...service, description: e.target.value};
+                      updateMutation.mutate(updatedService);
+                    }}
                     rows={3}
                   />
                 </div>
@@ -94,8 +100,11 @@ const ServicesEditor: React.FC = () => {
                   <Label htmlFor={`icon-${service.id}`}>Icon Name</Label>
                   <Input 
                     id={`icon-${service.id}`}
-                    value={service.icon} 
-                    onChange={(e) => updateMutation.mutate({...service, icon: e.target.value})}
+                    value={service.icon || ''} 
+                    onChange={(e) => {
+                      const updatedService = {...service, icon: e.target.value};
+                      updateMutation.mutate(updatedService);
+                    }}
                     placeholder="solar-panel"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
