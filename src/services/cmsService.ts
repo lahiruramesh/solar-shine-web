@@ -922,7 +922,7 @@ export async function updateAboutContent(formData: FormData): Promise<boolean> {
     ];
     
     for (const field of imageFields) {
-      const image = formData.get(field.formKey) as File;
+      const image = formData.get(field.formKey);
       
       if (image && image instanceof File && image.size > 0) {
         const fileName = `about_${field.formKey}_${Date.now()}_${image.name.replace(/\s/g, '_')}`;
