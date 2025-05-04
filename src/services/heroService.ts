@@ -36,7 +36,13 @@ export async function updateHeroSection(formData: FormData): Promise<boolean> {
     }
     
     // Create the update data object with the validated title
-    const updateData = {
+    const updateData: { 
+      title: string; 
+      subtitle: string; 
+      cta_text: string; 
+      cta_link: string;
+      background_image?: string;
+    } = {
       title: title,
       subtitle: formData.get('subtitle') as string || '',
       cta_text: formData.get('ctaText') as string || '',
