@@ -41,7 +41,7 @@ export async function uploadFileToStorage(
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(bucketName)
       .upload(fileName, file, {
-        cacheControl: 'no-cache', // Prevent caching
+        cacheControl: '3600',
         upsert: true // Replace if exists
       });
     
@@ -50,20 +50,29 @@ export async function uploadFileToStorage(
       return null;
     }
     
-    // Add a cache-busting parameter to the URL to prevent browser caching
+    // Get the public URL without any cache busting parameters
     const { data: urlData } = supabase.storage
       .from(bucketName)
       .getPublicUrl(fileName);
     
-    const publicUrl = urlData.publicUrl;
-    // Add cache-busting parameter
-    const urlWithCacheBusting = `${publicUrl}?t=${Date.now()}`;
-    
-    return urlWithCacheBusting;
+    return urlData.publicUrl;
   } catch (error) {
     console.error(`Error in uploadFileToStorage:`, error);
     return null;
   }
+}
+
+/**
+ * Force browser to reload an image by appending a cache-busting parameter
+ * 
+ * @param url The original image URL
+ * @returns URL with cache-busting parameter
+ */
+export function getImageWithCacheBusting(url: string): string {
+  if (!url) return '';
+  
+  // Add cache-busting parameter to force reload of the image
+  return `${url}?t=${Date.now()}`;
 }
 
 /**
@@ -129,42 +138,4 @@ export function createSlug(text: string): string {
 export function isImageFile(file: File): boolean {
   const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
   return validImageTypes.includes(file.type);
-}
-
-/**
- * Force browser to reload an image by appending a cache-busting parameter
- * 
- * @param url The original image URL
- * @returns URL with cache-busting parameter
- */
-export function getImageWithCacheBusting(url: string): string {
-  if (!url) return url;
-  
-  // If URL already has a cache-busting parameter, update it
-  if (url.includes('?t=')) {
-    return url.replace(/\?t=\d+/, `?t=${Date.now()}`);
-  }
-  
-  // If the URL already has parameters, append the cache-busting parameter
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}t=${Date.now()}`;
-}
-
-/**
- * Safely transform any external URL to a Supabase storage URL if possible
- * 
- * @param url Original image URL
- * @param bucketName Storage bucket name
- * @returns Processed URL
- */
-export function ensureStorageUrl(url: string | null | undefined, bucketName: string = 'content_images'): string {
-  if (!url) return '';
-  
-  // If it's already a storage URL, return it with cache busting
-  if (url.includes(bucketName)) {
-    return getImageWithCacheBusting(url);
-  }
-  
-  // Return external URLs as-is
-  return url;
 }

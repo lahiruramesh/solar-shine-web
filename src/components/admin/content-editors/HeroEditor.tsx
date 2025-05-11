@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -13,6 +14,7 @@ import { HeroSection } from '@/types/payload-types';
 const HeroEditor: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
   const { data: hero, isLoading } = useQuery({
     queryKey: ['heroSection'],
@@ -30,6 +32,7 @@ const HeroEditor: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['heroSection'] });
       setSelectedImage(null);
+      setPreviewUrl(null);
       toast.success('Hero section updated successfully');
     },
     onError: () => toast.error('Failed to update hero section')
@@ -37,7 +40,11 @@ const HeroEditor: React.FC = () => {
   
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedImage(e.target.files[0]);
+      const file = e.target.files[0];
+      setSelectedImage(file);
+      // Create a preview URL for immediate feedback
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
     }
   };
   
@@ -166,15 +173,13 @@ const HeroEditor: React.FC = () => {
           
           <div className="space-y-2">
             <Label>Background Image</Label>
-            {hero.backgroundImage && (
-              <div className="mt-2 mb-4">
-                <img 
-                  src={hero.backgroundImage} 
-                  alt="Hero background" 
-                  className="w-full h-48 object-cover rounded-md border"
-                />
-              </div>
-            )}
+            <div className="mt-2 mb-4">
+              <img 
+                src={previewUrl || hero.backgroundImage} 
+                alt="Hero background" 
+                className="w-full h-48 object-cover rounded-md border"
+              />
+            </div>
             
             <div className="flex items-center gap-3">
               <Label 
