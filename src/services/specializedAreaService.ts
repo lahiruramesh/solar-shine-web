@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { uploadFileToStorage } from './serviceUtils';
+import { uploadFileToStorage, getImageWithCacheBusting } from './serviceUtils';
 
 export async function fetchSpecializedAreas() {
   try {
@@ -14,7 +14,13 @@ export async function fetchSpecializedAreas() {
       throw error;
     }
     
-    return data || [];
+    // Apply cache busting to all images
+    const areasWithCacheBustedImages = (data || []).map(area => ({
+      ...area,
+      image: area.image ? getImageWithCacheBusting(area.image) : area.image
+    }));
+    
+    return areasWithCacheBustedImages;
   } catch (error) {
     console.error('Error in fetchSpecializedAreas:', error);
     throw error;

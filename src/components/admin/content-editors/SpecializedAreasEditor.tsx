@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -6,17 +7,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Save, Trash2, Upload } from 'lucide-react';
-import { fetchSpecializedAreas, updateSpecializedArea, deleteSpecializedArea } from '@/services/specializedAreaService';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Plus, Save, Trash2 } from 'lucide-react';
+import { fetchSpecializedAreas, updateSpecializedArea, deleteSpecializedArea } from '@/services/cmsService';
+import { getImageWithCacheBusting } from '@/services/serviceUtils';
 
 const SpecializedAreasEditor: React.FC = () => {
   const queryClient = useQueryClient();
   const [newArea, setNewArea] = useState({ title: '', description: '', image: null as File | null });
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
   
-  const { data: areas, isLoading } = useQuery({
+  const { data: areas, isLoading, error } = useQuery({
     queryKey: ['specializedAreas'],
-    queryFn: fetchSpecializedAreas
+    queryFn: fetchSpecializedAreas,
+    meta: {
+      onError: (error: Error) => {
+        console.error('Error fetching specialized areas:', error);
+        toast.error('Failed to load specialized areas');
+      }
+    }
   });
   
   const updateMutation = useMutation({
@@ -103,7 +112,49 @@ const SpecializedAreasEditor: React.FC = () => {
   };
   
   if (isLoading) {
-    return <div className="flex justify-center p-6">Loading specialized areas...</div>;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Specialized Areas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Array(3).fill(null).map((_, i) => (
+              <div key={i} className="border rounded-lg p-5">
+                <Skeleton className="h-6 w-1/3 mb-4" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-full mb-4" />
+                <Skeleton className="h-24 w-full rounded-md mb-4" />
+                <div className="flex justify-between">
+                  <Skeleton className="h-10 w-28" />
+                  <Skeleton className="h-10 w-28" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Specialized Areas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="p-8 text-center">
+            <p className="text-red-500 mb-4">Failed to load specialized areas</p>
+            <Button 
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['specializedAreas'] })}
+            >
+              Retry
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
   
   return (
@@ -140,7 +191,8 @@ const SpecializedAreasEditor: React.FC = () => {
                   <div className="mt-2 flex items-center gap-3">
                     <div className="w-24 h-24 border rounded-md overflow-hidden">
                       <img 
-                        src={previewUrls[area.id] || area.image || '/placeholder.svg'} 
+                        key={area.image} // Add key to force re-render when image changes
+                        src={previewUrls[area.id] || getImageWithCacheBusting(area.image) || '/placeholder.svg'} 
                         alt={area.title} 
                         className="w-full h-full object-cover"
                       />

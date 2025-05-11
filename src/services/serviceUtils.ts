@@ -23,6 +23,21 @@ export async function uploadFileToStorage(
     const uniqueId = Date.now() + '_' + Math.random().toString(36).substring(2, 15);
     const fileName = `${prefix}_${uniqueId}_${file.name.replace(/\s/g, '_')}`;
     
+    // Check if bucket exists, if not, create it
+    const { data: bucketsData, error: bucketsError } = await supabase.storage
+      .listBuckets();
+      
+    if (bucketsError) {
+      console.error('Error checking buckets:', bucketsError);
+      return null;
+    }
+    
+    // If bucket doesn't exist, we can't upload - would require admin rights
+    if (!bucketsData?.find(b => b.name === bucketName)) {
+      console.error(`Bucket ${bucketName} does not exist`);
+      return null;
+    }
+    
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(bucketName)
       .upload(fileName, file, {
@@ -125,7 +140,31 @@ export function isImageFile(file: File): boolean {
 export function getImageWithCacheBusting(url: string): string {
   if (!url) return url;
   
+  // If URL already has a cache-busting parameter, update it
+  if (url.includes('?t=')) {
+    return url.replace(/\?t=\d+/, `?t=${Date.now()}`);
+  }
+  
   // If the URL already has parameters, append the cache-busting parameter
   const separator = url.includes('?') ? '&' : '?';
   return `${url}${separator}t=${Date.now()}`;
+}
+
+/**
+ * Safely transform any external URL to a Supabase storage URL if possible
+ * 
+ * @param url Original image URL
+ * @param bucketName Storage bucket name
+ * @returns Processed URL
+ */
+export function ensureStorageUrl(url: string | null | undefined, bucketName: string = 'content_images'): string {
+  if (!url) return '';
+  
+  // If it's already a storage URL, return it with cache busting
+  if (url.includes(bucketName)) {
+    return getImageWithCacheBusting(url);
+  }
+  
+  // Return external URLs as-is
+  return url;
 }

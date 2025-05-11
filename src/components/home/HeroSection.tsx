@@ -3,18 +3,22 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HeroSection as HeroSectionType } from '@/types/payload-types';
+import { getImageWithCacheBusting } from '@/services/serviceUtils';
 
 interface HeroSectionProps {
   data: HeroSectionType;
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
+  // Apply cache-busting to the background image
+  const backgroundImageUrl = data.backgroundImage ? getImageWithCacheBusting(data.backgroundImage) : '';
+  
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40 z-10" />
         <img 
-          src={data.backgroundImage} 
+          src={backgroundImageUrl} 
           alt={data.title} 
           className="w-full h-full object-cover"
         />

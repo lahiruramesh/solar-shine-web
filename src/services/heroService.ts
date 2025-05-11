@@ -1,28 +1,33 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { HeroSection } from '@/types/payload-types';
-import { uploadFileToStorage } from './serviceUtils';
+import { uploadFileToStorage, getImageWithCacheBusting } from './serviceUtils';
 
 export async function fetchHeroSection(): Promise<HeroSection> {
-  const { data, error } = await supabase
-    .from('hero_sections')
-    .select('*')
-    .limit(1)
-    .single();
-  
-  if (error) {
-    console.error('Error fetching hero section:', error);
+  try {
+    const { data, error } = await supabase
+      .from('hero_sections')
+      .select('*')
+      .limit(1)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching hero section:', error);
+      throw error;
+    }
+    
+    return {
+      id: data.id,
+      title: data.title,
+      subtitle: data.subtitle || '',
+      backgroundImage: getImageWithCacheBusting(data.background_image || ''),
+      ctaText: data.cta_text || '',
+      ctaLink: data.cta_link || ''
+    };
+  } catch (error) {
+    console.error('Error in fetchHeroSection:', error);
     throw error;
   }
-  
-  return {
-    id: data.id,
-    title: data.title,
-    subtitle: data.subtitle || '',
-    backgroundImage: data.background_image,
-    ctaText: data.cta_text,
-    ctaLink: data.cta_link
-  };
 }
 
 export async function updateHeroSection(formData: FormData): Promise<boolean> {

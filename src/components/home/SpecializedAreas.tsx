@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { fetchSpecializedAreas } from '@/services/cmsService';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getImageWithCacheBusting } from '@/services/serviceUtils';
 
 const SpecializedAreas: React.FC = () => {
   const { data: areas, isLoading, error } = useQuery({
@@ -23,10 +24,10 @@ const SpecializedAreas: React.FC = () => {
       <div className="container-custom">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            {hasData ? areas[0]?.title || defaultTitle : defaultTitle}
+            {hasData && areas[0]?.title ? areas[0].title : defaultTitle}
           </h2>
           <p className="text-brand-gray max-w-3xl mx-auto">
-            {hasData ? areas[0]?.description || defaultDescription : defaultDescription}
+            {hasData && areas[0]?.description ? areas[0].description : defaultDescription}
           </p>
         </div>
 

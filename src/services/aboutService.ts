@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { AboutContent } from '@/types/payload-types';
-import { uploadFileToStorage } from './serviceUtils';
+import { uploadFileToStorage, getImageWithCacheBusting } from './serviceUtils';
 
 export async function fetchAboutContent(): Promise<AboutContent> {
   try {
@@ -21,13 +21,13 @@ export async function fetchAboutContent(): Promise<AboutContent> {
       title: data.title,
       subtitle: data.subtitle,
       content: data.content,
-      mainImage: data.main_image,
+      mainImage: getImageWithCacheBusting(data.main_image || ''),
       missionTitle: data.mission_title,
       missionDescription: data.mission_description,
       visionTitle: data.vision_title,
       visionDescription: data.vision_description,
-      imageOne: data.image_one,
-      imageTwo: data.image_two
+      imageOne: getImageWithCacheBusting(data.image_one || ''),
+      imageTwo: getImageWithCacheBusting(data.image_two || '')
     };
   } catch (error) {
     console.error('Error in fetchAboutContent:', error);
@@ -62,7 +62,7 @@ export async function updateAboutContent(formData: FormData): Promise<boolean> {
     }
     
     // Create update data object with required fields
-    const updateData = {
+    const updateData: Record<string, any> = {
       title,
       subtitle,
       content,
