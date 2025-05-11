@@ -61,8 +61,21 @@ export async function updateAboutContent(formData: FormData): Promise<boolean> {
       return false;
     }
     
-    // Create update data object with required fields
-    const updateData: Record<string, any> = {
+    // Create update data object with required fields that match the database schema
+    interface AboutContentUpdateData {
+      title: string;
+      subtitle: string;
+      content: string;
+      mission_title: string;
+      mission_description: string;
+      vision_title: string;
+      vision_description: string;
+      main_image?: string;
+      image_one?: string;
+      image_two?: string;
+    }
+    
+    const updateData: AboutContentUpdateData = {
       title,
       subtitle,
       content,
@@ -85,7 +98,7 @@ export async function updateAboutContent(formData: FormData): Promise<boolean> {
       if (imageValue && imageValue instanceof File && imageValue.size > 0) {
         const imageUrl = await uploadFileToStorage(imageValue, `about_${field.formKey}`, 'content_images');
         if (imageUrl) {
-          updateData[field.dbKey] = imageUrl;
+          updateData[field.dbKey as keyof AboutContentUpdateData] = imageUrl;
         }
       }
     }
