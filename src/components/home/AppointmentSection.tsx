@@ -58,13 +58,24 @@ const AppointmentSection: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Submit button clicked, handleSubmit triggered.");
+    console.log("Form data:", JSON.stringify(formData, null, 2));
+    console.log("Selected date:", selectedDate);
     
     // Validate form data
     if (!formData.name || !formData.phone || !formData.email || !formData.service || !selectedDate || !formData.timeSlot) {
       toast.error('Please fill in all required fields');
+      console.log("Validation failed. Required fields are missing.");
+      if (!formData.name) console.log("Missing: name");
+      if (!formData.phone) console.log("Missing: phone");
+      if (!formData.email) console.log("Missing: email");
+      if (!formData.service) console.log("Missing: service");
+      if (!selectedDate) console.log("Missing: selectedDate");
+      if (!formData.timeSlot) console.log("Missing: timeSlot");
       return;
     }
 
+    console.log("Validation passed. Proceeding with submission.");
     setSubmitting(true);
 
     try {
