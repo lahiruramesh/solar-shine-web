@@ -23,53 +23,50 @@ const ContentSection: React.FC = () => {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 mb-6 gap-1">
-            <TabsTrigger value="navigation">Navigation</TabsTrigger>
-            <TabsTrigger value="footer">Footer</TabsTrigger>
-            <TabsTrigger value="home">Home Hero</TabsTrigger>
-            <TabsTrigger value="specialized">Areas</TabsTrigger>
-            <TabsTrigger value="about">About Us</TabsTrigger>
-            <TabsTrigger value="services">Services</TabsTrigger>
-            <TabsTrigger value="projects">Projects</TabsTrigger>
-            <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
-            <TabsTrigger value="blog">Blog</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="navigation">
-            <NavbarEditor />
-          </TabsContent>
-          
-          <TabsContent value="footer">
-            <FooterEditor />
-          </TabsContent>
-          
-          <TabsContent value="home">
-            <HeroEditor />
-          </TabsContent>
-          
-          <TabsContent value="specialized">
-            <SpecializedAreasEditor />
-          </TabsContent>
-          
-          <TabsContent value="about">
-            <AboutEditor />
-          </TabsContent>
-          
-          <TabsContent value="services">
-            <ServicesEditor />
-          </TabsContent>
-          
-          <TabsContent value="projects">
-            <ProjectsEditor />
-          </TabsContent>
-          
-          <TabsContent value="testimonials">
-            <TestimonialsEditor />
-          </TabsContent>
-          
-          <TabsContent value="blog">
-            <BlogEditor />
-          </TabsContent>
+          <div className="md:grid md:grid-cols-12 gap-x-6">
+            <div className="md:col-span-3 lg:col-span-2 mb-4 md:mb-0">
+              <TabsList className="flex flex-col items-stretch h-full w-full">
+                <TabsTrigger value="navigation">Navigation</TabsTrigger>
+                <TabsTrigger value="footer">Footer</TabsTrigger>
+                <TabsTrigger value="home">Home Hero</TabsTrigger>
+                <TabsTrigger value="specialized">Areas</TabsTrigger>
+                <TabsTrigger value="about">About Us</TabsTrigger>
+                <TabsTrigger value="services">Services</TabsTrigger>
+                <TabsTrigger value="projects">Projects</TabsTrigger>
+                <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
+                <TabsTrigger value="blog">Blog</TabsTrigger>
+              </TabsList>
+            </div>
+            <div className="md:col-span-9 lg:col-span-10">
+              <TabsContent value="navigation">
+                <NavbarEditor />
+              </TabsContent>
+              <TabsContent value="footer">
+                <FooterEditor />
+              </TabsContent>
+              <TabsContent value="home">
+                <HeroEditor />
+              </TabsContent>
+              <TabsContent value="specialized">
+                <SpecializedAreasEditor />
+              </TabsContent>
+              <TabsContent value="about">
+                <AboutEditor />
+              </TabsContent>
+              <TabsContent value="services">
+                <ServicesEditor />
+              </TabsContent>
+              <TabsContent value="projects">
+                <ProjectsEditor />
+              </TabsContent>
+              <TabsContent value="testimonials">
+                <TestimonialsEditor />
+              </TabsContent>
+              <TabsContent value="blog">
+                <BlogEditor />
+              </TabsContent>
+            </div>
+          </div>
         </Tabs>
       </CardContent>
     </Card>
