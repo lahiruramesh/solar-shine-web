@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -29,17 +28,17 @@ const FooterEditor: React.FC = () => {
   const [newSocialLink, setNewSocialLink] = useState({ name: '', icon: '', url: '' });
   const [newFooterLink, setNewFooterLink] = useState({ name: '', url: '', category: 'quick_links' });
   
-  const { data: companyInfo, isLoading: loadingCompany } = useQuery({
+  const { data: companyInfo, isLoading: loadingCompany } = useQuery<CompanyInfo>({
     queryKey: ['footerData'],
     queryFn: fetchFooterData
   });
   
-  const { data: socialLinks, isLoading: loadingSocial } = useQuery({
+  const { data: socialLinks = [], isLoading: loadingSocial } = useQuery<SocialLink[]>({
     queryKey: ['socialLinks'],
     queryFn: fetchSocialLinks
   });
   
-  const { data: footerLinks, isLoading: loadingLinks } = useQuery({
+  const { data: footerLinks = [], isLoading: loadingLinks } = useQuery<FooterLink[]>({
     queryKey: ['footerLinks'],
     queryFn: fetchFooterLinks
   });
@@ -160,8 +159,11 @@ const FooterEditor: React.FC = () => {
                       id="company-name"
                       value={companyInfo.name} 
                       onChange={(e) => {
-                        const updatedInfo = {...companyInfo, name: e.target.value};
-                        updateCompanyMutation.mutate(updatedInfo);
+                        if (companyInfo) {
+                          const updatedInfo = {...companyInfo, name: e.target.value};
+                          queryClient.setQueryData(['footerData'], updatedInfo);
+                          updateCompanyMutation.mutate(updatedInfo);
+                        }
                       }}
                     />
                   </div>
@@ -172,8 +174,11 @@ const FooterEditor: React.FC = () => {
                       id="company-description"
                       value={companyInfo.description} 
                       onChange={(e) => {
-                        const updatedInfo = {...companyInfo, description: e.target.value};
-                        updateCompanyMutation.mutate(updatedInfo);
+                        if (companyInfo) {
+                          const updatedInfo = {...companyInfo, description: e.target.value};
+                          queryClient.setQueryData(['footerData'], updatedInfo);
+                          updateCompanyMutation.mutate(updatedInfo);
+                        }
                       }}
                       rows={3}
                     />
@@ -185,8 +190,11 @@ const FooterEditor: React.FC = () => {
                       id="company-address"
                       value={companyInfo.address} 
                       onChange={(e) => {
-                        const updatedInfo = {...companyInfo, address: e.target.value};
-                        updateCompanyMutation.mutate(updatedInfo);
+                        if (companyInfo) {
+                          const updatedInfo = {...companyInfo, address: e.target.value};
+                          queryClient.setQueryData(['footerData'], updatedInfo);
+                          updateCompanyMutation.mutate(updatedInfo);
+                        }
                       }}
                     />
                   </div>
@@ -198,8 +206,11 @@ const FooterEditor: React.FC = () => {
                       type="email"
                       value={companyInfo.email} 
                       onChange={(e) => {
-                        const updatedInfo = {...companyInfo, email: e.target.value};
-                        updateCompanyMutation.mutate(updatedInfo);
+                        if (companyInfo) {
+                          const updatedInfo = {...companyInfo, email: e.target.value};
+                          queryClient.setQueryData(['footerData'], updatedInfo);
+                          updateCompanyMutation.mutate(updatedInfo);
+                        }
                       }}
                     />
                   </div>
@@ -210,8 +221,11 @@ const FooterEditor: React.FC = () => {
                       id="company-phone"
                       value={companyInfo.phone} 
                       onChange={(e) => {
-                        const updatedInfo = {...companyInfo, phone: e.target.value};
-                        updateCompanyMutation.mutate(updatedInfo);
+                        if (companyInfo) {
+                          const updatedInfo = {...companyInfo, phone: e.target.value};
+                          queryClient.setQueryData(['footerData'], updatedInfo);
+                          updateCompanyMutation.mutate(updatedInfo);
+                        }
                       }}
                     />
                   </div>

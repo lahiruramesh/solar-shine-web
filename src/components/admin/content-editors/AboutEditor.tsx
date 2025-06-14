@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Save, Upload } from 'lucide-react';
 import { fetchAboutContent, updateAboutContent } from '@/services/cmsService';
+import { AboutContent } from '@/types/payload-types';
 
 const AboutEditor: React.FC = () => {
   const queryClient = useQueryClient();
@@ -19,7 +20,7 @@ const AboutEditor: React.FC = () => {
     imageTwo: null
   });
   
-  const { data: about, isLoading } = useQuery({
+  const { data: about, isLoading } = useQuery<AboutContent>({
     queryKey: ['aboutContent'],
     queryFn: fetchAboutContent,
     meta: {
@@ -83,12 +84,15 @@ const AboutEditor: React.FC = () => {
     updateMutation.mutate(formData);
   };
 
-  const handleFieldUpdate = (field: keyof typeof about, value: string) => {
+  const handleFieldUpdate = (field: keyof AboutContent, value: string) => {
     if (!about) return;
     
-    queryClient.setQueryData(['aboutContent'], {
-      ...about,
-      [field]: value
+    queryClient.setQueryData<AboutContent | undefined>(['aboutContent'], (oldData) => {
+      if (!oldData) return;
+      return {
+        ...oldData,
+        [field]: value
+      }
     });
   };
   

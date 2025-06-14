@@ -3,6 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { uploadFileToStorage, getImageWithCacheBusting } from './serviceUtils';
 import { SpecializedArea } from '@/types/payload-types';
 
+export * from './aboutService';
+export * from './appointmentService';
+export * from './blogService';
+export * from './companyService';
+export * from './heroService';
+export * from './navigationService';
+export * from './projectService';
+export * from './serviceCardService';
+export * from './settingsService';
+export * from './testimonialService';
+export * from './serviceUtils';
+
 export async function fetchSpecializedAreas(): Promise<SpecializedArea[]> {
   const { data, error } = await supabase
     .from('specialized_areas')

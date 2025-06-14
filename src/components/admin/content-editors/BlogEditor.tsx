@@ -66,7 +66,7 @@ const BlogEditor: React.FC = () => {
     data: blogPosts = [], 
     isLoading, 
     error 
-  } = useQuery({
+  } = useQuery<BlogPost[]>({
     queryKey: ['blogPosts'],
     queryFn: fetchBlogPosts
   });
