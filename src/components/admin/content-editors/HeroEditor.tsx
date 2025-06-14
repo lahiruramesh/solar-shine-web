@@ -212,7 +212,7 @@ const HeroEditor: React.FC = () => {
               )}
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <Label 
                 htmlFor="hero-image" 
                 className="cursor-pointer bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-md flex items-center gap-2"
@@ -228,7 +228,7 @@ const HeroEditor: React.FC = () => {
                 onChange={handleImageChange}
               />
               {selectedImage && (
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-muted-foreground break-all">
                   {selectedImageInfo
                     ? `${selectedImageInfo.name} (${selectedImageInfo.resolution})`
                     : `${selectedImage.name} (loading...)`}

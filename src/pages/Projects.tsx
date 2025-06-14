@@ -157,11 +157,11 @@ const Projects: React.FC = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
+                        <div className="flex flex-col sm:flex-row sm:justify-between">
                           <span className="text-brand-gray">Client:</span>
                           <span className="font-medium">{project.client}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex flex-col sm:flex-row sm:justify-between">
                           <span className="text-brand-gray">Completed:</span>
                           <span className="font-medium">
                             {new Date(project.completionDate).toLocaleDateString('en-US', {
