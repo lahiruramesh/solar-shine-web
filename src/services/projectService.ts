@@ -1,12 +1,12 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/payload-types';
-import { uploadFileToStorage } from './serviceUtils';
+import { uploadFileToStorage, getImageWithCacheBusting } from './serviceUtils';
 
 export async function fetchProjects(): Promise<Project[]> {
   const { data, error } = await supabase
     .from('projects')
-    .select('*');
+    .select('*')
+    .order('created_at', { ascending: false });
   
   if (error) {
     console.error('Error fetching projects:', error);
@@ -18,66 +18,44 @@ export async function fetchProjects(): Promise<Project[]> {
     title: project.title,
     category: project.category as 'Residential' | 'Commercial' | 'Industrial',
     description: project.description,
-    image: project.image,
+    image: project.image ? getImageWithCacheBusting(project.image) : project.image,
     client: project.client,
     completionDate: project.completion_date
   }));
 }
 
-export async function updateProject(projectData: Project | FormData): Promise<boolean> {
+export async function updateProject(formData: FormData): Promise<boolean> {
   try {
-    // Handle FormData case (with image)
-    if (projectData instanceof FormData) {
-      const projectId = projectData.get('id') as string;
-      let imageUrl = '';
-      
-      // Handle image upload if present
-      const projectImage = projectData.get('image');
-      
-      if (projectImage && projectImage instanceof File && projectImage.size > 0) {
-        imageUrl = await uploadFileToStorage(projectImage, 'project', 'content_images') || '';
-      }
-      
-      // Create update object
-      const updateData: any = {
-        title: projectData.get('title') as string,
-        description: projectData.get('description') as string,
-        category: projectData.get('category') as string,
-        client: projectData.get('client') as string,
-        completion_date: projectData.get('completionDate') as string
-      };
-      
-      // Only add image field if we have a new image
+    const projectId = formData.get('id') as string;
+    if (!projectId) {
+      console.error('Project ID is required for update');
+      return false;
+    }
+
+    const updateData: { [key: string]: any } = {
+      title: formData.get('title') as string,
+      description: formData.get('description') as string,
+      category: formData.get('category') as string,
+      client: formData.get('client') as string,
+      completion_date: formData.get('completionDate') as string
+    };
+    
+    const projectImage = formData.get('image');
+    if (projectImage && projectImage instanceof File && projectImage.size > 0) {
+      const imageUrl = await uploadFileToStorage(projectImage, 'project', 'content_images');
       if (imageUrl) {
         updateData.image = imageUrl;
       }
-      
-      const { error } = await supabase
-        .from('projects')
-        .update(updateData)
-        .eq('id', projectId);
-      
-      if (error) {
-        console.error('Error updating project with image:', error);
-        return false;
-      }
-    } else {
-      // Handle regular project update without image
-      const { error } = await supabase
-        .from('projects')
-        .update({
-          title: projectData.title,
-          description: projectData.description,
-          category: projectData.category,
-          client: projectData.client,
-          completion_date: projectData.completionDate
-        })
-        .eq('id', projectData.id);
-      
-      if (error) {
-        console.error('Error updating project:', error);
-        return false;
-      }
+    }
+    
+    const { error } = await supabase
+      .from('projects')
+      .update(updateData)
+      .eq('id', projectId);
+    
+    if (error) {
+      console.error('Error updating project:', error);
+      return false;
     }
     
     return true;

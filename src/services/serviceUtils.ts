@@ -42,7 +42,7 @@ export async function uploadFileToStorage(
       .from(bucketName)
       .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: true // Replace if exists
+        upsert: false // Use false, since we generate unique names
       });
     
     if (uploadError) {
@@ -55,7 +55,8 @@ export async function uploadFileToStorage(
       .from(bucketName)
       .getPublicUrl(fileName);
     
-    return urlData.publicUrl;
+    // Return with cache busting to ensure immediate refresh on client
+    return getImageWithCacheBusting(urlData.publicUrl);
   } catch (error) {
     console.error(`Error in uploadFileToStorage:`, error);
     return null;
