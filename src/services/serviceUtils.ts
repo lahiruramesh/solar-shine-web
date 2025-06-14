@@ -72,8 +72,11 @@ export async function uploadFileToStorage(
 export function getImageWithCacheBusting(url: string): string {
   if (!url) return '';
   
-  // Add cache-busting parameter to force reload of the image
-  return `${url}?t=${Date.now()}`;
+  // Strip existing query string to avoid multiple params
+  const baseUrl = url.split('?')[0];
+  
+  // Add a new cache-busting parameter
+  return `${baseUrl}?t=${Date.now()}`;
 }
 
 /**

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -15,8 +14,10 @@ const HeroEditor: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedImageInfo, setSelectedImageInfo] = useState<{ name: string; resolution: string } | null>(null);
+  const [currentImageRes, setCurrentImageRes] = useState<string | null>(null);
   
-  const { data: hero, isLoading } = useQuery({
+  const { data: hero, isLoading } = useQuery<HeroSection>({
     queryKey: ['heroSection'],
     queryFn: fetchHeroSection,
     meta: {
@@ -27,12 +28,29 @@ const HeroEditor: React.FC = () => {
     }
   });
   
+  useEffect(() => {
+    if (hero?.backgroundImage) {
+      const img = new Image();
+      img.onload = () => {
+        setCurrentImageRes(`${img.width} x ${img.height}px`);
+      };
+      img.onerror = () => {
+        setCurrentImageRes('N/A');
+      };
+      const cleanUrl = hero.backgroundImage.split('?')[0];
+      img.src = cleanUrl;
+    } else {
+      setCurrentImageRes(null);
+    }
+  }, [hero?.backgroundImage]);
+  
   const updateMutation = useMutation({
     mutationFn: updateHeroSection,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['heroSection'] });
       setSelectedImage(null);
       setPreviewUrl(null);
+      setSelectedImageInfo(null);
       toast.success('Hero section updated successfully');
     },
     onError: () => toast.error('Failed to update hero section')
@@ -42,9 +60,19 @@ const HeroEditor: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setSelectedImage(file);
-      // Create a preview URL for immediate feedback
+      setSelectedImageInfo(null); // Reset while loading
       const objectUrl = URL.createObjectURL(file);
       setPreviewUrl(objectUrl);
+
+      const img = new Image();
+      img.onload = () => {
+        setSelectedImageInfo({
+          name: file.name,
+          resolution: `${img.width} x ${img.height}px`,
+        });
+        URL.revokeObjectURL(img.src);
+      };
+      img.src = objectUrl;
     }
   };
   
@@ -175,10 +203,13 @@ const HeroEditor: React.FC = () => {
             <Label>Background Image</Label>
             <div className="mt-2 mb-4">
               <img 
-                src={previewUrl || hero.backgroundImage} 
+                src={previewUrl || hero.backgroundImage || ''} 
                 alt="Hero background" 
                 className="w-full h-48 object-cover rounded-md border"
               />
+              {currentImageRes && !previewUrl && (
+                <p className="text-sm text-muted-foreground mt-1">Resolution: {currentImageRes}</p>
+              )}
             </div>
             
             <div className="flex items-center gap-3">
@@ -197,8 +228,10 @@ const HeroEditor: React.FC = () => {
                 onChange={handleImageChange}
               />
               {selectedImage && (
-                <span className="text-sm text-green-600">
-                  {selectedImage.name} selected
+                <span className="text-sm text-muted-foreground">
+                  {selectedImageInfo
+                    ? `${selectedImageInfo.name} (${selectedImageInfo.resolution})`
+                    : `${selectedImage.name} (loading...)`}
                 </span>
               )}
             </div>
