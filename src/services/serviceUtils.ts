@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -39,8 +40,8 @@ export async function uploadFileToStorage(
       .from(bucketName)
       .getPublicUrl(fileName);
     
-    // Return with cache busting to ensure immediate refresh on client
-    return getImageWithCacheBusting(urlData.publicUrl);
+    // Return the clean publicUrl. Cache busting will be applied on display.
+    return urlData.publicUrl;
   } catch (error) {
     console.error(`Error in uploadFileToStorage:`, error);
     return null;
