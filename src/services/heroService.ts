@@ -43,7 +43,13 @@ export async function updateHeroSection(formData: FormData): Promise<boolean> {
       return false;
     }
 
-    const dbData: { [key: string]: any } = {
+    const dbData: {
+      title: string;
+      subtitle: string;
+      cta_text: string;
+      cta_link: string;
+      background_image?: string;
+    } = {
       title,
       subtitle: subtitle || '',
       cta_text: ctaText || '',
@@ -51,7 +57,7 @@ export async function updateHeroSection(formData: FormData): Promise<boolean> {
     };
     
     if (background_image) {
-      dbData.background_image = background_image;
+      dbData.background_image = background_image as string;
     }
     
     if (id) {
@@ -83,3 +89,4 @@ export async function updateHeroSection(formData: FormData): Promise<boolean> {
     return false;
   }
 }
+
