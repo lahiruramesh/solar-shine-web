@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { HeroSection } from '@/types/payload-types';
-import { uploadFileToStorage, getImageWithCacheBusting } from './serviceUtils';
+import { processFormDataWithImages } from './serviceUtils';
 
 export async function fetchHeroSection(): Promise<HeroSection> {
   try {
@@ -20,7 +20,7 @@ export async function fetchHeroSection(): Promise<HeroSection> {
       id: data.id,
       title: data.title,
       subtitle: data.subtitle || '',
-      backgroundImage: getImageWithCacheBusting(data.background_image || ''),
+      backgroundImage: data.background_image || '', // Return clean URL, cache busting is handled on display
       ctaText: data.cta_text || '',
       ctaLink: data.cta_link || ''
     };
@@ -32,55 +32,33 @@ export async function fetchHeroSection(): Promise<HeroSection> {
 
 export async function updateHeroSection(formData: FormData): Promise<boolean> {
   try {
-    // Extract and validate the title field
-    const titleValue = formData.get('title');
+    const processedData = await processFormDataWithImages(formData, [
+      { formKey: 'backgroundImage', dbKey: 'background_image', prefix: 'hero_background' }
+    ]);
     
-    if (!titleValue || typeof titleValue !== 'string') {
+    const { id, title, subtitle, ctaText, ctaLink, background_image } = processedData;
+
+    if (!title || typeof title !== 'string') {
       console.error('Title is required and must be a string');
       return false;
     }
-    
-    // Extract other string fields with validation
-    const subtitleValue = formData.get('subtitle');
-    const ctaTextValue = formData.get('ctaText');
-    const ctaLinkValue = formData.get('ctaLink');
-    
-    const subtitle = subtitleValue && typeof subtitleValue === 'string' ? subtitleValue : '';
-    const ctaText = ctaTextValue && typeof ctaTextValue === 'string' ? ctaTextValue : '';
-    const ctaLink = ctaLinkValue && typeof ctaLinkValue === 'string' ? ctaLinkValue : '';
-    
-    // Create the update data object with the validated title
-    const updateData: { 
-      title: string; 
-      subtitle: string; 
-      cta_text: string; 
-      cta_link: string;
-      background_image?: string;
-    } = {
-      title: titleValue,
-      subtitle: subtitle,
-      cta_text: ctaText,
-      cta_link: ctaLink
+
+    const dbData: { [key: string]: any } = {
+      title,
+      subtitle: subtitle || '',
+      cta_text: ctaText || '',
+      cta_link: ctaLink || '',
     };
     
-    // Handle background image upload
-    const backgroundImage = formData.get('backgroundImage');
-    if (backgroundImage && backgroundImage instanceof File && backgroundImage.size > 0) {
-      const imageUrl = await uploadFileToStorage(backgroundImage, 'hero_background', 'content_images');
-      if (imageUrl) {
-        updateData.background_image = imageUrl;
-      }
+    if (background_image) {
+      dbData.background_image = background_image;
     }
-    
-    // Extract and validate the ID
-    const idValue = formData.get('id');
-    const id = idValue ? String(idValue) : null;
     
     if (id) {
       // Update existing hero section
       const { error } = await supabase
         .from('hero_sections')
-        .update(updateData)
+        .update(dbData)
         .eq('id', id);
       
       if (error) {
@@ -91,7 +69,7 @@ export async function updateHeroSection(formData: FormData): Promise<boolean> {
       // Create new hero section
       const { error } = await supabase
         .from('hero_sections')
-        .insert(updateData);
+        .insert(dbData);
       
       if (error) {
         console.error('Error creating hero section:', error);
