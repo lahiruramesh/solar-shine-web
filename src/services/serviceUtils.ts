@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -22,21 +21,6 @@ export async function uploadFileToStorage(
     // Generate a random unique ID for the file to avoid cache issues
     const uniqueId = Date.now() + '_' + Math.random().toString(36).substring(2, 15);
     const fileName = `${prefix}_${uniqueId}_${file.name.replace(/\s/g, '_')}`;
-    
-    // Check if bucket exists, if not, create it
-    const { data: bucketsData, error: bucketsError } = await supabase.storage
-      .listBuckets();
-      
-    if (bucketsError) {
-      console.error('Error checking buckets:', bucketsError);
-      return null;
-    }
-    
-    // If bucket doesn't exist, we can't upload - would require admin rights
-    if (!bucketsData?.find(b => b.name === bucketName)) {
-      console.error(`Bucket ${bucketName} does not exist`);
-      return null;
-    }
     
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(bucketName)
