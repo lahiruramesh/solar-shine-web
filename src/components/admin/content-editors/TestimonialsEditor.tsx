@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Terminal } from 'lucide-react';
 import { fetchTestimonials, updateTestimonial, addTestimonial, deleteTestimonial } from '@/services/testimonialService';
 import { Testimonial } from '@/types/payload-types';
+import { useAuth } from '@/contexts/AuthContext';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const TestimonialsEditor: React.FC = () => {
+  const { isAdmin, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
   const [newTestimonial, setNewTestimonial] = useState({
     text: '',
@@ -20,7 +23,8 @@ const TestimonialsEditor: React.FC = () => {
   
   const { data: testimonials, isLoading } = useQuery({
     queryKey: ['testimonials'],
-    queryFn: fetchTestimonials
+    queryFn: fetchTestimonials,
+    enabled: isAdmin,
   });
   
   const updateMutation = useMutation({
@@ -64,6 +68,30 @@ const TestimonialsEditor: React.FC = () => {
     addMutation.mutate(newTestimonial);
   };
   
+  if (isAuthLoading) {
+    return <div className="flex justify-center p-6">Authenticating...</div>;
+  }
+
+  if (!isAdmin) {
+    return (
+     <Card>
+       <CardHeader>
+         <CardTitle>Unauthorized</CardTitle>
+         <CardDescription>You do not have permission to manage testimonials.</CardDescription>
+       </CardHeader>
+       <CardContent>
+         <Alert variant="destructive">
+           <Terminal className="h-4 w-4" />
+           <AlertTitle>Access Denied</AlertTitle>
+           <AlertDescription>
+             Please contact an administrator if you believe this is an error.
+           </AlertDescription>
+         </Alert>
+       </CardContent>
+     </Card>
+   );
+  }
+
   if (isLoading) {
     return <div className="flex justify-center p-6">Loading testimonials data...</div>;
   }

@@ -1,17 +1,19 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Terminal } from 'lucide-react';
 import { fetchProjects, updateProject, addProject, deleteProject } from '@/services/projectService';
 import { Project } from '@/types/payload-types';
 import ProjectsTable from './project/ProjectsTable';
 import ProjectFormDialog from './project/ProjectFormDialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const ProjectsEditor: React.FC = () => {
+  const { isAdmin, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -19,6 +21,7 @@ const ProjectsEditor: React.FC = () => {
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: fetchProjects,
+    enabled: isAdmin,
     meta: {
       onError: (error: Error) => toast.error(`Failed to load projects: ${error.message}`),
     },
@@ -74,6 +77,30 @@ const ProjectsEditor: React.FC = () => {
     setSelectedProject(project);
     setIsDialogOpen(true);
   };
+
+  if (isAuthLoading) {
+    return <Card><CardContent className="p-6 text-center">Authenticating...</CardContent></Card>;
+  }
+  
+  if (!isAdmin) {
+     return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Unauthorized</CardTitle>
+          <CardDescription>You do not have permission to manage projects.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Access Denied</AlertTitle>
+            <AlertDescription>
+              Please contact an administrator if you believe this is an error.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

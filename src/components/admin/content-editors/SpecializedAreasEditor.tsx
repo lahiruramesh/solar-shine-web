@@ -1,17 +1,19 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Terminal } from 'lucide-react';
 import { fetchSpecializedAreas, updateSpecializedArea, deleteSpecializedArea, addSpecializedArea } from '@/services/cmsService';
 import { SpecializedArea } from '@/types/payload-types';
 import SpecializedAreasTable from './specialized-area/SpecializedAreasTable';
 import SpecializedAreaFormDialog from './specialized-area/SpecializedAreaFormDialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const SpecializedAreasEditor: React.FC = () => {
+  const { isAdmin, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedArea, setSelectedArea] = useState<SpecializedArea | null>(null);
@@ -19,6 +21,7 @@ const SpecializedAreasEditor: React.FC = () => {
   const { data: areas = [], isLoading } = useQuery<SpecializedArea[]>({
     queryKey: ['specializedAreas'],
     queryFn: fetchSpecializedAreas,
+    enabled: isAdmin,
     meta: {
       onError: (err: Error) => toast.error(`Failed to load areas: ${err.message}`),
     }
@@ -74,6 +77,30 @@ const SpecializedAreasEditor: React.FC = () => {
     setSelectedArea(area);
     setIsDialogOpen(true);
   };
+
+  if (isAuthLoading) {
+    return <Card><CardContent className="p-6 text-center">Authenticating...</CardContent></Card>;
+  }
+
+  if (!isAdmin) {
+    return (
+     <Card>
+       <CardHeader>
+         <CardTitle>Unauthorized</CardTitle>
+         <CardDescription>You do not have permission to manage specialized areas.</CardDescription>
+       </CardHeader>
+       <CardContent>
+         <Alert variant="destructive">
+           <Terminal className="h-4 w-4" />
+           <AlertTitle>Access Denied</AlertTitle>
+           <AlertDescription>
+             Please contact an administrator if you believe this is an error.
+           </AlertDescription>
+         </Alert>
+       </CardContent>
+     </Card>
+   );
+ }
 
   return (
     <Card>
