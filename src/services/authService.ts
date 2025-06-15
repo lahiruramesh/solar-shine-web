@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 interface LoginCredentials {
@@ -27,12 +26,11 @@ export const loginAdmin = async (credentials: LoginCredentials): Promise<{ user:
     return { user: null, error: 'Authentication failed' };
   }
 
-  // Success - return user data
+  // Success - return user data without hardcoded role
   return {
     user: {
       id: data.user.id,
       email: data.user.email || '',
-      role: 'admin', // For simplicity, anyone who can log in is an admin
     },
     error: null,
   };
@@ -56,10 +54,10 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
     return null;
   }
   
+  // Return user data without hardcoded role
   return {
     id: data.session.user.id,
     email: data.session.user.email || '',
-    role: 'admin', // For simplicity
   };
 };
 
