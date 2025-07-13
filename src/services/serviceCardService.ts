@@ -1,86 +1,47 @@
-
-import { supabase } from '@/integrations/supabase/client';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
+import { ID, Query } from '@/lib/appwrite';
 import { ServiceCard } from '@/types/payload-types';
 
 export async function fetchServiceCards(): Promise<ServiceCard[]> {
-  const { data, error } = await supabase
-    .from('service_cards')
-    .select('*');
-  
-  if (error) {
+  try {
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.SERVICE_CARDS, [
+      Query.orderAsc('order_index')
+    ]);
+    return response.documents as unknown as ServiceCard[];
+  } catch (error) {
     console.error('Error fetching service cards:', error);
     throw error;
   }
-  
-  return data.map(card => ({
-    id: card.id,
-    title: card.title,
-    description: card.description,
-    icon: card.icon
-  }));
 }
 
-export async function updateServiceCard(serviceCard: ServiceCard): Promise<boolean> {
+export async function updateServiceCard(serviceCard: Partial<ServiceCard>): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('service_cards')
-      .update({
-        title: serviceCard.title,
-        description: serviceCard.description,
-        icon: serviceCard.icon,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', serviceCard.id);
-    
-    if (error) {
-      console.error('Error updating service card:', error);
-      return false;
-    }
-    
+    if (!serviceCard.$id) throw new Error('Service card ID is required for update.');
+    const { $id, ...data } = serviceCard;
+    await databases.updateDocument(DATABASE_ID, COLLECTIONS.SERVICE_CARDS, $id, data);
     return true;
   } catch (error) {
-    console.error('Error in updateServiceCard:', error);
+    console.error('Error updating service card:', error);
     return false;
   }
 }
 
-export async function addServiceCard(serviceCard: { title: string; description: string; icon: string }): Promise<boolean> {
+export async function addServiceCard(serviceCard: Omit<ServiceCard, '$id'>): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('service_cards')
-      .insert({
-        title: serviceCard.title,
-        description: serviceCard.description,
-        icon: serviceCard.icon
-      });
-    
-    if (error) {
-      console.error('Error adding service card:', error);
-      return false;
-    }
-    
+    await databases.createDocument(DATABASE_ID, COLLECTIONS.SERVICE_CARDS, ID.unique(), serviceCard);
     return true;
   } catch (error) {
-    console.error('Error in addServiceCard:', error);
+    console.error('Error adding service card:', error);
     return false;
   }
 }
 
 export async function deleteServiceCard(id: string): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('service_cards')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Error deleting service card:', error);
-      return false;
-    }
-    
+    await databases.deleteDocument(DATABASE_ID, COLLECTIONS.SERVICE_CARDS, id);
     return true;
   } catch (error) {
-    console.error('Error in deleteServiceCard:', error);
+    console.error('Error deleting service card:', error);
     return false;
   }
 }

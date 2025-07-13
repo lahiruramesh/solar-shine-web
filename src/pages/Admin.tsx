@@ -1,45 +1,68 @@
 
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Footer from '@/components/layout/Footer';
 import { useAuth } from '@/contexts/AuthContext';
-import AdminHeader from '@/components/admin/AdminHeader';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+import { Dashboard } from '@/components/admin/Dashboard';
+import { ContentManager } from '@/components/admin/content/ContentManager';
+import { GlobalSettingsManager } from '@/components/admin/content/GlobalSettingsManager';
+import { NavigationManager } from '@/components/admin/content/NavigationManager';
+import { SEOManager } from '@/components/admin/content/SEOManager';
 import AppointmentsSection from '@/components/admin/AppointmentsSection';
 import SEOSection from '@/components/admin/SEOSection';
-import ContentSection from '@/components/admin/ContentSection';
 
 const Admin: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('appointments');
-  const { user, logout } = useAuth();
+  const [activeSection, setActiveSection] = useState('dashboard');
+  const { user } = useAuth();
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'appointments':
+        return <AppointmentsSection />;
+      case 'seo':
+        return <SEOManager />;
+      case 'hero':
+      case 'services':
+      case 'specialized-areas':
+      case 'projects':
+      case 'testimonials':
+      case 'blog':
+      case 'about':
+        return <ContentManager activeSection={activeSection} />;
+      case 'company-info':
+        return (
+          <div className="text-center py-8 text-gray-500">
+            Company Info management coming soon...
+          </div>
+        );
+      case 'navigation':
+        return <NavigationManager />;
+      case 'settings':
+        return <GlobalSettingsManager />;
+      default:
+        return <Dashboard />;
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+          <p className="text-gray-600">Please log in to access the admin panel.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <AdminHeader user={user} onLogout={logout} />
-      <main className="min-h-screen pt-8 pb-12 px-4">
-        <div className="container-custom">
-          <Tabs defaultValue="appointments" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-8">
-              <TabsTrigger value="appointments">Appointments</TabsTrigger>
-              <TabsTrigger value="seo">SEO Settings</TabsTrigger>
-              <TabsTrigger value="content">Content Management</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="appointments" className="space-y-6">
-              <AppointmentsSection />
-            </TabsContent>
-            
-            <TabsContent value="seo" className="space-y-6">
-              <SEOSection />
-            </TabsContent>
-
-            <TabsContent value="content" className="space-y-6">
-              <ContentSection />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </main>
-      <Footer />
-    </>
+    <AdminLayout
+      activeSection={activeSection}
+      onSectionChange={setActiveSection}
+    >
+      {renderContent()}
+    </AdminLayout>
   );
 };
 

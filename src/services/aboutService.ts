@@ -1,138 +1,62 @@
-
-import { supabase } from '@/integrations/supabase/client';
+import { databases, storage } from '@/lib/appwrite';
+import { ID, Query } from 'appwrite';
 import { AboutContent } from '@/types/payload-types';
-import { uploadFileToStorage, getImageWithCacheBusting } from './serviceUtils';
 
-export async function fetchAboutContent(): Promise<AboutContent> {
-  try {
-    const { data, error } = await supabase
-      .from('about_content')
-      .select('*')
-      .limit(1)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching about content:', error);
-      throw error;
-    }
-    
+const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+const COLLECTION_ID = import.meta.env.VITE_APPWRITE_ABOUT_COLLECTION_ID;
+const BUCKET_ID = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
+
+function mapDocToAboutContent(doc: any): AboutContent {
+    const getImageUrl = (id?: string) => id ? (storage.getFilePreview(BUCKET_ID, id) as any).href : undefined;
+
     return {
-      id: data.id,
-      title: data.title,
-      subtitle: data.subtitle,
-      content: data.content,
-      mainImage: getImageWithCacheBusting(data.main_image || ''),
-      missionTitle: data.mission_title,
-      missionDescription: data.mission_description,
-      visionTitle: data.vision_title,
-      visionDescription: data.vision_description,
-      imageOne: getImageWithCacheBusting(data.image_one || ''),
-      imageTwo: getImageWithCacheBusting(data.image_two || '')
+        $id: doc.$id,
+        title: doc.title,
+        subtitle: doc.subtitle,
+        content: doc.content,
+        mission_statement: doc.mission_statement,
+        vision_statement: doc.vision_statement,
+        main_image: getImageUrl(doc.main_image_id),
+        main_image_id: doc.main_image_id,
+        image_one: getImageUrl(doc.image_one_id),
+        image_one_id: doc.image_one_id,
+        image_two: getImageUrl(doc.image_two_id),
+        image_two_id: doc.image_two_id,
+        team_members: doc.team_members ? JSON.parse(doc.team_members) : []
     };
+}
+
+export async function getAboutContent(): Promise<AboutContent | null> {
+  try {
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
+      Query.limit(1)
+    ]);
+    if (response.documents.length > 0) {
+      return mapDocToAboutContent(response.documents[0]);
+    }
+    return null;
   } catch (error) {
-    console.error('Error in fetchAboutContent:', error);
+    console.error('Error fetching about content:', error);
     throw error;
   }
 }
 
-export async function updateAboutContent(formData: FormData): Promise<boolean> {
+export async function updateAboutContent(documentId: string, data: Partial<Omit<AboutContent, '$id' | 'main_image' | 'image_one' | 'image_two'>>): Promise<AboutContent> {
   try {
-    // Validate and extract required fields
-    const titleValue = formData.get('title');
-    const subtitleValue = formData.get('subtitle');
-    const contentValue = formData.get('content');
-    const missionTitleValue = formData.get('missionTitle');
-    const missionDescriptionValue = formData.get('missionDescription');
-    const visionTitleValue = formData.get('visionTitle');
-    const visionDescriptionValue = formData.get('visionDescription');
-    
-    // Convert to strings and validate
-    const title = titleValue && typeof titleValue === 'string' ? titleValue : null;
-    const subtitle = subtitleValue && typeof subtitleValue === 'string' ? subtitleValue : null;
-    const content = contentValue && typeof contentValue === 'string' ? contentValue : null;
-    const missionTitle = missionTitleValue && typeof missionTitleValue === 'string' ? missionTitleValue : null;
-    const missionDescription = missionDescriptionValue && typeof missionDescriptionValue === 'string' ? missionDescriptionValue : null;
-    const visionTitle = visionTitleValue && typeof visionTitleValue === 'string' ? visionTitleValue : null;
-    const visionDescription = visionDescriptionValue && typeof visionDescriptionValue === 'string' ? visionDescriptionValue : null;
-    
-    // Check if required fields exist and are strings
-    if (!title || !subtitle || !content || !missionTitle || !missionDescription || !visionTitle || !visionDescription) {
-      console.error('Required fields are missing or invalid');
-      return false;
+    const dataToUpdate = { ...data };
+    if (dataToUpdate.team_members) {
+        dataToUpdate.team_members = JSON.stringify(dataToUpdate.team_members) as any;
     }
-    
-    // Create update data object with required fields that match the database schema
-    interface AboutContentUpdateData {
-      title: string;
-      subtitle: string;
-      content: string;
-      mission_title: string;
-      mission_description: string;
-      vision_title: string;
-      vision_description: string;
-      main_image?: string;
-      image_one?: string;
-      image_two?: string;
-    }
-    
-    const updateData: AboutContentUpdateData = {
-      title,
-      subtitle,
-      content,
-      mission_title: missionTitle,
-      mission_description: missionDescription,
-      vision_title: visionTitle,
-      vision_description: visionDescription
-    };
-    
-    // Handle image uploads
-    const imageFields = [
-      { formKey: 'mainImage', dbKey: 'main_image' },
-      { formKey: 'imageOne', dbKey: 'image_one' },
-      { formKey: 'imageTwo', dbKey: 'image_two' }
-    ];
-    
-    for (const field of imageFields) {
-      const imageValue = formData.get(field.formKey);
-      
-      if (imageValue && imageValue instanceof File && imageValue.size > 0) {
-        const imageUrl = await uploadFileToStorage(imageValue, `about_${field.formKey}`, 'content_images');
-        if (imageUrl) {
-          updateData[field.dbKey as keyof AboutContentUpdateData] = imageUrl;
-        }
-      }
-    }
-    
-    // Check if this is a create or update operation
-    const idValue = formData.get('id');
-    const id = idValue ? String(idValue) : null;
-    
-    if (id) {
-      // Update existing record
-      const { error } = await supabase
-        .from('about_content')
-        .update(updateData)
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error updating about content:', error);
-        return false;
-      }
-    } else {
-      // Create new record
-      const { error } = await supabase
-        .from('about_content')
-        .insert(updateData);
-      
-      if (error) {
-        console.error('Error creating about content:', error);
-        return false;
-      }
-    }
-    
-    return true;
+
+    const response = await databases.updateDocument(DATABASE_ID, COLLECTION_ID, documentId, dataToUpdate as any);
+    return mapDocToAboutContent(response);
   } catch (error) {
-    console.error('Error in updateAboutContent:', error);
-    return false;
+    console.error('Error updating about content:', error);
+    throw error;
   }
+}
+
+export async function uploadAboutImage(imageFile: File): Promise<string> {
+    const fileResponse = await storage.createFile(BUCKET_ID, ID.unique(), imageFile);
+    return fileResponse.$id;
 }

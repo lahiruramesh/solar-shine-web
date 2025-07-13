@@ -1,122 +1,107 @@
-import { supabase } from '@/integrations/supabase/client';
+import { databases, storage } from '@/lib/appwrite';
+import { ID, Query } from 'appwrite';
 import { Project } from '@/types/payload-types';
-import { uploadFileToStorage, getImageWithCacheBusting } from './serviceUtils';
+
+const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+const COLLECTION_ID = import.meta.env.VITE_APPWRITE_PROJECTS_COLLECTION_ID;
+const BUCKET_ID = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
 
 export async function fetchProjects(): Promise<Project[]> {
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .order('created_at', { ascending: false });
-  
-  if (error) {
+  try {
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
+      Query.orderDesc('$createdAt')
+    ]);
+    return response.documents.map(doc => {
+      const imageUrl = doc.image ? (storage.getFilePreview(BUCKET_ID, doc.image) as any).href : '';
+      return {
+        ...doc,
+        $id: doc.$id,
+        image: imageUrl,
+        completionDate: doc.completionDate ? new Date(doc.completionDate).toISOString().split('T')[0] : '',
+      } as unknown as Project;
+    });
+  } catch (error) {
     console.error('Error fetching projects:', error);
     throw error;
   }
-  
-  return data.map(project => ({
-    id: project.id,
-    title: project.title,
-    category: project.category as 'Residential' | 'Commercial' | 'Industrial',
-    description: project.description,
-    image: project.image ? getImageWithCacheBusting(project.image) : project.image,
-    client: project.client,
-    completionDate: project.completion_date
-  }));
 }
 
-export async function updateProject(formData: FormData): Promise<boolean> {
-  try {
-    const projectId = formData.get('id') as string;
-    if (!projectId) {
-      console.error('Project ID is required for update');
-      return false;
+async function handleImageData(imageFile: File | null): Promise<string | undefined> {
+    if (imageFile && imageFile.size > 0) {
+        const fileResponse = await storage.createFile(BUCKET_ID, ID.unique(), imageFile);
+        return fileResponse.$id;
     }
-
-    const updateData: { [key: string]: any } = {
-      title: formData.get('title') as string,
-      description: formData.get('description') as string,
-      category: formData.get('category') as string,
-      client: formData.get('client') as string,
-      completion_date: formData.get('completionDate') as string
-    };
-    
-    const projectImage = formData.get('image');
-    if (projectImage && projectImage instanceof File && projectImage.size > 0) {
-      const imageUrl = await uploadFileToStorage(projectImage, 'project', 'content_images');
-      if (imageUrl) {
-        updateData.image = imageUrl;
-      }
-    }
-    
-    const { error } = await supabase
-      .from('projects')
-      .update(updateData)
-      .eq('id', projectId);
-    
-    if (error) {
-      console.error('Error updating project:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in updateProject:', error);
-    return false;
-  }
+    return undefined;
 }
 
-export async function addProject(formData: FormData): Promise<boolean> {
-  try {
-    const projectImage = formData.get('image');
-    let imageUrl = '';
-    
-    if (projectImage && projectImage instanceof File && projectImage.size > 0) {
-      imageUrl = await uploadFileToStorage(projectImage, 'project', 'content_images') || '';
-    }
-    
-    if (!imageUrl) {
-      console.error('Failed to upload project image');
-      return false;
-    }
-    
-    const { error } = await supabase
-      .from('projects')
-      .insert({
+function getProjectData(formData: FormData) {
+    return {
         title: formData.get('title') as string,
         description: formData.get('description') as string,
         category: formData.get('category') as string,
         client: formData.get('client') as string,
-        completion_date: formData.get('completionDate') as string,
-        image: imageUrl
-      });
-    
-    if (error) {
-      console.error('Error adding project:', error);
-      return false;
+        completionDate: formData.get('completionDate') as string,
+    };
+}
+
+export async function addProject(formData: FormData): Promise<boolean> {
+    try {
+        const data = getProjectData(formData);
+
+        if (!data.title) {
+            console.error('Title is required.');
+            return false;
+        }
+
+        const imageFile = formData.get('image') as File | null;
+        const imageId = await handleImageData(imageFile);
+        if (imageId) {
+            (data as any).image = imageId;
+        }
+
+        await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), data);
+        return true;
+    } catch (error) {
+        console.error('Error adding project:', error);
+        return false;
+    }
+}
+
+export async function updateProject(formData: FormData): Promise<boolean> {
+  try {
+    const id = formData.get('id') as string;
+    if (!id) {
+        console.error('Project ID is required for update');
+        return false;
     }
     
+    const data = getProjectData(formData);
+
+    if (!data.title) {
+      console.error('Title is required.');
+      return false;
+    }
+
+    const imageFile = formData.get('image') as File | null;
+    const imageId = await handleImageData(imageFile);
+    if (imageId) {
+        (data as any).image = imageId;
+    }
+
+    await databases.updateDocument(DATABASE_ID, COLLECTION_ID, id, data);
     return true;
   } catch (error) {
-    console.error('Error in addProject:', error);
+    console.error('Error updating project:', error);
     return false;
   }
 }
 
 export async function deleteProject(id: string): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('projects')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Error deleting project:', error);
-      return false;
-    }
-    
+    await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
     return true;
   } catch (error) {
-    console.error('Error in deleteProject:', error);
+    console.error('Error deleting project:', error);
     return false;
   }
 }

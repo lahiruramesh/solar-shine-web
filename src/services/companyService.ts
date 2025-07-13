@@ -1,56 +1,31 @@
-
-import { supabase } from '@/integrations/supabase/client';
+import { databases } from '@/lib/appwrite';
+import { ID, Query } from 'appwrite';
 import { CompanyInfo, SocialLink, FooterLink } from '@/types/payload-types';
 
-export async function fetchCompanyInfo(): Promise<CompanyInfo> {
+const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+
+const COMPANY_INFO_COLLECTION_ID = 'company_info';
+const SOCIAL_LINKS_COLLECTION_ID = 'social_links';
+const FOOTER_LINKS_COLLECTION_ID = 'footer_links';
+
+// Company Info Functions
+export async function fetchCompanyInfo(): Promise<CompanyInfo | null> {
   try {
-    const { data, error } = await supabase
-      .from('company_info')
-      .select('*')
-      .limit(1)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching company info:', error);
-      throw error;
-    }
-    
-    return {
-      id: data.id,
-      name: data.name,
-      description: data.description,
-      address: data.address,
-      email: data.email,
-      phone: data.phone
-    };
+    const response = await databases.listDocuments(DATABASE_ID, COMPANY_INFO_COLLECTION_ID, [Query.limit(1)]);
+    return response.documents.length > 0 ? response.documents[0] as unknown as CompanyInfo : null;
   } catch (error) {
-    console.error('Error in fetchCompanyInfo:', error);
+    console.error('Error fetching company info:', error);
     throw error;
   }
 }
 
 export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('company_info')
-      .update({
-        name: info.name,
-        description: info.description,
-        address: info.address,
-        email: info.email,
-        phone: info.phone,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', info.id);
-    
-    if (error) {
-      console.error('Error updating company info:', error);
-      return false;
-    }
-    
+    const { $id, ...data } = info;
+    await databases.updateDocument(DATABASE_ID, COMPANY_INFO_COLLECTION_ID, $id, data);
     return true;
   } catch (error) {
-    console.error('Error in updateCompanyInfo:', error);
+    console.error('Error updating company info:', error);
     return false;
   }
 }
@@ -58,180 +33,86 @@ export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
 // Social Links Functions
 export async function fetchSocialLinks(): Promise<SocialLink[]> {
   try {
-    const { data, error } = await supabase
-      .from('social_links')
-      .select('*');
-    
-    if (error) {
-      console.error('Error fetching social links:', error);
-      throw error;
-    }
-    
-    return (data || []).map(link => ({
-      id: link.id,
-      name: link.name,
-      icon: link.icon,
-      url: link.url
-    }));
+    const response = await databases.listDocuments(DATABASE_ID, SOCIAL_LINKS_COLLECTION_ID, [Query.orderAsc('order')]);
+    return response.documents as unknown as SocialLink[];
   } catch (error) {
-    console.error('Error in fetchSocialLinks:', error);
+    console.error('Error fetching social links:', error);
     return [];
   }
 }
 
 export async function updateSocialLink(link: SocialLink): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('social_links')
-      .update({
-        name: link.name,
-        icon: link.icon,
-        url: link.url,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', link.id);
-    
-    if (error) {
-      console.error('Error updating social link:', error);
-      return false;
-    }
-    
+    const { $id, ...data } = link;
+    await databases.updateDocument(DATABASE_ID, SOCIAL_LINKS_COLLECTION_ID, $id, data);
     return true;
   } catch (error) {
-    console.error('Error in updateSocialLink:', error);
+    console.error('Error updating social link:', error);
     return false;
   }
 }
 
-export async function addSocialLink(link: { name: string; icon: string; url: string }): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('social_links')
-      .insert({
-        name: link.name,
-        icon: link.icon,
-        url: link.url
-      });
-    
-    if (error) {
+export async function addSocialLink(link: Omit<SocialLink, '$id'>): Promise<boolean> {
+    try {
+      await databases.createDocument(DATABASE_ID, SOCIAL_LINKS_COLLECTION_ID, ID.unique(), link);
+      return true;
+    } catch (error) {
       console.error('Error adding social link:', error);
       return false;
     }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in addSocialLink:', error);
-    return false;
   }
-}
-
-export async function deleteSocialLink(id: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('social_links')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
+  
+  export async function deleteSocialLink(id: string): Promise<boolean> {
+    try {
+      await databases.deleteDocument(DATABASE_ID, SOCIAL_LINKS_COLLECTION_ID, id);
+      return true;
+    } catch (error) {
       console.error('Error deleting social link:', error);
       return false;
     }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in deleteSocialLink:', error);
-    return false;
   }
-}
 
 // Footer Links Functions
 export async function fetchFooterLinks(): Promise<FooterLink[]> {
   try {
-    const { data, error } = await supabase
-      .from('footer_links')
-      .select('*');
-    
-    if (error) {
-      console.error('Error fetching footer links:', error);
-      throw error;
-    }
-    
-    return (data || []).map(link => ({
-      id: link.id,
-      name: link.name,
-      url: link.url,
-      category: link.category
-    }));
+    const response = await databases.listDocuments(DATABASE_ID, FOOTER_LINKS_COLLECTION_ID, [Query.orderAsc('order')]);
+    return response.documents as unknown as FooterLink[];
   } catch (error) {
-    console.error('Error in fetchFooterLinks:', error);
+    console.error('Error fetching footer links:', error);
     return [];
   }
 }
 
 export async function updateFooterLink(link: FooterLink): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('footer_links')
-      .update({
-        name: link.name,
-        url: link.url,
-        category: link.category,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', link.id);
-    
-    if (error) {
-      console.error('Error updating footer link:', error);
-      return false;
-    }
-    
+    const { $id, ...data } = link;
+    await databases.updateDocument(DATABASE_ID, FOOTER_LINKS_COLLECTION_ID, $id, data);
     return true;
   } catch (error) {
-    console.error('Error in updateFooterLink:', error);
+    console.error('Error updating footer link:', error);
     return false;
   }
 }
 
-export async function addFooterLink(link: { name: string; url: string; category: string }): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('footer_links')
-      .insert({
-        name: link.name,
-        url: link.url,
-        category: link.category
-      });
-    
-    if (error) {
+export async function addFooterLink(link: Omit<FooterLink, '$id'>): Promise<boolean> {
+    try {
+      await databases.createDocument(DATABASE_ID, FOOTER_LINKS_COLLECTION_ID, ID.unique(), link);
+      return true;
+    } catch (error) {
       console.error('Error adding footer link:', error);
       return false;
     }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in addFooterLink:', error);
-    return false;
   }
-}
-
-export async function deleteFooterLink(id: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('footer_links')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
+  
+  export async function deleteFooterLink(id: string): Promise<boolean> {
+    try {
+      await databases.deleteDocument(DATABASE_ID, FOOTER_LINKS_COLLECTION_ID, id);
+      return true;
+    } catch (error) {
       console.error('Error deleting footer link:', error);
       return false;
     }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in deleteFooterLink:', error);
-    return false;
   }
-}
 
 // Alias for backward compatibility
 export const fetchFooterData = fetchCompanyInfo;

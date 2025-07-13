@@ -62,6 +62,7 @@ const ProjectsEditor: React.FC = () => {
 
   const handleSave = (formData: FormData) => {
     if (selectedProject) {
+      formData.append('id', selectedProject.$id);
       updateMutation.mutate(formData);
     } else {
       addMutation.mutate(formData);
@@ -121,7 +122,7 @@ const ProjectsEditor: React.FC = () => {
             <Skeleton className="h-12 w-full" />
           </div>
         ) : (
-          <ProjectsTable projects={projects} onEdit={handleEdit} onDelete={deleteMutation.mutate} />
+          <ProjectsTable projects={projects} onEdit={handleEdit} onDelete={(id: string) => deleteMutation.mutate(id)} />
         )}
         <ProjectFormDialog
           isOpen={isDialogOpen}

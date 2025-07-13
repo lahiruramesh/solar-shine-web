@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -7,12 +6,12 @@ import { format } from 'date-fns';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchAvailableTimeSlots, createAppointment } from '@/services/appointmentService';
 import { cn } from '@/lib/utils';
 
 const AppointmentSection: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [availableTimeSlots, setAvailableTimeSlots] = useState<{id: string, time_slot: string}[]>([]);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<{ $id: string, time_slot: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -28,24 +27,20 @@ const AppointmentSection: React.FC = () => {
   useEffect(() => {
     if (!selectedDate) return;
 
-    const fetchAvailableTimeSlots = async () => {
+    const fetchSlots = async () => {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('available_time_slots')
-        .select('id, time_slot')
-        .eq('date', format(selectedDate, 'yyyy-MM-dd'))
-        .eq('is_booked', false);
-
-      if (error) {
+      try {
+        const slots = await fetchAvailableTimeSlots(format(selectedDate, 'yyyy-MM-dd'));
+        setAvailableTimeSlots(slots.map(s => ({ $id: s.$id, time_slot: s.time_slot })));
+      } catch (error) {
         console.error('Error fetching time slots:', error);
         toast.error('Failed to fetch available time slots');
-      } else {
-        setAvailableTimeSlots(data || []);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
-    fetchAvailableTimeSlots();
+    fetchSlots();
   }, [selectedDate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -58,52 +53,27 @@ const AppointmentSection: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submit button clicked, handleSubmit triggered.");
-    console.log("Form data:", JSON.stringify(formData, null, 2));
-    console.log("Selected date:", selectedDate);
     
-    // Validate form data
     if (!formData.name || !formData.phone || !formData.email || !formData.service || !selectedDate || !formData.timeSlot) {
       toast.error('Please fill in all required fields');
-      console.log("Validation failed. Required fields are missing.");
-      if (!formData.name) console.log("Missing: name");
-      if (!formData.phone) console.log("Missing: phone");
-      if (!formData.email) console.log("Missing: email");
-      if (!formData.service) console.log("Missing: service");
-      if (!selectedDate) console.log("Missing: selectedDate");
-      if (!formData.timeSlot) console.log("Missing: timeSlot");
       return;
     }
 
-    console.log("Validation passed. Proceeding with submission.");
     setSubmitting(true);
 
     try {
-      // Save the appointment to the database
-      const { error } = await supabase
-        .from('appointments')
-        .insert({
-          name: formData.name,
-          phone: formData.phone,
-          email: formData.email,
-          service: formData.service,
-          date: format(selectedDate, 'yyyy-MM-dd'),
-          time_slot: formData.timeSlot,
-          message: formData.message,
-          status: 'pending'
-        });
+      const appointmentData = {
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        service: formData.service,
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        time_slot: formData.timeSlot,
+        message: formData.message,
+      };
+      
+      await createAppointment(appointmentData);
 
-      if (error) throw error;
-
-      // Update the time slot as booked
-      const { error: updateError } = await supabase
-        .from('available_time_slots')
-        .update({ is_booked: true })
-        .eq('id', formData.timeSlot);
-
-      if (updateError) throw updateError;
-
-      // Reset form
       setFormData({
         name: '',
         phone: '',
@@ -279,7 +249,7 @@ const AppointmentSection: React.FC = () => {
                             : 'Select a time'}
                     </option>
                     {availableTimeSlots.map(slot => (
-                      <option key={slot.id} value={slot.id}>
+                      <option key={slot.$id} value={slot.$id}>
                         {slot.time_slot}
                       </option>
                     ))}

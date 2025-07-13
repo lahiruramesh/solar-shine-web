@@ -230,10 +230,10 @@ const BlogEditor: React.FC = () => {
                   <TableRow key={post.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center">
-                        {post.coverImage && (
+                        {post.featured_image && (
                           <div className="h-8 w-8 mr-2 overflow-hidden rounded">
                             <img 
-                              src={post.coverImage} 
+                              src={post.featured_image} 
                               alt={post.title} 
                               className="h-full w-full object-cover"
                             />
@@ -351,10 +351,10 @@ const BlogEditor: React.FC = () => {
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="coverImage">Cover Image</Label>
+                <Label htmlFor="featured_image">Cover Image</Label>
                 <Input
-                  id="coverImage"
-                  name="coverImage"
+                  id="featured_image"
+                  name="featured_image"
                   type="file"
                   accept="image/*"
                 />
@@ -439,12 +439,12 @@ const BlogEditor: React.FC = () => {
                   />
                 </div>
                 
-                {selectedPost.coverImage && (
+                {selectedPost.featured_image && (
                   <div className="mb-2">
                     <p className="text-sm font-medium mb-1">Current Cover Image:</p>
                     <div className="h-32 w-full overflow-hidden rounded border">
                       <img 
-                        src={selectedPost.coverImage} 
+                        src={selectedPost.featured_image} 
                         alt="Cover" 
                         className="h-full w-full object-cover object-center"
                       />
@@ -453,10 +453,10 @@ const BlogEditor: React.FC = () => {
                 )}
                 
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-coverImage">New Cover Image (optional)</Label>
+                  <Label htmlFor="edit-featured_image">New Cover Image (optional)</Label>
                   <Input
-                    id="edit-coverImage"
-                    name="coverImage"
+                    id="edit-featured_image"
+                    name="featured_image"
                     type="file"
                     accept="image/*"
                   />

@@ -1,8 +1,7 @@
 
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { getCurrentUser, AuthUser, loginAdmin, logoutAdmin } from '@/services/authService';
+import { getCurrentUser, AuthUser, loginAdmin, logoutAdmin, registerAdmin } from '@/services/authService';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 interface UserProfile extends AuthUser {
   role: string;
@@ -14,6 +13,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -29,19 +29,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         const currentUser = await getCurrentUser();
         if (currentUser) {
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', currentUser.id)
-            .single();
-
-          if (error || !profile) {
-            console.error('Error fetching user profile or profile not found:', error);
-            await logoutAdmin(); 
-            setUser(null);
-          } else {
-            setUser({ ...currentUser, role: profile.role });
-          }
+          // For now, all users are admins. In the future, you can implement role management
+          setUser({ ...currentUser, role: 'admin' });
         } else {
           setUser(null);
         }
@@ -66,24 +55,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return false;
       }
       
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', authUser.id)
-        .single();
-      
-      if (profileError || !profile) {
-        toast.error('Could not retrieve user profile. Please contact support.');
-        await logoutAdmin();
-        setUser(null);
-        return false;
-      }
-
-      setUser({ ...authUser, role: profile.role });
+      // For now, all users are admins. You can implement role management later
+      setUser({ ...authUser, role: 'admin' });
       toast.success('Login successful');
       return true;
     } catch (error) {
       console.error('Login error:', error);
+      toast.error('An unexpected error occurred');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      const { user: authUser, error } = await registerAdmin({ name, email, password });
+      
+      if (error || !authUser) {
+        toast.error(error || 'Registration failed');
+        return false;
+      }
+      
+      // For now, all users are admins
+      setUser({ ...authUser, role: 'admin' });
+      toast.success('Registration successful');
+      return true;
+    } catch (error) {
+      console.error('Registration error:', error);
       toast.error('An unexpected error occurred');
       return false;
     } finally {
@@ -118,6 +118,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
         login,
+        register,
         logout,
       }}
     >

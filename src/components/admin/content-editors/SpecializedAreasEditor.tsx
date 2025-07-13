@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Terminal } from 'lucide-react';
-import { fetchSpecializedAreas, updateSpecializedArea, deleteSpecializedArea, addSpecializedArea } from '@/services/cmsService';
+import { fetchSpecializedAreas, updateSpecializedArea, deleteSpecializedArea, addSpecializedArea } from '@/services/specializedAreaService';
 import { SpecializedArea } from '@/types/payload-types';
 import SpecializedAreasTable from './specialized-area/SpecializedAreasTable';
 import SpecializedAreaFormDialog from './specialized-area/SpecializedAreaFormDialog';
@@ -52,7 +52,7 @@ const SpecializedAreasEditor: React.FC = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteSpecializedArea,
+    mutationFn: (id: string) => deleteSpecializedArea(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['specializedAreas'] });
       toast.success('Area deleted successfully');
@@ -62,6 +62,7 @@ const SpecializedAreasEditor: React.FC = () => {
   
   const handleSave = (formData: FormData) => {
     if (selectedArea) {
+      formData.append('id', selectedArea.$id);
       updateMutation.mutate(formData);
     } else {
       addMutation.mutate(formData);
@@ -121,7 +122,7 @@ const SpecializedAreasEditor: React.FC = () => {
             <Skeleton className="h-12 w-full" />
           </div>
         ) : (
-          <SpecializedAreasTable areas={areas} onEdit={handleEdit} onDelete={deleteMutation.mutate} />
+          <SpecializedAreasTable areas={areas} onEdit={handleEdit} onDelete={(id: string) => deleteMutation.mutate(id)} />
         )}
         <SpecializedAreaFormDialog
           isOpen={isDialogOpen}

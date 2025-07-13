@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -10,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent } from "@/components/ui/card";
-import { supabase } from '@/integrations/supabase/client';
+import { createAppointment, AppointmentData } from '@/services/appointmentService';
 
 // In a real implementation, this would come from PayloadCMS
 const contactData = {
@@ -67,10 +66,23 @@ const Contact: React.FC = () => {
   });
 
   const onSubmit = async (data: FormValues) => {
-    console.log("Form submitted:", data);
-    // In a real app, this would send the data to your backend
-    alert("Thank you for your message! We will contact you soon.");
-    form.reset();
+    try {
+      const appointmentData: Omit<AppointmentData, '$id' | '$createdAt' | 'status'> = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        service: data.service,
+        message: data.message,
+        date: new Date().toISOString(), // Or a selected date
+        time_slot: 'not-specified', // Or a selected time slot
+      };
+      await createAppointment(appointmentData);
+      alert("Thank you for your message! We will contact you soon.");
+      form.reset();
+    } catch (error) {
+      console.error("Failed to submit contact form:", error);
+      alert("Failed to send message. Please try again later.");
+    }
   };
 
   return (

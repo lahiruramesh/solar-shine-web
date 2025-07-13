@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -70,11 +69,11 @@ const ServicesEditor: React.FC = () => {
         <CardContent>
           <div className="space-y-6">
             {services?.map((service: ServiceCard) => (
-              <div key={service.id} className="border rounded-lg p-5 space-y-4">
+              <div key={service.$id} className="border rounded-lg p-5 space-y-4">
                 <div>
-                  <Label htmlFor={`title-${service.id}`}>Title</Label>
+                  <Label htmlFor={`title-${service.$id}`}>Title</Label>
                   <Input 
-                    id={`title-${service.id}`}
+                    id={`title-${service.$id}`}
                     value={service.title} 
                     onChange={(e) => {
                       const updatedService = {...service, title: e.target.value};
@@ -84,9 +83,9 @@ const ServicesEditor: React.FC = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor={`description-${service.id}`}>Description</Label>
+                  <Label htmlFor={`description-${service.$id}`}>Description</Label>
                   <Textarea 
-                    id={`description-${service.id}`}
+                    id={`description-${service.$id}`}
                     value={service.description || ''} 
                     onChange={(e) => {
                       const updatedService = {...service, description: e.target.value};
@@ -97,9 +96,9 @@ const ServicesEditor: React.FC = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor={`icon-${service.id}`}>Icon Name</Label>
+                  <Label htmlFor={`icon-${service.$id}`}>Icon Name</Label>
                   <Input 
-                    id={`icon-${service.id}`}
+                    id={`icon-${service.$id}`}
                     value={service.icon || ''} 
                     onChange={(e) => {
                       const updatedService = {...service, icon: e.target.value};
@@ -115,7 +114,7 @@ const ServicesEditor: React.FC = () => {
                 <div className="flex justify-end">
                   <Button 
                     variant="destructive"
-                    onClick={() => deleteMutation.mutate(service.id)}
+                    onClick={() => deleteMutation.mutate(service.$id)}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete Service

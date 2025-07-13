@@ -45,7 +45,7 @@ const BlogSection: React.FC<BlogSectionProps> = ({ posts }) => {
             >
               <div className="h-48 overflow-hidden">
                 <img 
-                  src={post.coverImage} 
+                  src={post.featured_image} 
                   alt={post.title} 
                   className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
                 />

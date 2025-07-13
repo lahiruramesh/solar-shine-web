@@ -1,0 +1,290 @@
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Save, Loader2, Image as ImageIcon, Link, Type } from 'lucide-react';
+import { toast } from 'sonner';
+import { fetchHeroSection, updateHeroSection } from '@/services/heroService';
+import { HeroSection } from '@/types/payload-types';
+
+export const HeroSectionManager: React.FC = () => {
+  const [heroData, setHeroData] = useState<HeroSection>({
+    title: '',
+    subtitle: '',
+    backgroundImage: '',
+    ctaText: '',
+    ctaLink: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string>('');
+
+  useEffect(() => {
+    loadHeroSection();
+  }, []);
+
+  const loadHeroSection = async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchHeroSection();
+      setHeroData(data);
+      if (data.backgroundImage) {
+        setPreviewImage(data.backgroundImage);
+      }
+      toast.success('Hero section loaded successfully');
+    } catch (error) {
+      console.error('Error loading hero section:', error);
+      toast.error('Failed to load hero section');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!heroData.title.trim()) {
+      toast.error('Title is required');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const formData = new FormData();
+      
+      if (heroData.$id) {
+        formData.append('id', heroData.$id);
+      }
+      formData.append('title', heroData.title);
+      formData.append('subtitle', heroData.subtitle || '');
+      formData.append('ctaText', heroData.ctaText || '');
+      formData.append('ctaLink', heroData.ctaLink || '');
+      
+      if (backgroundImageFile) {
+        formData.append('backgroundImage', backgroundImageFile);
+      }
+
+      const success = await updateHeroSection(formData);
+      
+      if (success) {
+        toast.success('Hero section saved successfully');
+        loadHeroSection(); // Reload to get updated data
+      } else {
+        toast.error('Failed to save hero section');
+      }
+    } catch (error) {
+      console.error('Error saving hero section:', error);
+      toast.error('Failed to save hero section');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleChange = (field: keyof HeroSection, value: string) => {
+    setHeroData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBackgroundImageFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading hero section...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Type className="h-6 w-6" />
+            Hero Section Manager
+          </h2>
+          <p className="text-muted-foreground">
+            Manage the main hero section content on your homepage
+          </p>
+        </div>
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
+            </>
+          )}
+        </Button>
+      </div>
+
+      <div className="grid gap-6">
+        {/* Content Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Type className="h-5 w-5" />
+              Hero Content
+            </CardTitle>
+            <CardDescription>
+              Main headline and descriptive content for your hero section
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                value={heroData.title}
+                onChange={(e) => handleChange('title', e.target.value)}
+                placeholder="Enter hero title"
+                maxLength={255}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="subtitle">Subtitle</Label>
+              <Textarea
+                id="subtitle"
+                value={heroData.subtitle || ''}
+                onChange={(e) => handleChange('subtitle', e.target.value)}
+                placeholder="Enter hero subtitle"
+                maxLength={500}
+                rows={3}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Call to Action */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Link className="h-5 w-5" />
+              Call to Action
+            </CardTitle>
+            <CardDescription>
+              Button text and link for the hero section
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="ctaText">Button Text</Label>
+                <Input
+                  id="ctaText"
+                  value={heroData.ctaText || ''}
+                  onChange={(e) => handleChange('ctaText', e.target.value)}
+                  placeholder="Get Started"
+                  maxLength={100}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ctaLink">Button Link</Label>
+                <Input
+                  id="ctaLink"
+                  value={heroData.ctaLink || ''}
+                  onChange={(e) => handleChange('ctaLink', e.target.value)}
+                  placeholder="/contact"
+                  maxLength={255}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Background Image */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5" />
+              Background Image
+            </CardTitle>
+            <CardDescription>
+              Upload a background image for the hero section
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="backgroundImage">Background Image</Label>
+              <Input
+                id="backgroundImage"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="cursor-pointer"
+              />
+            </div>
+            {previewImage && (
+              <div className="space-y-2">
+                <Label>Preview</Label>
+                <div className="border rounded-lg overflow-hidden">
+                  <img
+                    src={previewImage}
+                    alt="Background preview"
+                    className="w-full h-48 object-cover"
+                  />
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Preview Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Preview</CardTitle>
+            <CardDescription>
+              Preview how your hero section will look
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div 
+              className="relative h-64 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center"
+              style={{
+                backgroundImage: previewImage ? `url(${previewImage})` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
+            >
+              <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+              <div className="relative text-center text-white space-y-4 p-6">
+                <h1 className="text-3xl font-bold">
+                  {heroData.title || 'Your Hero Title'}
+                </h1>
+                {heroData.subtitle && (
+                  <p className="text-lg opacity-90">
+                    {heroData.subtitle}
+                  </p>
+                )}
+                {heroData.ctaText && (
+                  <Button className="mt-4">
+                    {heroData.ctaText}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};

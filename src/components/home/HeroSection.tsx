@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HeroSection as HeroSectionType } from '@/types/payload-types';
-import { getImageWithCacheBusting } from '@/services/serviceUtils';
+import { getImageWithCacheBusting } from '@/lib/utils';
 
 interface HeroSectionProps {
   data: HeroSectionType;

@@ -1,10 +1,8 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { fetchSpecializedAreas } from '@/services/cmsService';
+import { fetchSpecializedAreas } from '@/services/specializedAreaService';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getImageWithCacheBusting } from '@/services/serviceUtils';
 
 const SpecializedAreas: React.FC = () => {
   const { data: areas, isLoading, error } = useQuery({
@@ -49,7 +47,7 @@ const SpecializedAreas: React.FC = () => {
             // Map through actual data
             areas.map((area, index) => (
               <motion.div
-                key={area.id}
+                key={area.$id}
                 className="bg-white rounded-lg shadow-lg overflow-hidden"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}

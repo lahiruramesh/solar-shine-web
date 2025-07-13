@@ -1,29 +1,27 @@
-
-import { supabase } from '@/integrations/supabase/client';
+import { databases } from '@/lib/appwrite';
+import { ID } from 'appwrite';
 import { NavigationItem } from '@/types/payload-types';
+
+const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+const NAVIGATION_COLLECTION_ID = 'navigation_items';
 
 export async function fetchNavigationItems(): Promise<NavigationItem[]> {
   try {
-    const { data, error } = await supabase
-      .from('navigation_items')
-      .select('*')
-      .order('order', { ascending: true });
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      NAVIGATION_COLLECTION_ID
+    );
     
-    if (error) {
-      console.error('Error fetching navigation items:', error);
-      throw error;
-    }
-    
-    if (!data) {
+    if (!response.documents) {
       return [];
     }
     
-    return data.map(item => ({
-      id: item.id,
+    return response.documents.map(item => ({
+      $id: item.$id,
       title: item.title,
       path: item.path,
       order: item.order
-    }));
+    })).sort((a, b) => a.order - b.order);
   } catch (error) {
     console.error('Error in fetchNavigationItems:', error);
     return [];
@@ -32,19 +30,16 @@ export async function fetchNavigationItems(): Promise<NavigationItem[]> {
 
 export async function updateNavigationItem(item: NavigationItem): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('navigation_items')
-      .update({
+    await databases.updateDocument(
+      DATABASE_ID,
+      NAVIGATION_COLLECTION_ID,
+      item.$id,
+      {
         title: item.title,
         path: item.path,
         order: item.order
-      })
-      .eq('id', item.id);
-    
-    if (error) {
-      console.error('Error updating navigation item:', error);
-      return false;
-    }
+      }
+    );
     
     return true;
   } catch (error) {
@@ -56,31 +51,27 @@ export async function updateNavigationItem(item: NavigationItem): Promise<boolea
 export async function addNavigationItem(item: { title: string; path: string }): Promise<boolean> {
   try {
     // Get the current max order value
-    const { data: orderData, error: orderError } = await supabase
-      .from('navigation_items')
-      .select('order')
-      .order('order', { ascending: false })
-      .limit(1);
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      NAVIGATION_COLLECTION_ID
+    );
     
-    if (orderError) {
-      console.error('Error fetching navigation items for order:', orderError);
-      return false;
-    }
+    const maxOrder = response.documents.length > 0 
+      ? Math.max(...response.documents.map(doc => doc.order || 0))
+      : 0;
     
-    const newOrder = (orderData && orderData.length > 0) ? orderData[0].order + 1 : 1;
+    const newOrder = maxOrder + 1;
     
-    const { error } = await supabase
-      .from('navigation_items')
-      .insert({
+    await databases.createDocument(
+      DATABASE_ID,
+      NAVIGATION_COLLECTION_ID,
+      ID.unique(),
+      {
         title: item.title,
         path: item.path,
         order: newOrder
-      });
-    
-    if (error) {
-      console.error('Error adding navigation item:', error);
-      return false;
-    }
+      }
+    );
     
     return true;
   } catch (error) {
@@ -91,15 +82,11 @@ export async function addNavigationItem(item: { title: string; path: string }): 
 
 export async function deleteNavigationItem(id: string): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('navigation_items')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Error deleting navigation item:', error);
-      return false;
-    }
+    await databases.deleteDocument(
+      DATABASE_ID,
+      NAVIGATION_COLLECTION_ID,
+      id
+    );
     
     return true;
   } catch (error) {

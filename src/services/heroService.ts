@@ -1,86 +1,96 @@
-
-import { supabase } from '@/integrations/supabase/client';
+import { databases, storage, DATABASE_ID, STORAGE_BUCKET_ID, ID, Query } from '@/lib/appwrite';
 import { HeroSection } from '@/types/payload-types';
-import { processFormDataWithImages } from './serviceUtils';
+
+const HERO_COLLECTION_ID = 'hero_section';
 
 export async function fetchHeroSection(): Promise<HeroSection> {
   try {
-    const { data, error } = await supabase
-      .from('hero_sections')
-      .select('*')
-      .limit(1)
-      .single();
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      HERO_COLLECTION_ID,
+      [Query.limit(1)]
+    );
     
-    if (error) {
-      console.error('Error fetching hero section:', error);
-      throw error;
+    if (response.documents.length > 0) {
+      const doc = response.documents[0];
+      let imageUrl = '';
+      if (doc.background_image) {
+        imageUrl = storage.getFilePreview(STORAGE_BUCKET_ID, doc.background_image);
+      }
+      
+      return {
+        $id: doc.$id,
+        title: doc.title,
+        subtitle: doc.subtitle || '',
+        backgroundImage: imageUrl,
+        ctaText: doc.cta_text || '',
+        ctaLink: doc.cta_url || ''
+      };
+    } else {
+      // Return a default empty hero section if none exists
+      return {
+        title: '',
+        subtitle: '',
+        backgroundImage: '',
+        ctaText: '',
+        ctaLink: ''
+      };
     }
-    
-    return {
-      id: data.id,
-      title: data.title,
-      subtitle: data.subtitle || '',
-      backgroundImage: data.background_image || '', // Return clean URL, cache busting is handled on display
-      ctaText: data.cta_text || '',
-      ctaLink: data.cta_link || ''
-    };
   } catch (error) {
-    console.error('Error in fetchHeroSection:', error);
+    console.error('Error fetching hero section:', error);
     throw error;
   }
 }
 
 export async function updateHeroSection(formData: FormData): Promise<boolean> {
   try {
-    const processedData = await processFormDataWithImages(formData, [
-      { formKey: 'backgroundImage', dbKey: 'background_image', prefix: 'hero_background' }
-    ]);
-    
-    const { id, title, subtitle, ctaText, ctaLink, background_image } = processedData;
+    const id = formData.get('id') as string | null;
+    const title = formData.get('title') as string;
+    const subtitle = formData.get('subtitle') as string;
+    const ctaText = formData.get('ctaText') as string;
+    const ctaLink = formData.get('ctaLink') as string;
+    const backgroundImageFile = formData.get('backgroundImage') as File | null;
 
-    if (!title || typeof title !== 'string') {
-      console.error('Title is required and must be a string');
+    if (!title) {
+      console.error('Title is required');
       return false;
+    }
+
+    let backgroundImageId: string | undefined = undefined;
+
+    if (backgroundImageFile && backgroundImageFile.size > 0) {
+      // Upload new background image
+      const fileResponse = await storage.createFile(
+        STORAGE_BUCKET_ID,
+        ID.unique(),
+        backgroundImageFile
+      );
+      backgroundImageId = fileResponse.$id;
     }
 
     const dbData: {
       title: string;
       subtitle: string;
       cta_text: string;
-      cta_link: string;
+      cta_url: string;
       background_image?: string;
     } = {
       title,
       subtitle: subtitle || '',
       cta_text: ctaText || '',
-      cta_link: ctaLink || '',
+      cta_url: ctaLink || '',
     };
-    
-    if (background_image) {
-      dbData.background_image = background_image as string;
+
+    if (backgroundImageId) {
+      dbData.background_image = backgroundImageId;
     }
-    
+
     if (id) {
       // Update existing hero section
-      const { error } = await supabase
-        .from('hero_sections')
-        .update(dbData)
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error updating hero section:', error);
-        return false;
-      }
+      await databases.updateDocument(DATABASE_ID, HERO_COLLECTION_ID, id, dbData);
     } else {
       // Create new hero section
-      const { error } = await supabase
-        .from('hero_sections')
-        .insert(dbData);
-      
-      if (error) {
-        console.error('Error creating hero section:', error);
-        return false;
-      }
+      await databases.createDocument(DATABASE_ID, HERO_COLLECTION_ID, ID.unique(), dbData);
     }
     
     return true;

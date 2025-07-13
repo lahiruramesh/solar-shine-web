@@ -1,8 +1,8 @@
-
-import { supabase } from '@/integrations/supabase/client';
+import { databases, COLLECTIONS, DATABASE_ID } from '@/lib/appwrite';
+import { ID, Query } from 'appwrite';
 
 export interface AppointmentData {
-  id: string;
+  $id: string;
   name: string;
   email: string;
   phone: string;
@@ -11,74 +11,108 @@ export interface AppointmentData {
   time_slot: string;
   message?: string;
   status: string;
-  created_at: string;
+  $createdAt: string;
 }
 
 export interface TimeSlot {
-  id: string;
+  $id:string;
   date: string;
   time_slot: string;
   is_booked: boolean;
 }
 
 export async function fetchAppointments(): Promise<AppointmentData[]> {
-  const { data, error } = await supabase
-    .from('appointments')
-    .select('*')
-    .order('date', { ascending: true })
-    .order('created_at', { ascending: false });
-  
-  if (error) {
+  try {
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTIONS.APPOINTMENTS,
+      [
+        Query.orderDesc('date'),
+        Query.orderDesc('$createdAt')
+      ]
+    );
+    return response.documents as unknown as AppointmentData[];
+  } catch (error) {
     console.error('Error fetching appointments:', error);
     throw error;
   }
-  
-  return data || [];
 }
 
 export async function fetchAvailableTimeSlots(date?: string): Promise<TimeSlot[]> {
-  let query = supabase
-    .from('available_time_slots')
-    .select('*')
-    .eq('is_booked', false);
-  
-  if (date) {
-    query = query.eq('date', date);
-  }
-  
-  const { data, error } = await query.order('date', { ascending: true });
-  
-  if (error) {
+  try {
+    const queries = [Query.equal('is_booked', false)];
+    if (date) {
+      queries.push(Query.equal('date', date));
+    }
+    queries.push(Query.orderAsc('date'));
+
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTIONS.AVAILABLE_TIME_SLOTS,
+      queries
+    );
+    return response.documents as unknown as TimeSlot[];
+  } catch (error) {
     console.error('Error fetching available time slots:', error);
     throw error;
   }
-  
-  return data || [];
 }
 
 export async function addAvailableTimeSlot(date: string, timeSlot: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('available_time_slots')
-    .insert({ date, time_slot: timeSlot });
-  
-  if (error) {
-    console.error('Error adding time slot:', error);
-    return false;
-  }
-  
-  return true;
+    try {
+        await databases.createDocument(
+            DATABASE_ID,
+            COLLECTIONS.AVAILABLE_TIME_SLOTS,
+            ID.unique(),
+            { date, time_slot: timeSlot, is_booked: false }
+        );
+        return true;
+    } catch (error) {
+        console.error('Error adding time slot:', error);
+        return false;
+    }
 }
 
 export async function updateAppointmentStatus(id: string, status: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('appointments')
-    .update({ status })
-    .eq('id', id);
-  
-  if (error) {
-    console.error('Error updating appointment status:', error);
-    return false;
-  }
-  
-  return true;
+    try {
+        await databases.updateDocument(
+            DATABASE_ID,
+            COLLECTIONS.APPOINTMENTS,
+            id,
+            { status }
+        );
+        return true;
+    } catch (error) {
+        console.error('Error updating appointment status:', error);
+        return false;
+    }
+}
+
+export async function deleteAppointment(id: string): Promise<boolean> {
+    try {
+        await databases.deleteDocument(
+            DATABASE_ID,
+            COLLECTIONS.APPOINTMENTS,
+            id
+        );
+        return true;
+    } catch (error) {
+        console.error('Error deleting appointment:', error);
+        return false;
+    }
+}
+
+export async function createAppointment(appointmentData: Omit<AppointmentData, '$id' | '$createdAt' | 'status'>): Promise<AppointmentData> {
+    try {
+        const response = await databases.createDocument(
+            DATABASE_ID,
+            COLLECTIONS.APPOINTMENTS,
+            ID.unique(),
+            { ...appointmentData, status: 'pending' }
+        );
+        return response as unknown as AppointmentData;
+    } catch (error) {
+        console.error('Error creating appointment:', error);
+        throw error;
+    }
 }

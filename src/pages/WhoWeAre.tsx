@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -6,20 +5,20 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { motion } from 'framer-motion';
 import { CheckCircle, Award, Users, Clock, Shield, Smile } from 'lucide-react';
-import { fetchAboutContent } from '@/services/cmsService';
+import { getAboutContent } from '@/services/aboutService';
 import { Skeleton } from '@/components/ui/skeleton';
-import SEOHead from '@/components/common/SEOHead';
+import { AboutContent } from '@/types/payload-types';
 
 const WhoWeAre: React.FC = () => {
-  const { data: aboutContent, isLoading, error } = useQuery({
+  const { data: aboutContent, isLoading, error } = useQuery<AboutContent | null>({
     queryKey: ['aboutContent'],
-    queryFn: fetchAboutContent
+    queryFn: getAboutContent,
   });
 
-  // Show error toast if data fetch fails
-  React.useEffect(() => {
-    if (error) toast.error("Failed to load about page content");
-  }, [error]);
+  if (error) {
+    toast.error('Failed to load content. Please try again later.');
+    console.error(error);
+  }
 
   // Default data for fallback
   const whoWeAreData = {
@@ -140,37 +139,52 @@ const WhoWeAre: React.FC = () => {
 
     return (
       <>
-        {/* Mission & Vision */}
-        <section className="py-20 px-4">
+        {/* Hero Section */}
+        <section className="relative h-[50vh] md:h-[60vh] flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40 z-10" />
+            <img 
+              src={aboutContent?.main_image || whoWeAreData.heroSection.image} 
+              alt="Solar team" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="container-custom relative z-20 text-center text-white">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+              {aboutContent?.title || whoWeAreData.heroSection.title}
+            </h1>
+            <p className="text-xl md:text-2xl max-w-3xl mx-auto">
+              {aboutContent?.subtitle || whoWeAreData.heroSection.subtitle}
+            </p>
+          </div>
+        </section>
+
+        {/* Mission and Vision */}
+        <section className="py-16 sm:py-24 bg-gray-50">
           <div className="container-custom">
-            <div className="grid md:grid-cols-2 gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <motion.div 
-                className="bg-brand-light p-8 rounded-lg"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                className="space-y-4"
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.6 }}
               >
-                <h2 className="text-3xl font-bold mb-4">
-                  {aboutContent?.missionTitle || whoWeAreData.mission.title}
-                </h2>
-                <p className="text-lg text-brand-gray">
-                  {aboutContent?.missionDescription || whoWeAreData.mission.description}
+                <h2 className="text-3xl font-bold text-gray-900">Our Mission</h2>
+                <p className="text-lg text-gray-600">
+                  {aboutContent?.mission_statement || "To empower communities with sustainable and affordable solar energy solutions, driving a cleaner future for generations to come."}
                 </p>
               </motion.div>
-              
               <motion.div 
-                className="bg-primary p-8 rounded-lg"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                className="space-y-4"
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
               >
-                <h2 className="text-3xl font-bold mb-4">
-                  {aboutContent?.visionTitle || whoWeAreData.vision.title}
-                </h2>
-                <p className="text-lg text-brand-black/80">
-                  {aboutContent?.visionDescription || whoWeAreData.vision.description}
+                <h2 className="text-3xl font-bold text-gray-900">Our Vision</h2>
+                <p className="text-lg text-gray-600">
+                  {aboutContent?.vision_statement || "To be a leading force in the global transition to renewable energy, making solar power accessible to everyone, everywhere."}
                 </p>
               </motion.div>
             </div>
@@ -204,39 +218,35 @@ const WhoWeAre: React.FC = () => {
         </section>
 
         {/* Team Section */}
-        <section className="py-20 px-4">
+        <section className="py-16 sm:py-24">
           <div className="container-custom">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">{whoWeAreData.team.title}</h2>
-              <p className="text-xl text-brand-gray max-w-3xl mx-auto">
-                {whoWeAreData.team.description}
+            <div className="text-center">
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Meet Our Experts</h2>
+              <p className="mt-4 text-lg leading-8 text-gray-600">
+                A dedicated team of professionals committed to excellence.
               </p>
             </div>
-            
-            <div className="grid md:grid-cols-3 gap-8">
-              {whoWeAreData.team.members.map((member, index) => (
-                <motion.div 
-                  key={member.name}
-                  className="text-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.2 }}
-                >
-                  <div className="mb-4 relative">
-                    <div className="w-48 h-48 rounded-full overflow-hidden mx-auto border-4 border-primary">
-                      <img 
-                        src={member.image} 
-                        alt={member.name} 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold">{member.name}</h3>
-                  <p className="text-primary font-medium mb-2">{member.position}</p>
-                  <p className="text-brand-gray">{member.bio}</p>
-                </motion.div>
-              ))}
+            <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-96 w-full" />
+                ))
+              ) : (
+                aboutContent?.team_members?.map((member) => (
+                  <motion.div 
+                    key={member.name} 
+                    className="bg-white p-6 rounded-lg shadow-lg text-center"
+                    initial={{ opacity: 0, y: 50 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <img className="mx-auto h-24 w-24 rounded-full" src={member.image || "/placeholder.svg"} alt={member.name} />
+                    <h3 className="mt-6 text-base font-semibold leading-7 tracking-tight text-gray-900">{member.name}</h3>
+                    <p className="text-sm leading-6 text-gray-600">{member.position}</p>
+                  </motion.div>
+                ))
+              )}
             </div>
           </div>
         </section>
@@ -282,36 +292,6 @@ const WhoWeAre: React.FC = () => {
             </div>
           </div>
         </section>
-      </>
-    );
-  };
-
-  return (
-    <>
-      <SEOHead pagePath="/who-we-are" />
-      <Header />
-      <main className="pt-20 min-h-screen">
-        {/* Hero Section */}
-        <section className="relative h-[50vh] md:h-[60vh] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40 z-10" />
-            <img 
-              src={aboutContent?.mainImage || whoWeAreData.heroSection.image} 
-              alt="Solar team" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="container-custom relative z-20 text-center text-white">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              {aboutContent?.title || whoWeAreData.heroSection.title}
-            </h1>
-            <p className="text-xl md:text-2xl max-w-3xl mx-auto">
-              {aboutContent?.subtitle || whoWeAreData.heroSection.subtitle}
-            </p>
-          </div>
-        </section>
-
-        {renderContent()}
 
         {/* CTA Section */}
         <section className="py-16 bg-primary">
@@ -336,6 +316,15 @@ const WhoWeAre: React.FC = () => {
             </div>
           </div>
         </section>
+      </>
+    );
+  };
+
+  return (
+    <>
+      <Header />
+      <main className="pt-20 min-h-screen">
+        {renderContent()}
       </main>
       <Footer />
     </>
