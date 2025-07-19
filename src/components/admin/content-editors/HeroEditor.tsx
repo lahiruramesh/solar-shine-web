@@ -29,7 +29,7 @@ const HeroEditor: React.FC = () => {
   });
   
   useEffect(() => {
-    if (hero?.backgroundImage) {
+    if (hero?.background_image) {
       const img = new Image();
       img.onload = () => {
         setCurrentImageRes(`${img.width} x ${img.height}px`);
@@ -37,12 +37,12 @@ const HeroEditor: React.FC = () => {
       img.onerror = () => {
         setCurrentImageRes('N/A');
       };
-      const cleanUrl = hero.backgroundImage.split('?')[0];
+      const cleanUrl = hero.background_image.split('?')[0];
       img.src = cleanUrl;
     } else {
       setCurrentImageRes(null);
     }
-  }, [hero?.backgroundImage]);
+  }, [hero?.background_image]);
   
   const updateMutation = useMutation({
     mutationFn: updateHeroSection,
@@ -82,17 +82,18 @@ const HeroEditor: React.FC = () => {
     if (!hero) return;
     
     const formData = new FormData();
-    formData.append('id', hero.id || '');
-    formData.append('title', hero.title);
-    formData.append('subtitle', hero.subtitle || '');
-    formData.append('ctaText', hero.ctaText || '');
-    formData.append('ctaLink', hero.ctaLink || '');
+    // Create the update object with the correct structure that the service expects
+    const updateData = {
+      title: hero.title,
+      subtitle: hero.subtitle || '',
+      description: hero.description || '',
+      cta_text: hero.cta_text || '',
+      cta_url: hero.cta_url || '',
+      background_image_url: hero.background_image || '',
+      ...(selectedImage && { background_image_file: selectedImage })
+    };
     
-    if (selectedImage) {
-      formData.append('backgroundImage', selectedImage);
-    }
-    
-    updateMutation.mutate(formData);
+    updateMutation.mutate(updateData);
   };
   
   const handleFieldUpdate = (field: keyof HeroSection, value: string) => {
@@ -125,16 +126,13 @@ const HeroEditor: React.FC = () => {
                 const defaultHero = {
                   title: "Your Renewable Energy Partner",
                   subtitle: "Professional solar solutions for homes and businesses across Sri Lanka",
-                  ctaText: "Get a Free Quote",
-                  ctaLink: "/contact"
+                  description: "",
+                  cta_text: "Get a Free Quote",
+                  cta_url: "/contact",
+                  background_image_url: ""
                 };
                 
-                const formData = new FormData();
-                Object.entries(defaultHero).forEach(([key, value]) => {
-                  formData.append(key, value);
-                });
-                
-                updateMutation.mutate(formData);
+                updateMutation.mutate(defaultHero);
               }}
             >
               Create Default Content
@@ -181,8 +179,8 @@ const HeroEditor: React.FC = () => {
               <Label htmlFor="cta-text">CTA Button Text</Label>
               <Input 
                 id="cta-text"
-                value={hero.ctaText || ''} 
-                onChange={(e) => handleFieldUpdate('ctaText', e.target.value)}
+                value={hero.cta_text || ''} 
+                onChange={(e) => handleFieldUpdate('cta_text', e.target.value)}
                 placeholder="Get Started"
                 className="mt-1"
               />
@@ -191,8 +189,8 @@ const HeroEditor: React.FC = () => {
               <Label htmlFor="cta-link">CTA Button Link</Label>
               <Input 
                 id="cta-link"
-                value={hero.ctaLink || ''} 
-                onChange={(e) => handleFieldUpdate('ctaLink', e.target.value)}
+                value={hero.cta_url || ''} 
+                onChange={(e) => handleFieldUpdate('cta_url', e.target.value)}
                 placeholder="/contact"
                 className="mt-1"
               />
@@ -203,7 +201,7 @@ const HeroEditor: React.FC = () => {
             <Label>Background Image</Label>
             <div className="mt-2 mb-4">
               <img 
-                src={previewUrl || hero.backgroundImage || ''} 
+                src={previewUrl || hero.background_image || ''} 
                 alt="Hero background" 
                 className="w-full h-48 object-cover rounded-md border"
               />
@@ -218,7 +216,7 @@ const HeroEditor: React.FC = () => {
                 className="cursor-pointer bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-md flex items-center gap-2"
               >
                 <Upload size={16} />
-                <span>{hero.backgroundImage ? 'Change Image' : 'Upload Image'}</span>
+                <span>{hero.background_image ? 'Change Image' : 'Upload Image'}</span>
               </Label>
               <Input 
                 id="hero-image"

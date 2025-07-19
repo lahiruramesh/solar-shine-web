@@ -13,9 +13,10 @@ export const HeroSectionManager: React.FC = () => {
   const [heroData, setHeroData] = useState<HeroSection>({
     title: '',
     subtitle: '',
-    backgroundImage: '',
-    ctaText: '',
-    ctaLink: ''
+    description: '',
+    background_image: '',
+    cta_text: '',
+    cta_url: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -30,9 +31,11 @@ export const HeroSectionManager: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await fetchHeroSection();
-      setHeroData(data);
-      if (data.backgroundImage) {
-        setPreviewImage(data.backgroundImage);
+      if (data) {
+        setHeroData(data);
+        if (data.background_image) {
+          setPreviewImage(data.background_image);
+        }
       }
       toast.success('Hero section loaded successfully');
     } catch (error) {
@@ -51,21 +54,15 @@ export const HeroSectionManager: React.FC = () => {
 
     setIsSaving(true);
     try {
-      const formData = new FormData();
-      
-      if (heroData.$id) {
-        formData.append('id', heroData.$id);
-      }
-      formData.append('title', heroData.title);
-      formData.append('subtitle', heroData.subtitle || '');
-      formData.append('ctaText', heroData.ctaText || '');
-      formData.append('ctaLink', heroData.ctaLink || '');
-      
-      if (backgroundImageFile) {
-        formData.append('backgroundImage', backgroundImageFile);
-      }
-
-      const success = await updateHeroSection(formData);
+      const success = await updateHeroSection({
+        title: heroData.title,
+        subtitle: heroData.subtitle || '',
+        description: heroData.description || '',
+        cta_text: heroData.cta_text || '',
+        cta_url: heroData.cta_url || '',
+        background_image_url: previewImage,
+        background_image_file: backgroundImageFile || undefined
+      });
       
       if (success) {
         toast.success('Hero section saved successfully');
@@ -168,7 +165,18 @@ export const HeroSectionManager: React.FC = () => {
                 onChange={(e) => handleChange('subtitle', e.target.value)}
                 placeholder="Enter hero subtitle"
                 maxLength={500}
-                rows={3}
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={heroData.description || ''}
+                onChange={(e) => handleChange('description', e.target.value)}
+                placeholder="Enter hero description"
+                maxLength={1000}
+                rows={4}
               />
             </div>
           </CardContent>
@@ -188,21 +196,21 @@ export const HeroSectionManager: React.FC = () => {
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="ctaText">Button Text</Label>
+                <Label htmlFor="cta_text">Button Text</Label>
                 <Input
-                  id="ctaText"
-                  value={heroData.ctaText || ''}
-                  onChange={(e) => handleChange('ctaText', e.target.value)}
+                  id="cta_text"
+                  value={heroData.cta_text || ''}
+                  onChange={(e) => handleChange('cta_text', e.target.value)}
                   placeholder="Get Started"
                   maxLength={100}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="ctaLink">Button Link</Label>
+                <Label htmlFor="cta_url">Button Link</Label>
                 <Input
-                  id="ctaLink"
-                  value={heroData.ctaLink || ''}
-                  onChange={(e) => handleChange('ctaLink', e.target.value)}
+                  id="cta_url"
+                  value={heroData.cta_url || ''}
+                  onChange={(e) => handleChange('cta_url', e.target.value)}
                   placeholder="/contact"
                   maxLength={255}
                 />
@@ -224,9 +232,9 @@ export const HeroSectionManager: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="backgroundImage">Background Image</Label>
+              <Label htmlFor="background_image">Background Image</Label>
               <Input
-                id="backgroundImage"
+                id="background_image"
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
@@ -260,7 +268,7 @@ export const HeroSectionManager: React.FC = () => {
             <div 
               className="relative h-64 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center"
               style={{
-                backgroundImage: previewImage ? `url(${previewImage})` : 'none',
+                backgroundImage: previewImage ? `url(${previewImage})` : 'none', /* This is just CSS, not a field name */
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
               }}
@@ -275,9 +283,14 @@ export const HeroSectionManager: React.FC = () => {
                     {heroData.subtitle}
                   </p>
                 )}
-                {heroData.ctaText && (
+                {heroData.description && (
+                  <p className="text-base opacity-80">
+                    {heroData.description}
+                  </p>
+                )}
+                {heroData.cta_text && (
                   <Button className="mt-4">
-                    {heroData.ctaText}
+                    {heroData.cta_text}
                   </Button>
                 )}
               </div>

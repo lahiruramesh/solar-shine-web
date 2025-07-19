@@ -1,13 +1,9 @@
-import { databases, storage } from '@/lib/appwrite';
+import { databases, storage, DATABASE_ID, COLLECTIONS, STORAGE_BUCKET_ID } from '@/lib/appwrite';
 import { ID, Query } from 'appwrite';
 import { AboutContent } from '@/types/payload-types';
 
-const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
-const COLLECTION_ID = import.meta.env.VITE_APPWRITE_ABOUT_COLLECTION_ID;
-const BUCKET_ID = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
-
 function mapDocToAboutContent(doc: any): AboutContent {
-    const getImageUrl = (id?: string) => id ? (storage.getFilePreview(BUCKET_ID, id) as any).href : undefined;
+    const getImageUrl = (id?: string) => id ? (storage.getFilePreview(STORAGE_BUCKET_ID, id) as any).href : undefined;
 
     return {
         $id: doc.$id,
@@ -28,7 +24,7 @@ function mapDocToAboutContent(doc: any): AboutContent {
 
 export async function getAboutContent(): Promise<AboutContent | null> {
   try {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.ABOUT_CONTENT, [
       Query.limit(1)
     ]);
     if (response.documents.length > 0) {
@@ -48,7 +44,7 @@ export async function updateAboutContent(documentId: string, data: Partial<Omit<
         dataToUpdate.team_members = JSON.stringify(dataToUpdate.team_members) as any;
     }
 
-    const response = await databases.updateDocument(DATABASE_ID, COLLECTION_ID, documentId, dataToUpdate as any);
+    const response = await databases.updateDocument(DATABASE_ID, COLLECTIONS.ABOUT_CONTENT, documentId, dataToUpdate as any);
     return mapDocToAboutContent(response);
   } catch (error) {
     console.error('Error updating about content:', error);
@@ -57,6 +53,6 @@ export async function updateAboutContent(documentId: string, data: Partial<Omit<
 }
 
 export async function uploadAboutImage(imageFile: File): Promise<string> {
-    const fileResponse = await storage.createFile(BUCKET_ID, ID.unique(), imageFile);
+    const fileResponse = await storage.createFile(STORAGE_BUCKET_ID, ID.unique(), imageFile);
     return fileResponse.$id;
 }

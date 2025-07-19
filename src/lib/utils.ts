@@ -21,3 +21,25 @@ export const getImageWithCacheBusting = (url: string) => {
   // Appends a timestamp to the image URL to bypass browser cache
   return `${url}?v=${new Date().getTime()}`;
 };
+
+/**
+ * Safely prepare data for Appwrite database operations by filtering out
+ * undefined values and converting empty strings to null
+ */
+export function prepareAppwriteData<T extends Record<string, any>>(data: T): Record<string, any> {
+  const result: Record<string, any> = {};
+  
+  for (const [key, value] of Object.entries(data)) {
+    // Skip undefined values
+    if (value === undefined) continue;
+    
+    // Convert empty strings to null for Appwrite
+    if (value === '') {
+      result[key] = null;
+    } else {
+      result[key] = value;
+    }
+  }
+  
+  return result;
+}

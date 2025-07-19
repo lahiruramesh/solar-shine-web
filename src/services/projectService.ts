@@ -1,18 +1,14 @@
-import { databases, storage } from '@/lib/appwrite';
+import { databases, storage, DATABASE_ID, COLLECTIONS, STORAGE_BUCKET_ID } from '@/lib/appwrite';
 import { ID, Query } from 'appwrite';
 import { Project } from '@/types/payload-types';
 
-const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
-const COLLECTION_ID = import.meta.env.VITE_APPWRITE_PROJECTS_COLLECTION_ID;
-const BUCKET_ID = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
-
 export async function fetchProjects(): Promise<Project[]> {
   try {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PROJECTS, [
       Query.orderDesc('$createdAt')
     ]);
     return response.documents.map(doc => {
-      const imageUrl = doc.image ? (storage.getFilePreview(BUCKET_ID, doc.image) as any).href : '';
+      const imageUrl = doc.image ? (storage.getFilePreview(STORAGE_BUCKET_ID, doc.image) as any).href : '';
       return {
         ...doc,
         $id: doc.$id,
@@ -28,7 +24,7 @@ export async function fetchProjects(): Promise<Project[]> {
 
 async function handleImageData(imageFile: File | null): Promise<string | undefined> {
     if (imageFile && imageFile.size > 0) {
-        const fileResponse = await storage.createFile(BUCKET_ID, ID.unique(), imageFile);
+        const fileResponse = await storage.createFile(STORAGE_BUCKET_ID, ID.unique(), imageFile);
         return fileResponse.$id;
     }
     return undefined;
@@ -59,7 +55,7 @@ export async function addProject(formData: FormData): Promise<boolean> {
             (data as any).image = imageId;
         }
 
-        await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), data);
+        await databases.createDocument(DATABASE_ID, COLLECTIONS.PROJECTS, ID.unique(), data);
         return true;
     } catch (error) {
         console.error('Error adding project:', error);
@@ -88,7 +84,7 @@ export async function updateProject(formData: FormData): Promise<boolean> {
         (data as any).image = imageId;
     }
 
-    await databases.updateDocument(DATABASE_ID, COLLECTION_ID, id, data);
+    await databases.updateDocument(DATABASE_ID, COLLECTIONS.PROJECTS, id, data);
     return true;
   } catch (error) {
     console.error('Error updating project:', error);
@@ -98,7 +94,7 @@ export async function updateProject(formData: FormData): Promise<boolean> {
 
 export async function deleteProject(id: string): Promise<boolean> {
   try {
-    await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
+    await databases.deleteDocument(DATABASE_ID, COLLECTIONS.PROJECTS, id);
     return true;
   } catch (error) {
     console.error('Error deleting project:', error);

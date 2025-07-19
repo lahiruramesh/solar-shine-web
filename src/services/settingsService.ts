@@ -1,13 +1,10 @@
-import { databases } from '@/lib/appwrite';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 import { Query } from 'appwrite';
 import { GlobalSettings } from '@/types/payload-types';
 
-const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
-const COLLECTION_ID = 'global_settings'; // As per appwrite.json
-
 export async function fetchGlobalSettings(): Promise<GlobalSettings | null> {
   try {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.GLOBAL_SETTINGS, [
       Query.limit(1)
     ]);
     if (response.documents.length > 0) {
@@ -30,7 +27,7 @@ export async function fetchGlobalSettings(): Promise<GlobalSettings | null> {
 
 export async function updateGlobalSettings(documentId: string, data: Partial<GlobalSettings>): Promise<boolean> {
     try {
-        await databases.updateDocument(DATABASE_ID, COLLECTION_ID, documentId, data as any);
+        await databases.updateDocument(DATABASE_ID, COLLECTIONS.GLOBAL_SETTINGS, documentId, data as any);
         return true;
     } catch (error) {
         console.error('Error updating global settings:', error);

@@ -319,6 +319,14 @@
           "array": false,
           "size": 100,
           "default": null
+        },
+        {
+          "key": "categories",
+          "type": "string",
+          "required": false,
+          "array": true,
+          "size": 50,
+          "default": null
         }
       ],
       "indexes": []

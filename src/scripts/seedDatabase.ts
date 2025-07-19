@@ -73,8 +73,39 @@ const seedDatabase = async () => {
     // 5. Seed Blog Posts
     console.log('Seeding Blog Posts...');
     const posts = [
-      { title: 'The Benefits of Switching to Solar Power', slug: 'benefits-of-solar-power', excerpt: 'Discover the top reasons to make the switch to clean, renewable solar energy.', content: 'Full blog post content goes here...', featured_image: DUMMY_IMAGE_URL(800, 400), published: true, publishDate: new Date().toISOString(), author: 'Jane Doe' },
-      { title: 'How to Maintain Your Solar Panels', slug: 'how-to-maintain-solar-panels', excerpt: 'A guide to keeping your solar panels in top condition for maximum efficiency.', content: 'Full blog post content goes here...', featured_image: DUMMY_IMAGE_URL(800, 400), published: true, publishDate: new Date().toISOString(), author: 'John Smith' },
+      { 
+        title: 'The Benefits of Switching to Solar Power', 
+        slug: 'benefits-of-solar-power', 
+        excerpt: 'Discover the top reasons to make the switch to clean, renewable solar energy.', 
+        content: 'Full blog post content goes here...', 
+        featured_image: DUMMY_IMAGE_URL(800, 400), 
+        published: true, 
+        publishDate: new Date().toISOString(), 
+        author: 'Jane Doe',
+        categories: ['Education', 'Residential']
+      },
+      { 
+        title: 'How to Maintain Your Solar Panels', 
+        slug: 'how-to-maintain-solar-panels', 
+        excerpt: 'A guide to keeping your solar panels in top condition for maximum efficiency.', 
+        content: 'Full blog post content goes here...', 
+        featured_image: DUMMY_IMAGE_URL(800, 400), 
+        published: true, 
+        publishDate: new Date().toISOString(), 
+        author: 'John Smith',
+        categories: ['Maintenance', 'Tips']
+      },
+      { 
+        title: 'Solar Technology Innovations of 2025', 
+        slug: 'solar-tech-innovations-2025', 
+        excerpt: 'The latest breakthroughs in solar panel efficiency and smart home integration.', 
+        content: 'Full blog post content goes here...', 
+        featured_image: DUMMY_IMAGE_URL(800, 400), 
+        published: true, 
+        publishDate: new Date().toISOString(), 
+        author: 'Sarah Chen',
+        categories: ['Technology', 'Innovation']
+      }
     ];
     for (const post of posts) {
       await databases.createDocument(DATABASE_ID, COLLECTIONS.BLOG_POSTS, ID.unique(), post);

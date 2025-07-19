@@ -35,12 +35,32 @@ const Blog: React.FC = () => {
     loadPosts();
   }, []);
 
-  const categories = ["All", ...Array.from(new Set(posts.map(p => p.category).filter(Boolean)))];
+  // Extract unique categories from posts, defaulting to "Uncategorized" if no categories
+  const categories = ["All", ...Array.from(new Set(
+    posts.map(p => {
+      // If categories array exists and has items, use the first category
+      if (p.categories && p.categories.length > 0) {
+        return p.categories[0];
+      }
+      // Otherwise return "Uncategorized"
+      return "Uncategorized";
+    })
+  ))];
 
   const filteredPosts = posts.filter(post => {
-    const matchesCategory = activeCategory === "All" || post.category === activeCategory;
-    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (post.excerpt && post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()));
+    // Check if the post matches the selected category
+    const matchesCategory = 
+      activeCategory === "All" || 
+      // Check in categories array if it exists
+      (post.categories && post.categories.includes(activeCategory)) ||
+      // If no categories and "Uncategorized" is selected
+      (!post.categories && activeCategory === "Uncategorized");
+      
+    // Check if the post matches the search query
+    const matchesSearch = 
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (post.excerpt && post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()));
+      
     return matchesCategory && matchesSearch;
   });
 
@@ -137,7 +157,11 @@ const Blog: React.FC = () => {
                     <div className="p-6">
                       <div className="flex items-center text-sm text-gray-500 mb-2">
                         <Tag className="h-4 w-4 mr-2" />
-                        <span>{post.category}</span>
+                        <span>
+                          {post.categories && post.categories.length > 0 
+                            ? post.categories[0] 
+                            : "Uncategorized"}
+                        </span>
                       </div>
                       <h3 className="text-xl font-bold text-gray-900 mb-3 h-16 overflow-hidden">{post.title}</h3>
                       <p className="text-gray-600 text-sm mb-4 h-20 overflow-hidden">{post.excerpt}</p>

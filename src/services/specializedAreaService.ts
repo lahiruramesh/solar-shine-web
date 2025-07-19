@@ -1,19 +1,15 @@
-import { databases, storage } from '@/lib/appwrite';
+import { databases, storage, DATABASE_ID, COLLECTIONS, STORAGE_BUCKET_ID } from '@/lib/appwrite';
 import { ID, Query } from 'appwrite';
 import { SpecializedArea } from '@/types/payload-types';
 
-const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
-const COLLECTION_ID = import.meta.env.VITE_APPWRITE_SPECIALIZED_AREAS_COLLECTION_ID;
-const BUCKET_ID = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
-
 export async function fetchSpecializedAreas(): Promise<SpecializedArea[]> {
   try {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.SPECIALIZED_AREAS, [
       Query.orderDesc('$createdAt')
     ]);
 
     const areas = response.documents.map(doc => {
-      const imageUrl = doc.image ? (storage.getFilePreview(BUCKET_ID, doc.image) as any).href : '';
+      const imageUrl = doc.image ? (storage.getFilePreview(STORAGE_BUCKET_ID, doc.image) as any).href : '';
       return {
         ...doc,
         $id: doc.$id,
@@ -30,7 +26,7 @@ export async function fetchSpecializedAreas(): Promise<SpecializedArea[]> {
 
 async function handleImageData(imageFile: File | null): Promise<string | undefined> {
     if (imageFile && imageFile.size > 0) {
-        const fileResponse = await storage.createFile(BUCKET_ID, ID.unique(), imageFile);
+        const fileResponse = await storage.createFile(STORAGE_BUCKET_ID, ID.unique(), imageFile);
         return fileResponse.$id;
     }
     return undefined;
@@ -57,7 +53,7 @@ export async function addSpecializedArea(formData: FormData): Promise<boolean> {
             data.image = imageId;
         }
 
-        await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), data);
+        await databases.createDocument(DATABASE_ID, COLLECTIONS.SPECIALIZED_AREAS, ID.unique(), data);
         return true;
     } catch (error) {
         console.error('Error adding specialized area:', error);
@@ -87,7 +83,7 @@ export async function updateSpecializedArea(formData: FormData): Promise<boolean
         data.image = imageId;
     }
 
-    await databases.updateDocument(DATABASE_ID, COLLECTION_ID, id, data);
+    await databases.updateDocument(DATABASE_ID, COLLECTIONS.SPECIALIZED_AREAS, id, data);
     return true;
   } catch (error) {
     console.error('Error updating specialized area:', error);
@@ -97,7 +93,7 @@ export async function updateSpecializedArea(formData: FormData): Promise<boolean
 
 export async function deleteSpecializedArea(id: string): Promise<boolean> {
   try {
-    await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
+    await databases.deleteDocument(DATABASE_ID, COLLECTIONS.SPECIALIZED_AREAS, id);
     return true;
   } catch (error) {
     console.error('Error deleting specialized area:', error);

@@ -10,7 +10,7 @@ interface HeroSectionProps {
 
 const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
   // Apply cache-busting to the background image
-  const backgroundImageUrl = data.backgroundImage ? getImageWithCacheBusting(data.backgroundImage) : '';
+  const backgroundImageUrl = data.background_image ? getImageWithCacheBusting(data.background_image) : '';
   
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
@@ -28,13 +28,18 @@ const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
             {data.title}
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-white/90">
+          <p className="text-xl md:text-2xl mb-3 text-white/90">
             {data.subtitle}
           </p>
+          {data.description && (
+            <p className="text-base mb-8 text-white/80 max-w-2xl">
+              {data.description}
+            </p>
+          )}
           <div className="flex flex-col sm:flex-row gap-4">
             <Button className="btn-primary flex items-center gap-2 text-lg" asChild>
-              <a href={data.ctaLink}>
-                {data.ctaText}
+              <a href={data.cta_url || '#'}>
+                {data.cta_text}
                 <ArrowRight size={18} />
               </a>
             </Button>

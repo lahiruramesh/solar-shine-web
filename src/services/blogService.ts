@@ -1,14 +1,10 @@
-import { databases, storage } from '@/lib/appwrite';
+import { databases, storage, DATABASE_ID, COLLECTIONS, STORAGE_BUCKET_ID } from '@/lib/appwrite';
 import { ID, Query } from 'appwrite';
 import { BlogPost } from '@/types/payload-types';
 import { createSlug } from '@/lib/utils';
 
-const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
-const COLLECTION_ID = import.meta.env.VITE_APPWRITE_BLOG_POSTS_COLLECTION_ID;
-const BUCKET_ID = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
-
 function mapDocumentToBlogPost(doc: any): BlogPost {
-  const imageUrl = doc.featured_image_id ? (storage.getFilePreview(BUCKET_ID, doc.featured_image_id) as any).href : undefined;
+  const imageUrl = doc.featured_image_id ? (storage.getFilePreview(STORAGE_BUCKET_ID, doc.featured_image_id) as any).href : undefined;
   return {
     ...doc,
     $id: doc.$id,
@@ -20,7 +16,7 @@ function mapDocumentToBlogPost(doc: any): BlogPost {
 
 export async function fetchBlogPosts(): Promise<BlogPost[]> {
   try {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.BLOG_POSTS, [
       Query.orderDesc('publishDate')
     ]);
     return response.documents.map(mapDocumentToBlogPost);
@@ -32,7 +28,7 @@ export async function fetchBlogPosts(): Promise<BlogPost[]> {
 
 export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null> {
     try {
-      const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
+      const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.BLOG_POSTS, [
         Query.equal('slug', slug)
       ]);
       if (response.documents.length > 0) {
@@ -46,7 +42,7 @@ export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null
   }
 
 export async function uploadBlogImage(imageFile: File): Promise<string> {
-    const fileResponse = await storage.createFile(BUCKET_ID, ID.unique(), imageFile);
+    const fileResponse = await storage.createFile(STORAGE_BUCKET_ID, ID.unique(), imageFile);
     return fileResponse.$id;
 }
 
@@ -57,7 +53,7 @@ export async function createBlogPost(postData: Partial<Omit<BlogPost, '$id' | 'f
             slug: postData.slug || createSlug(postData.title!),
         };
 
-        const response = await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), dataToSave);
+        const response = await databases.createDocument(DATABASE_ID, COLLECTIONS.BLOG_POSTS, ID.unique(), dataToSave);
         return response.$id;
     } catch (error) {
         console.error('Error creating blog post:', error);
@@ -67,12 +63,12 @@ export async function createBlogPost(postData: Partial<Omit<BlogPost, '$id' | 'f
 
 export async function updateBlogPost(id: string, postData: Partial<Omit<BlogPost, '$id' | 'featured_image'>>): Promise<boolean> {
   try {
-    const oldPost = await databases.getDocument(DATABASE_ID, COLLECTION_ID, id);
+    const oldPost = await databases.getDocument(DATABASE_ID, COLLECTIONS.BLOG_POSTS, id);
     const oldImageId = oldPost.featured_image_id as string | undefined;
 
     // If a new image is being set, and it's different from the old one, delete the old one.
     if (postData.featured_image_id && postData.featured_image_id !== oldImageId && oldImageId) {
-        await storage.deleteFile(BUCKET_ID, oldImageId);
+        await storage.deleteFile(STORAGE_BUCKET_ID, oldImageId);
     }
 
     const { title, slug, excerpt, content, author, publishDate, featured_image_id, categories, tags } = postData;
@@ -85,7 +81,7 @@ export async function updateBlogPost(id: string, postData: Partial<Omit<BlogPost
       }
     }
 
-    await databases.updateDocument(DATABASE_ID, COLLECTION_ID, id, dataToUpdate);
+    await databases.updateDocument(DATABASE_ID, COLLECTIONS.BLOG_POSTS, id, dataToUpdate);
     return true;
   } catch (error) {
     console.error('Error updating blog post:', error);
@@ -95,11 +91,11 @@ export async function updateBlogPost(id: string, postData: Partial<Omit<BlogPost
 
 export async function deleteBlogPost(id: string): Promise<boolean> {
     try {
-        const post = await databases.getDocument(DATABASE_ID, COLLECTION_ID, id);
+        const post = await databases.getDocument(DATABASE_ID, COLLECTIONS.BLOG_POSTS, id);
         if (post.featured_image_id) {
-            await storage.deleteFile(BUCKET_ID, post.featured_image_id as string);
+            await storage.deleteFile(STORAGE_BUCKET_ID, post.featured_image_id as string);
         }
-        await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
+        await databases.deleteDocument(DATABASE_ID, COLLECTIONS.BLOG_POSTS, id);
         return true;
     } catch (error) {
         console.error('Error deleting blog post:', error);

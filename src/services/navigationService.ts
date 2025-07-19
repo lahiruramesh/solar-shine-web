@@ -1,15 +1,12 @@
-import { databases } from '@/lib/appwrite';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 import { ID } from 'appwrite';
 import { NavigationItem } from '@/types/payload-types';
-
-const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
-const NAVIGATION_COLLECTION_ID = 'navigation_items';
 
 export async function fetchNavigationItems(): Promise<NavigationItem[]> {
   try {
     const response = await databases.listDocuments(
       DATABASE_ID,
-      NAVIGATION_COLLECTION_ID
+      COLLECTIONS.NAVIGATION_ITEMS
     );
     
     if (!response.documents) {
@@ -32,7 +29,7 @@ export async function updateNavigationItem(item: NavigationItem): Promise<boolea
   try {
     await databases.updateDocument(
       DATABASE_ID,
-      NAVIGATION_COLLECTION_ID,
+      COLLECTIONS.NAVIGATION_ITEMS,
       item.$id,
       {
         title: item.title,
@@ -53,7 +50,7 @@ export async function addNavigationItem(item: { title: string; path: string }): 
     // Get the current max order value
     const response = await databases.listDocuments(
       DATABASE_ID,
-      NAVIGATION_COLLECTION_ID
+      COLLECTIONS.NAVIGATION_ITEMS
     );
     
     const maxOrder = response.documents.length > 0 
@@ -64,7 +61,7 @@ export async function addNavigationItem(item: { title: string; path: string }): 
     
     await databases.createDocument(
       DATABASE_ID,
-      NAVIGATION_COLLECTION_ID,
+      COLLECTIONS.NAVIGATION_ITEMS,
       ID.unique(),
       {
         title: item.title,
@@ -84,7 +81,7 @@ export async function deleteNavigationItem(id: string): Promise<boolean> {
   try {
     await databases.deleteDocument(
       DATABASE_ID,
-      NAVIGATION_COLLECTION_ID,
+      COLLECTIONS.NAVIGATION_ITEMS,
       id
     );
     

@@ -11,9 +11,10 @@ export interface HeroSection {
   $id?: string;
   title: string;
   subtitle: string | null;
-  backgroundImage: string | null;
-  ctaText: string | null;
-  ctaLink: string | null;
+  description: string | null;
+  cta_text: string | null;
+  cta_url: string | null;
+  background_image: string | null;
 }
 
 export interface ServiceCard {

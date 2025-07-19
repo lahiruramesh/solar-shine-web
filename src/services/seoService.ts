@@ -1,4 +1,4 @@
-import { databases } from '@/lib/appwrite';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 import { ID, Query } from 'appwrite';
 
 export interface SEOSettings {
@@ -29,15 +29,11 @@ export interface PageSEO {
   canonical_url: string;
 }
 
-const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
-const SEO_SETTINGS_COLLECTION_ID = 'seo_settings';
-const PAGE_SEO_COLLECTION_ID = 'page_seo';
-
 export async function fetchSEOSettings(): Promise<SEOSettings | null> {
   try {
     const response = await databases.listDocuments(
       DATABASE_ID,
-      SEO_SETTINGS_COLLECTION_ID
+      COLLECTIONS.SEO_SETTINGS
     );
     
     if (response.documents.length > 0) {
@@ -72,7 +68,7 @@ export async function updateSEOSettings(settings: Partial<SEOSettings>): Promise
       // Update existing settings
       await databases.updateDocument(
         DATABASE_ID,
-        SEO_SETTINGS_COLLECTION_ID,
+        COLLECTIONS.SEO_SETTINGS,
         settings.$id,
         settings
       );
@@ -80,7 +76,7 @@ export async function updateSEOSettings(settings: Partial<SEOSettings>): Promise
       // Create new settings
       await databases.createDocument(
         DATABASE_ID,
-        SEO_SETTINGS_COLLECTION_ID,
+        COLLECTIONS.SEO_SETTINGS,
         ID.unique(),
         settings
       );
@@ -97,7 +93,7 @@ export async function fetchAllPageSEO(): Promise<PageSEO[]> {
   try {
     const response = await databases.listDocuments(
       DATABASE_ID,
-      PAGE_SEO_COLLECTION_ID
+      COLLECTIONS.PAGE_SEO
     );
     
     return response.documents.map(doc => ({
@@ -121,7 +117,7 @@ export async function fetchPageSEOByPath(pagePath: string): Promise<PageSEO | nu
   try {
     const response = await databases.listDocuments(
       DATABASE_ID,
-      PAGE_SEO_COLLECTION_ID,
+      COLLECTIONS.PAGE_SEO,
       [Query.equal('page_path', pagePath)]
     );
 
@@ -151,7 +147,7 @@ export async function addPageSEO(pageSEO: Omit<PageSEO, '$id'>): Promise<boolean
   try {
     await databases.createDocument(
       DATABASE_ID,
-      PAGE_SEO_COLLECTION_ID,
+      COLLECTIONS.PAGE_SEO,
       ID.unique(),
       pageSEO
     );
@@ -171,7 +167,7 @@ export async function updatePageSEO(pageSEO: PageSEO): Promise<boolean> {
     
     await databases.updateDocument(
       DATABASE_ID,
-      PAGE_SEO_COLLECTION_ID,
+      COLLECTIONS.PAGE_SEO,
       pageSEO.$id,
       pageSEO
     );
@@ -187,7 +183,7 @@ export async function deletePageSEO(id: string): Promise<boolean> {
   try {
     await databases.deleteDocument(
       DATABASE_ID,
-      PAGE_SEO_COLLECTION_ID,
+      COLLECTIONS.PAGE_SEO,
       id
     );
     

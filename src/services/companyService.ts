@@ -1,17 +1,11 @@
-import { databases } from '@/lib/appwrite';
+import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 import { ID, Query } from 'appwrite';
 import { CompanyInfo, SocialLink, FooterLink } from '@/types/payload-types';
-
-const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
-
-const COMPANY_INFO_COLLECTION_ID = 'company_info';
-const SOCIAL_LINKS_COLLECTION_ID = 'social_links';
-const FOOTER_LINKS_COLLECTION_ID = 'footer_links';
 
 // Company Info Functions
 export async function fetchCompanyInfo(): Promise<CompanyInfo | null> {
   try {
-    const response = await databases.listDocuments(DATABASE_ID, COMPANY_INFO_COLLECTION_ID, [Query.limit(1)]);
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.COMPANY_INFO, [Query.limit(1)]);
     return response.documents.length > 0 ? response.documents[0] as unknown as CompanyInfo : null;
   } catch (error) {
     console.error('Error fetching company info:', error);
@@ -22,7 +16,7 @@ export async function fetchCompanyInfo(): Promise<CompanyInfo | null> {
 export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
   try {
     const { $id, ...data } = info;
-    await databases.updateDocument(DATABASE_ID, COMPANY_INFO_COLLECTION_ID, $id, data);
+    await databases.updateDocument(DATABASE_ID, COLLECTIONS.COMPANY_INFO, $id, data);
     return true;
   } catch (error) {
     console.error('Error updating company info:', error);
@@ -33,7 +27,7 @@ export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
 // Social Links Functions
 export async function fetchSocialLinks(): Promise<SocialLink[]> {
   try {
-    const response = await databases.listDocuments(DATABASE_ID, SOCIAL_LINKS_COLLECTION_ID, [Query.orderAsc('order')]);
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.SOCIAL_LINKS, [Query.orderAsc('order')]);
     return response.documents as unknown as SocialLink[];
   } catch (error) {
     console.error('Error fetching social links:', error);
@@ -44,7 +38,7 @@ export async function fetchSocialLinks(): Promise<SocialLink[]> {
 export async function updateSocialLink(link: SocialLink): Promise<boolean> {
   try {
     const { $id, ...data } = link;
-    await databases.updateDocument(DATABASE_ID, SOCIAL_LINKS_COLLECTION_ID, $id, data);
+    await databases.updateDocument(DATABASE_ID, COLLECTIONS.SOCIAL_LINKS, $id, data);
     return true;
   } catch (error) {
     console.error('Error updating social link:', error);
@@ -54,7 +48,7 @@ export async function updateSocialLink(link: SocialLink): Promise<boolean> {
 
 export async function addSocialLink(link: Omit<SocialLink, '$id'>): Promise<boolean> {
     try {
-      await databases.createDocument(DATABASE_ID, SOCIAL_LINKS_COLLECTION_ID, ID.unique(), link);
+      await databases.createDocument(DATABASE_ID, COLLECTIONS.SOCIAL_LINKS, ID.unique(), link);
       return true;
     } catch (error) {
       console.error('Error adding social link:', error);
@@ -64,7 +58,7 @@ export async function addSocialLink(link: Omit<SocialLink, '$id'>): Promise<bool
   
   export async function deleteSocialLink(id: string): Promise<boolean> {
     try {
-      await databases.deleteDocument(DATABASE_ID, SOCIAL_LINKS_COLLECTION_ID, id);
+      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.SOCIAL_LINKS, id);
       return true;
     } catch (error) {
       console.error('Error deleting social link:', error);
@@ -75,7 +69,7 @@ export async function addSocialLink(link: Omit<SocialLink, '$id'>): Promise<bool
 // Footer Links Functions
 export async function fetchFooterLinks(): Promise<FooterLink[]> {
   try {
-    const response = await databases.listDocuments(DATABASE_ID, FOOTER_LINKS_COLLECTION_ID, [Query.orderAsc('order')]);
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.FOOTER_LINKS, [Query.orderAsc('order')]);
     return response.documents as unknown as FooterLink[];
   } catch (error) {
     console.error('Error fetching footer links:', error);
@@ -86,7 +80,7 @@ export async function fetchFooterLinks(): Promise<FooterLink[]> {
 export async function updateFooterLink(link: FooterLink): Promise<boolean> {
   try {
     const { $id, ...data } = link;
-    await databases.updateDocument(DATABASE_ID, FOOTER_LINKS_COLLECTION_ID, $id, data);
+    await databases.updateDocument(DATABASE_ID, COLLECTIONS.FOOTER_LINKS, $id, data);
     return true;
   } catch (error) {
     console.error('Error updating footer link:', error);
@@ -96,7 +90,7 @@ export async function updateFooterLink(link: FooterLink): Promise<boolean> {
 
 export async function addFooterLink(link: Omit<FooterLink, '$id'>): Promise<boolean> {
     try {
-      await databases.createDocument(DATABASE_ID, FOOTER_LINKS_COLLECTION_ID, ID.unique(), link);
+      await databases.createDocument(DATABASE_ID, COLLECTIONS.FOOTER_LINKS, ID.unique(), link);
       return true;
     } catch (error) {
       console.error('Error adding footer link:', error);
@@ -106,7 +100,7 @@ export async function addFooterLink(link: Omit<FooterLink, '$id'>): Promise<bool
   
   export async function deleteFooterLink(id: string): Promise<boolean> {
     try {
-      await databases.deleteDocument(DATABASE_ID, FOOTER_LINKS_COLLECTION_ID, id);
+      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.FOOTER_LINKS, id);
       return true;
     } catch (error) {
       console.error('Error deleting footer link:', error);
