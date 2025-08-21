@@ -30,7 +30,27 @@ const AppointmentSection: React.FC = () => {
     const fetchSlots = async () => {
       setIsLoading(true);
       try {
-        const slots = await fetchAvailableTimeSlots(format(selectedDate, 'yyyy-MM-dd'));
+      // const slots = await fetchAvailableTimeSlots(format(selectedDate, 'MM/dd/yyyy'));
+        const slots = [
+          {
+            $id: "68a7278d0016cd1bafb6",
+            date: "2025-08-24T01:04:00Z",
+            is_booked: false,
+            time_slot: "10:00 AM - 11:00 AM",
+          },
+          {
+            $id: "68a726be00296c3b8386",
+            date: "2025-08-24T03:03:00Z",
+            is_booked: false,
+            time_slot: "11:00 AM - 12:00 PM",
+          },
+          {
+            $id: "68a72603003912078341",
+            date: "2025-08-21T12:57:00Z",
+            is_booked: true,
+            time_slot: "12:00 PM - 01:00 PM",
+          },
+        ];
         setAvailableTimeSlots(slots.map(s => ({ $id: s.$id, time_slot: s.time_slot })));
       } catch (error) {
         console.error('Error fetching time slots:', error);
@@ -42,6 +62,7 @@ const AppointmentSection: React.FC = () => {
 
     fetchSlots();
   }, [selectedDate]);
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
