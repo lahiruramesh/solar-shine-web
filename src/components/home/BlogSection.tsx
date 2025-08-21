@@ -24,8 +24,8 @@ const BlogSection: React.FC<BlogSectionProps> = ({ posts }) => {
               Stay updated with the latest news and trends in solar energy.
             </p>
           </div>
-          <a 
-            href="/blog" 
+          <a
+            href="/blog"
             className="btn-secondary mt-4 md:mt-0 group"
           >
             View All Articles
@@ -44,9 +44,9 @@ const BlogSection: React.FC<BlogSectionProps> = ({ posts }) => {
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
               <div className="h-48 overflow-hidden">
-                <img 
-                  src={post.featured_image} 
-                  alt={post.title} 
+                <img
+                  src={post.featured_image}
+                  alt={post.title}
                   className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
                 />
               </div>
@@ -57,8 +57,8 @@ const BlogSection: React.FC<BlogSectionProps> = ({ posts }) => {
                 </div>
                 <h3 className="text-xl font-bold mb-2 line-clamp-2">{post.title}</h3>
                 <p className="text-brand-gray mb-4 line-clamp-3">{post.excerpt}</p>
-                <a 
-                  href={`/blog/${post.slug}`} 
+                <a
+                  href={`/blog/${post.slug}`}
                   className="text-primary font-medium hover:underline flex items-center"
                 >
                   Read More

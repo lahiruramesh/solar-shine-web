@@ -48,6 +48,8 @@ export interface Testimonial {
   text: string;
   author: string;
   position: string | null;
+  company?: string;
+  rating?: number;
 }
 
 export interface BlogPost {
@@ -92,6 +94,15 @@ export interface CompanyInfo {
   address: string;
   email: string;
   phone: string;
+  website?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+  businessHours?: string;
+  facebook?: string;
+  linkedin?: string;
+  additionalInfo?: string;
 }
 
 export interface AboutContent {

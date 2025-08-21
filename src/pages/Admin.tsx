@@ -4,11 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Dashboard } from '@/components/admin/Dashboard';
 import { ContentManager } from '@/components/admin/content/ContentManager';
-import { GlobalSettingsManager } from '@/components/admin/content/GlobalSettingsManager';
-import { NavigationManager } from '@/components/admin/content/NavigationManager';
-import { SEOManager } from '@/components/admin/content/SEOManager';
 import AppointmentsSection from '@/components/admin/AppointmentsSection';
-import SEOSection from '@/components/admin/SEOSection';
 
 const Admin: React.FC = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -20,8 +16,6 @@ const Admin: React.FC = () => {
         return <Dashboard />;
       case 'appointments':
         return <AppointmentsSection />;
-      case 'seo':
-        return <SEOManager />;
       case 'hero':
       case 'services':
       case 'specialized-areas':
@@ -29,17 +23,13 @@ const Admin: React.FC = () => {
       case 'testimonials':
       case 'blog':
       case 'about':
-        return <ContentManager activeSection={activeSection} />;
       case 'company-info':
-        return (
-          <div className="text-center py-8 text-gray-500">
-            Company Info management coming soon...
-          </div>
-        );
+      case 'social-links':
+      case 'footer-links':
       case 'navigation':
-        return <NavigationManager />;
+      case 'seo':
       case 'settings':
-        return <GlobalSettingsManager />;
+        return <ContentManager activeSection={activeSection} />;
       default:
         return <Dashboard />;
     }

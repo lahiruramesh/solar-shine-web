@@ -22,7 +22,8 @@ import {
   Info,
   LogOut,
   Menu,
-  X
+  X,
+  Link
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -57,6 +58,8 @@ const sidebarItems = [
     category: 'Configuration',
     items: [
       { id: 'company-info', label: 'Company Info', icon: Building },
+      { id: 'social-links', label: 'Social Links', icon: Globe },
+      { id: 'footer-links', label: 'Footer Links', icon: Link },
       { id: 'navigation', label: 'Navigation', icon: Globe },
       { id: 'seo', label: 'SEO Settings', icon: BarChart3 },
       { id: 'settings', label: 'Global Settings', icon: Settings },
@@ -107,7 +110,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 {category.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeSection === item.id;
-                  
+
                   return (
                     <Button
                       key={item.id}

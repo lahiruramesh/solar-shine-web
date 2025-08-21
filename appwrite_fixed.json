@@ -249,9 +249,9 @@
       "$id": "blog_posts",
       "$permissions": [
         "read(\"any\")",
-        "create(\"any\")",
-        "update(\"any\")",
-        "delete(\"any\")"
+        "create(\"users\")",
+        "update(\"users\")",
+        "delete(\"users\")"
       ],
       "databaseId": "6873ba790033a7d5cfdb",
       "name": "Blog Posts",
@@ -299,14 +299,6 @@
           "default": null
         },
         {
-          "key": "featured_image_id",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 255,
-          "default": null
-        },
-        {
           "key": "published",
           "type": "boolean",
           "required": false,
@@ -330,14 +322,6 @@
         },
         {
           "key": "categories",
-          "type": "string",
-          "required": false,
-          "array": true,
-          "size": 50,
-          "default": null
-        },
-        {
-          "key": "tags",
           "type": "string",
           "required": false,
           "array": true,
@@ -539,7 +523,7 @@
       "attributes": [
         { "key": "date", "type": "datetime", "required": true, "array": false },
         { "key": "time_slot", "type": "string", "required": true, "array": false, "size": 100 },
-        { "key": "is_booked", "type": "boolean", "required": false, "array": false, "default": false }
+        { "key": "is_booked", "type": "boolean", "required": true, "array": false, "default": false }
       ],
       "indexes": [
         { "key": "idx_date_booked", "type": "key", "attributes": ["date", "is_booked"], "orders": ["ASC", "ASC"] }
@@ -763,7 +747,7 @@
           "type": "string",
           "required": false,
           "array": false,
-          "size": 5000,
+          "size": 10000,
           "default": null
         },
         {
@@ -771,7 +755,7 @@
           "type": "string",
           "required": false,
           "array": false,
-          "size": 500,
+          "size": 1000,
           "default": null
         },
         {
@@ -779,7 +763,39 @@
           "type": "string",
           "required": false,
           "array": false,
-          "size": 500,
+          "size": 1000,
+          "default": null
+        },
+        {
+          "key": "main_image_id",
+          "type": "string",
+          "required": false,
+          "array": false,
+          "size": 255,
+          "default": null
+        },
+        {
+          "key": "image_one_id",
+          "type": "string",
+          "required": false,
+          "array": false,
+          "size": 255,
+          "default": null
+        },
+        {
+          "key": "image_two_id",
+          "type": "string",
+          "required": false,
+          "array": false,
+          "size": 255,
+          "default": null
+        },
+        {
+          "key": "team_members",
+          "type": "string",
+          "required": false,
+          "array": false,
+          "size": 10000,
           "default": null
         }
       ],

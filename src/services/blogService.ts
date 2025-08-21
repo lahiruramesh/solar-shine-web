@@ -4,12 +4,26 @@ import { BlogPost } from '@/types/payload-types';
 import { createSlug } from '@/lib/utils';
 
 function mapDocumentToBlogPost(doc: any): BlogPost {
-  const imageUrl = doc.featured_image_id ? (storage.getFilePreview(STORAGE_BUCKET_ID, doc.featured_image_id) as any).href : undefined;
+  // Handle both featured_image and featured_image_id fields
+  let imageUrl: string | undefined;
+  let imageId: string | undefined;
+  
+  if (doc.featured_image_id) {
+    try {
+      imageUrl = (storage.getFilePreview(STORAGE_BUCKET_ID, doc.featured_image_id) as any).href;
+      imageId = doc.featured_image_id;
+    } catch (error) {
+      console.warn('Failed to get image preview:', error);
+    }
+  } else if (doc.featured_image) {
+    imageUrl = doc.featured_image;
+  }
+  
   return {
     ...doc,
     $id: doc.$id,
     featured_image: imageUrl,
-    featured_image_id: doc.featured_image_id,
+    featured_image_id: imageId,
     publishDate: doc.publishDate ? new Date(doc.publishDate).toISOString() : undefined,
   } as unknown as BlogPost;
 }
@@ -48,10 +62,29 @@ export async function uploadBlogImage(imageFile: File): Promise<string> {
 
 export async function createBlogPost(postData: Partial<Omit<BlogPost, '$id' | 'featured_image'>>): Promise<string | null> {
     try {
-        const dataToSave = {
-            ...postData,
+        // Prepare data for Appwrite, handling missing fields
+        const dataToSave: any = {
+            title: postData.title || '',
             slug: postData.slug || createSlug(postData.title!),
+            excerpt: postData.excerpt || null,
+            content: postData.content || null,
+            author: postData.author || null,
+            publishDate: postData.publishDate || new Date().toISOString(),
+            categories: postData.categories || null,
+            tags: postData.tags || null,
         };
+
+        // Add featured_image_id if it exists
+        if (postData.featured_image_id) {
+            dataToSave.featured_image_id = postData.featured_image_id;
+        }
+
+        // Remove undefined values to prevent Appwrite errors
+        Object.keys(dataToSave).forEach(key => {
+            if (dataToSave[key] === undefined) {
+                delete dataToSave[key];
+            }
+        });
 
         const response = await databases.createDocument(DATABASE_ID, COLLECTIONS.BLOG_POSTS, ID.unique(), dataToSave);
         return response.$id;
@@ -72,12 +105,12 @@ export async function updateBlogPost(id: string, postData: Partial<Omit<BlogPost
     }
 
     const { title, slug, excerpt, content, author, publishDate, featured_image_id, categories, tags } = postData;
-    const dataToUpdate = { title, slug, excerpt, content, author, publishDate, featured_image_id, categories, tags };
+    const dataToUpdate: any = { title, slug, excerpt, content, author, publishDate, featured_image_id, categories, tags };
     
     // Appwrite expects null for empty optional fields, not undefined.
     for (const key in dataToUpdate) {
-      if ((dataToUpdate as any)[key] === undefined) {
-        (dataToUpdate as any)[key] = null;
+      if (dataToUpdate[key] === undefined) {
+        dataToUpdate[key] = null;
       }
     }
 

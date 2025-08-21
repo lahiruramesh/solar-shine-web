@@ -8,24 +8,29 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { 
-  fetchBlogPosts, 
-  createBlogPost, 
-  updateBlogPost, 
+import {
+  fetchBlogPosts,
+  createBlogPost,
+  updateBlogPost,
   deleteBlogPost,
-  uploadBlogImage 
+  uploadBlogImage
 } from '@/services/blogService';
 import type { BlogPost } from '@/types/payload-types';
 import { Loader2, Plus, Edit, Trash2, Save, Calendar } from 'lucide-react';
+import { DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const BlogManager: React.FC = () => {
+  const { isAdmin, isLoading: isAuthLoading } = useAuth();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  
+
+
+
   const [formData, setFormData] = useState<Partial<Omit<BlogPost, '$id' | 'featured_image'>>>({
     title: '',
     excerpt: '',
@@ -48,7 +53,8 @@ export const BlogManager: React.FC = () => {
       const data = await fetchBlogPosts();
       setPosts(data);
     } catch (error) {
-      toast.error("Failed to load blog posts");
+      console.error('Error loading blog posts:', error);
+      toast.error(`Failed to load blog posts: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -130,11 +136,18 @@ export const BlogManager: React.FC = () => {
     setSaving(true);
     try {
       let imageId: string | undefined | null = editingPost?.featured_image_id || null;
-      
+
       if (imageFile) {
         setUploading(true);
-        imageId = await uploadBlogImage(imageFile);
-        setUploading(false);
+        try {
+          imageId = await uploadBlogImage(imageFile);
+        } catch (imageError) {
+          console.error('Failed to upload image:', imageError);
+          toast.error("Failed to upload image");
+          return;
+        } finally {
+          setUploading(false);
+        }
       }
 
       const postData: Partial<Omit<BlogPost, '$id' | 'featured_image'>> = {
@@ -142,18 +155,30 @@ export const BlogManager: React.FC = () => {
         featured_image_id: imageId,
         publishDate: formData.publishDate ? new Date(formData.publishDate).toISOString() : new Date().toISOString(),
       };
-      
+
       if (editingPost) {
-        await updateBlogPost(editingPost.$id, postData);
-        toast.success("Blog post updated successfully");
+        const success = await updateBlogPost(editingPost.$id, postData);
+        if (success) {
+          toast.success("Blog post updated successfully");
+        } else {
+          toast.error("Failed to update blog post");
+          return;
+        }
       } else {
-        await createBlogPost(postData);
-        toast.success("Blog post created successfully");
+        const postId = await createBlogPost(postData);
+        if (postId) {
+          toast.success("Blog post created successfully");
+        } else {
+          toast.error("Failed to create blog post");
+          return;
+        }
       }
+
       await loadPosts();
       handleCloseDialog();
     } catch (error) {
-      toast.error("Failed to save blog post");
+      console.error('Error saving blog post:', error);
+      toast.error(`Failed to save blog post: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
       setUploading(false);
@@ -175,13 +200,33 @@ export const BlogManager: React.FC = () => {
   const getStatusBadge = (post: BlogPost) => {
     const date = post.publishDate ? new Date(post.publishDate) : null;
     const isPublished = date && date <= new Date();
-    
+
     return (
       <Badge variant={isPublished ? 'default' : 'secondary'}>
         {isPublished ? 'Published' : 'Draft'}
       </Badge>
     );
   };
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading authentication...</span>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold mb-2">Access Denied</h3>
+          <p className="text-muted-foreground">You need admin privileges to access this section.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -203,6 +248,9 @@ export const BlogManager: React.FC = () => {
           <p className="text-muted-foreground">
             Manage your blog content and publications
           </p>
+          <div className="mt-2 text-xs text-muted-foreground">
+            DB: {DATABASE_ID} | Collection: {COLLECTIONS.BLOG_POSTS}
+          </div>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -364,7 +412,7 @@ export const BlogManager: React.FC = () => {
               ))}
             </TableBody>
           </Table>
-          
+
           {posts.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Calendar className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />

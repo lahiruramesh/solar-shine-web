@@ -55,7 +55,7 @@ export const ProjectsManager: React.FC = () => {
         collectionId,
         [Query.orderDesc('completion_date')]
       );
-      
+
       const projectsData = response.documents.map(doc => ({
         $id: doc.$id,
         title: doc.title,
@@ -65,7 +65,7 @@ export const ProjectsManager: React.FC = () => {
         completion_date: doc.completion_date,
         featured: doc.featured
       }));
-      
+
       setProjects(projectsData);
       toast.success('Projects loaded successfully');
     } catch (error) {
@@ -81,13 +81,13 @@ export const ProjectsManager: React.FC = () => {
     try {
       const fileId = ID.unique();
       const uploadedFile = await storage.createFile(bucketId, fileId, file);
-      
-      // Get the file URL
-      const fileUrl = storage.getFileView(bucketId, uploadedFile.$id);
-      
+
+      // Get the file URL - construct it properly
+      const fileUrl = `${import.meta.env.VITE_APPWRITE_ENDPOINT}/storage/buckets/${bucketId}/files/${uploadedFile.$id}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`;
+
       setFormData(prev => ({
         ...prev,
-        image_url: fileUrl.toString()
+        image_url: fileUrl
       }));
       toast.success('Image uploaded successfully');
     } catch (error) {
@@ -325,6 +325,24 @@ export const ProjectsManager: React.FC = () => {
                     )}
                   </Button>
                 </div>
+
+                {/* Image Preview */}
+                {formData.image_url && (
+                  <div className="mt-2">
+                    <Label>Image Preview</Label>
+                    <div className="border rounded-lg overflow-hidden mt-1">
+                      <img
+                        src={formData.image_url}
+                        alt="Project preview"
+                        className="w-full h-32 object-cover"
+                        onError={(e) => {
+                          console.error('Failed to load project image:', formData.image_url);
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <Switch
@@ -371,6 +389,7 @@ export const ProjectsManager: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Image</TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Completion Date</TableHead>
@@ -381,6 +400,21 @@ export const ProjectsManager: React.FC = () => {
             <TableBody>
               {projects.map((project) => (
                 <TableRow key={project.$id}>
+                  <TableCell>
+                    {project.image_url && (
+                      <div className="w-16 h-16 rounded-lg overflow-hidden border">
+                        <img
+                          src={project.image_url}
+                          alt={project.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error('Failed to load project image:', project.image_url);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium">
                     <div className="max-w-sm">
                       <div className="font-medium">{project.title}</div>
@@ -427,7 +461,7 @@ export const ProjectsManager: React.FC = () => {
               ))}
             </TableBody>
           </Table>
-          
+
           {projects.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Building className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />

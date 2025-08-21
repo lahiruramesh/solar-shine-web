@@ -8,13 +8,19 @@ export async function fetchProjects(): Promise<Project[]> {
       Query.orderDesc('$createdAt')
     ]);
     return response.documents.map(doc => {
-      const imageUrl = doc.image ? (storage.getFilePreview(STORAGE_BUCKET_ID, doc.image) as any).href : '';
+      // Ensure the image URL is properly formatted
+      const imageUrl = doc.image_url ? 
+        (doc.image_url.startsWith('http') 
+          ? doc.image_url 
+          : `${import.meta.env.VITE_APPWRITE_ENDPOINT}/storage/buckets/${STORAGE_BUCKET_ID}/files/${doc.image_url}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`)
+        : '';
+      
       return {
         ...doc,
         $id: doc.$id,
-        image: imageUrl,
-        completionDate: doc.completionDate ? new Date(doc.completionDate).toISOString().split('T')[0] : '',
-      } as unknown as Project;
+        image_url: imageUrl,
+        completion_date: doc.completion_date || doc.completionDate || '',
+      } as Project;
     });
   } catch (error) {
     console.error('Error fetching projects:', error);

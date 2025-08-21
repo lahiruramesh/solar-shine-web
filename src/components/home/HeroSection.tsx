@@ -9,18 +9,28 @@ interface HeroSectionProps {
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
-  // Apply cache-busting to the background image
-  const backgroundImageUrl = data.background_image ? getImageWithCacheBusting(data.background_image) : '';
-  
+  // Ensure the background image URL is properly formatted
+  const backgroundImageUrl = data.background_image ?
+    (data.background_image.startsWith('http')
+      ? data.background_image
+      : `${import.meta.env.VITE_APPWRITE_ENDPOINT}/storage/buckets/${import.meta.env.VITE_APPWRITE_STORAGE_BUCKET_ID}/files/${data.background_image}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`)
+    : '';
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40 z-10" />
-        <img 
-          src={backgroundImageUrl} 
-          alt={data.title} 
-          className="w-full h-full object-cover"
-        />
+        {backgroundImageUrl && (
+          <img
+            src={backgroundImageUrl}
+            alt={data.title}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              console.error('Failed to load hero background image:', backgroundImageUrl);
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        )}
       </div>
 
       <div className="container-custom relative z-20 pt-20 md:pt-0">

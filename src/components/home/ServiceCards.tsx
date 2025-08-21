@@ -36,35 +36,35 @@ const ServiceCards: React.FC<ServiceCardsProps> = ({ services }) => {
 
         <div className="relative mt-12">
           {/* Navigation Buttons */}
-          <button 
-            onClick={() => scroll('left')} 
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 transition md:-left-5 hidden md:block"
+          <button
+            onClick={() => scroll('left')}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white p-3 rounded-full shadow-xl hover:bg-gray-50 hover:shadow-2xl transition-all duration-300 md:-left-8 hidden md:block group"
             aria-label="Scroll left"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={28} className="text-slate-600 group-hover:text-slate-800 transition-colors duration-300" />
           </button>
-          
-          <button 
-            onClick={() => scroll('right')} 
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 transition md:-right-5 hidden md:block"
+
+          <button
+            onClick={() => scroll('right')}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white p-3 rounded-full shadow-xl hover:bg-gray-50 hover:shadow-2xl transition-all duration-300 md:-right-8 hidden md:block group"
             aria-label="Scroll right"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={28} className="text-slate-600 group-hover:text-slate-800 transition-colors duration-300" />
           </button>
 
           {/* Service Cards Container */}
-          <div 
-            ref={containerRef} 
-            className="flex overflow-x-auto gap-6 pb-6 scrollbar-hide snap-x snap-mandatory"
+          <div
+            ref={containerRef}
+            className="flex overflow-x-auto gap-6 pb-6 scrollbar-hide snap-x snap-mandatory px-4 md:px-8"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {services.map((service, index) => {
               // Default to Sun icon if the icon string doesn't match any in our map
               const IconComponent = iconMap[service.icon] || Sun;
               const cardColor = index % 2 === 0 ? 'bg-primary' : 'bg-brand-black';
-              
+
               return (
-                <motion.div 
+                <motion.div
                   key={service.id}
                   className="min-w-[300px] max-w-[350px] bg-white rounded-lg shadow-lg p-6 flex flex-col h-[280px] snap-center"
                   whileHover={{ y: -10, transition: { duration: 0.3 } }}
@@ -78,7 +78,7 @@ const ServiceCards: React.FC<ServiceCardsProps> = ({ services }) => {
                   </div>
                   <h3 className="text-xl font-bold mb-2">{service.title}</h3>
                   <p className="text-brand-gray flex-grow">{service.description}</p>
-                  <a 
+                  <a
                     href={`/services#${service.title.toLowerCase().replace(/\s+/g, '-')}`}
                     className="text-primary font-medium mt-4 flex items-center hover:underline"
                   >
