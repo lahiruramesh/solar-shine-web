@@ -16,18 +16,9 @@ export const fetchCompanyInfo = async (): Promise<CompanyInfo | null> => {
         $id: doc.$id,
         name: doc.name || '',
         description: doc.description || '',
-        address: doc.address || '',
-        email: doc.email || '',
-        phone: doc.phone || '',
         website: doc.website || '',
-        city: doc.city || '',
-        state: doc.state || '',
-        zipCode: doc.zipCode || '',
-        country: doc.country || '',
-        businessHours: doc.businessHours || '',
-        facebook: doc.facebook || '',
-        linkedin: doc.linkedin || '',
-        additionalInfo: doc.additionalInfo || '',
+        logo_url: doc.logo_url || '',
+        businessHours: doc.business_hours || '',
       };
     }
 
@@ -48,18 +39,9 @@ export const updateCompanyInfo = async (companyData: CompanyInfo): Promise<boole
     const dbData = prepareAppwriteData({
       name: companyData.name,
       description: companyData.description,
-      address: companyData.address,
-      email: companyData.email,
-      phone: companyData.phone,
       website: companyData.website,
-      city: companyData.city,
-      state: companyData.state,
-      zipCode: companyData.zipCode,
-      country: companyData.country,
-      businessHours: companyData.businessHours,
-      facebook: companyData.facebook,
-      linkedin: companyData.linkedin,
-      additionalInfo: companyData.additionalInfo,
+      logo_url: companyData.logo_url,
+      business_hours: companyData.businessHours,
     });
 
     if (Object.keys(dbData).length === 0) {
@@ -73,8 +55,8 @@ export const updateCompanyInfo = async (companyData: CompanyInfo): Promise<boole
         await databases.updateDocument(DATABASE_ID, COLLECTIONS.COMPANY_INFO, id, dbData);
       } else {
         // Create new company info
-        if (!dbData.name || !dbData.email) {
-          console.error('Name and email are required for creating new company info');
+        if (!dbData.name) {
+          console.error('Name is required for creating new company info');
           return false;
         }
         await databases.createDocument(DATABASE_ID, COLLECTIONS.COMPANY_INFO, ID.unique(), dbData);
@@ -95,22 +77,13 @@ export const createCompanyInfo = async (companyData: Omit<CompanyInfo, '$id'>): 
     const dbData = prepareAppwriteData({
       name: companyData.name,
       description: companyData.description,
-      address: companyData.address,
-      email: companyData.email,
-      phone: companyData.phone,
       website: companyData.website,
-      city: companyData.city,
-      state: companyData.state,
-      zipCode: companyData.zipCode,
-      country: companyData.country,
-      businessHours: companyData.businessHours,
-      facebook: companyData.facebook,
-      linkedin: companyData.linkedin,
-      additionalInfo: companyData.additionalInfo,
+      logo_url: companyData.logo_url,
+      business_hours: companyData.businessHours,
     });
 
-    if (!dbData.name || !dbData.email) {
-      throw new Error('Name and email are required');
+    if (!dbData.name) {
+      throw new Error('Name is required');
     }
 
     const response = await databases.createDocument(
@@ -124,18 +97,9 @@ export const createCompanyInfo = async (companyData: Omit<CompanyInfo, '$id'>): 
       $id: response.$id,
       name: response.name || '',
       description: response.description || '',
-      address: response.address || '',
-      email: response.email || '',
-      phone: response.phone || '',
       website: response.website || '',
-      city: response.city || '',
-      state: response.state || '',
-      zipCode: response.zipCode || '',
-      country: response.country || '',
-      businessHours: response.businessHours || '',
-      facebook: response.facebook || '',
-      linkedin: response.linkedin || '',
-      additionalInfo: response.additionalInfo || '',
+      logo_url: response.logo_url || '',
+      businessHours: response.business_hours || '',
     };
   } catch (error) {
     console.error('Error creating company info:', error);

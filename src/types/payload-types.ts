@@ -1,10 +1,9 @@
 export interface GlobalSettings {
-  siteName: string;
-  logo: string | null;
-  primaryColor: string | null;
-  secondaryColor: string | null;
-  contactEmail: string | null;
-  contactPhone: string | null;
+  site_title: string;
+  site_description: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  address: string | null;
 }
 
 export interface HeroSection {
@@ -91,18 +90,9 @@ export interface CompanyInfo {
   $id: string;
   name: string;
   description: string;
-  address: string;
-  email: string;
-  phone: string;
   website?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country?: string;
+  logo_url?: string;
   businessHours?: string;
-  facebook?: string;
-  linkedin?: string;
-  additionalInfo?: string;
 }
 
 export interface AboutContent {

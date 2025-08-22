@@ -7,13 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Building, Mail, Phone, MapPin, Globe, Save, Loader2, Clock } from 'lucide-react';
+import { Building, Save, Loader2, Clock, Image, Upload, X } from 'lucide-react';
 import { fetchCompanyInfo, updateCompanyInfo } from '@/services/companyService';
 import { CompanyInfo } from '@/types/payload-types';
+import { storage, STORAGE_BUCKET_ID, ID } from '@/lib/appwrite';
 
 export const CompanyInfoManager: React.FC = () => {
     const [formData, setFormData] = useState<Partial<CompanyInfo>>({});
     const [isEditing, setIsEditing] = useState(false);
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string>('');
+    const [isUploading, setIsUploading] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: companyInfo, isLoading, error } = useQuery({
@@ -27,6 +31,12 @@ export const CompanyInfoManager: React.FC = () => {
             toast.success('Company information updated successfully!');
             queryClient.invalidateQueries({ queryKey: ['companyInfo'] });
             setIsEditing(false);
+            setLogoFile(null);
+
+            // Update the logo preview from the current form data
+            if (formData.logo_url) {
+                setLogoPreview(formData.logo_url);
+            }
         },
         onError: (error) => {
             toast.error('Failed to update company information');
@@ -37,8 +47,21 @@ export const CompanyInfoManager: React.FC = () => {
     useEffect(() => {
         if (companyInfo) {
             setFormData(companyInfo);
+            // Set logo preview from existing logo URL
+            if (companyInfo.logo_url) {
+                setLogoPreview(companyInfo.logo_url);
+            } else {
+                setLogoPreview('');
+            }
         }
     }, [companyInfo]);
+
+    // Watch for changes in logo_url field
+    useEffect(() => {
+        if (formData.logo_url) {
+            setLogoPreview(formData.logo_url);
+        }
+    }, [formData.logo_url]);
 
     const handleInputChange = (field: keyof CompanyInfo, value: string) => {
         setFormData(prev => ({
@@ -47,18 +70,135 @@ export const CompanyInfoManager: React.FC = () => {
         }));
     };
 
-    const handleSave = () => {
-        if (!formData.name || !formData.email) {
-            toast.error('Company name and email are required');
+    const validateLogoFile = (file: File): boolean => {
+        // Check file type
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select a valid image file');
+            return false;
+        }
+
+        // Check file size (max 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+            toast.error('Logo file size must be less than 5MB');
+            return false;
+        }
+
+        return true;
+    };
+
+    const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            if (validateLogoFile(file)) {
+                setLogoFile(file);
+                // Create preview from the selected file
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (e.target?.result) {
+                        setLogoPreview(e.target.result as string);
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Reset the input
+                event.target.value = '';
+            }
+        }
+    };
+
+    const uploadLogoToStorage = async (file: File): Promise<string | null> => {
+        try {
+            setIsUploading(true);
+
+            // Create a unique filename
+            const fileExtension = file.name.split('.').pop();
+            const fileName = `company-logo-${Date.now()}.${fileExtension}`;
+
+            // Upload to Appwrite storage
+            const uploadedFile = await storage.createFile(
+                STORAGE_BUCKET_ID,
+                ID.unique(),
+                file
+            );
+
+            // Generate the correct file URL using the same pattern as other services
+            const fileUrl = `${import.meta.env.VITE_APPWRITE_ENDPOINT}/storage/buckets/${STORAGE_BUCKET_ID}/files/${uploadedFile.$id}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`;
+
+            toast.success('Logo uploaded successfully!');
+            return fileUrl;
+        } catch (error) {
+            console.error('Logo upload error:', error);
+            toast.error('Failed to upload logo. Please try again.');
+            return null;
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const removeLogo = () => {
+        setLogoFile(null);
+        setLogoPreview('');
+        setFormData(prev => ({
+            ...prev,
+            logo_url: ''
+        }));
+        // Clear the file input
+        const fileInput = document.getElementById('logo') as HTMLInputElement;
+        if (fileInput) {
+            fileInput.value = '';
+        }
+    };
+
+    const handleSave = async () => {
+        if (!formData.name) {
+            toast.error('Company name is required');
             return;
         }
 
-        updateMutation.mutate(formData as CompanyInfo);
+        try {
+            let logoUrl = formData.logo_url;
+
+            // If there's a new logo file, upload it first
+            if (logoFile) {
+                const uploadedUrl = await uploadLogoToStorage(logoFile);
+                if (uploadedUrl) {
+                    logoUrl = uploadedUrl;
+                } else {
+                    toast.error('Failed to upload logo. Please try again.');
+                    return;
+                }
+            }
+
+            // Update form data with new logo URL
+            const updatedFormData = {
+                ...formData,
+                logo_url: logoUrl
+            };
+
+            // Save company info
+            updateMutation.mutate(updatedFormData as CompanyInfo);
+        } catch (error) {
+            console.error('Save error:', error);
+            toast.error('Failed to save company information');
+        }
     };
 
     const handleCancel = () => {
         setFormData(companyInfo || {});
+        setLogoFile(null);
+        // Reset logo preview to original state
+        if (companyInfo?.logo_url) {
+            setLogoPreview(companyInfo.logo_url);
+        } else {
+            setLogoPreview('');
+        }
         setIsEditing(false);
+        // Clear the file input
+        const fileInput = document.getElementById('logo') as HTMLInputElement;
+        if (fileInput) {
+            fileInput.value = '';
+        }
     };
 
     if (isLoading) {
@@ -83,7 +223,7 @@ export const CompanyInfoManager: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">Company Information</h2>
-                    <p className="text-gray-600">Manage your business details and contact information</p>
+                    <p className="text-gray-600">Manage your business details and company branding</p>
                 </div>
                 <div className="flex space-x-2">
                     {!isEditing ? (
@@ -98,21 +238,21 @@ export const CompanyInfoManager: React.FC = () => {
                             </Button>
                             <Button
                                 onClick={handleSave}
-                                disabled={updateMutation.isPending}
+                                disabled={updateMutation.isPending || isUploading}
                             >
-                                {updateMutation.isPending ? (
+                                {updateMutation.isPending || isUploading ? (
                                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                                 ) : (
                                     <Save className="h-4 w-4 mr-2" />
                                 )}
-                                Save Changes
+                                {isUploading ? 'Uploading...' : 'Save Changes'}
                             </Button>
                         </>
                     )}
                 </div>
             </div>
 
-            {/* Company Information Form */}
+            {/* Basic Information */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center">
@@ -162,114 +302,98 @@ export const CompanyInfoManager: React.FC = () => {
                 </CardContent>
             </Card>
 
-            {/* Contact Information */}
+            {/* Logo Management */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center">
-                        <Mail className="h-5 w-5 mr-2" />
-                        Contact Information
+                        <Image className="h-5 w-5 mr-2" />
+                        Logo Management
                     </CardTitle>
                     <CardDescription>
-                        How customers can reach your business
+                        Upload and manage your company logo
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email Address *</Label>
-                            <Input
-                                id="email"
-                                value={formData.email || ''}
-                                onChange={(e) => handleInputChange('email', e.target.value)}
-                                disabled={!isEditing}
-                                placeholder="info@solarshine.com"
-                                type="email"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="phone">Phone Number</Label>
-                            <Input
-                                id="phone"
-                                value={formData.phone || ''}
-                                onChange={(e) => handleInputChange('phone', e.target.value)}
-                                disabled={!isEditing}
-                                placeholder="+1 (555) 123-4567"
-                                type="tel"
-                            />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Address Information */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center">
-                        <MapPin className="h-5 w-5 mr-2" />
-                        Address Information
-                    </CardTitle>
-                    <CardDescription>
-                        Physical location and service areas
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                    {/* Current Logo Display */}
                     <div className="space-y-2">
-                        <Label htmlFor="address">Full Address</Label>
-                        <Textarea
-                            id="address"
-                            value={formData.address || ''}
-                            onChange={(e) => handleInputChange('address', e.target.value)}
-                            disabled={!isEditing}
-                            placeholder="123 Solar Street, Green City, ST 12345"
-                            rows={3}
-                        />
+                        <Label>Current Logo</Label>
+                        {logoPreview ? (
+                            <div className="flex items-center space-x-4">
+                                <div className="border rounded-lg bg-gray-50 p-2">
+                                    <img
+                                        src={logoPreview}
+                                        alt="Company Logo"
+                                        className="h-20 w-20 object-contain"
+                                        onError={(e) => {
+                                            console.error('Logo image failed to load:', logoPreview);
+                                            console.error('Error event:', e);
+                                            // If image fails to load, show placeholder
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                            setLogoPreview('');
+                                        }}
+                                        onLoad={(e) => {
+                                            console.log('Logo image loaded successfully:', logoPreview);
+                                        }}
+                                    />
+                                </div>
+                                {isEditing && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={removeLogo}
+                                        className="text-red-600 hover:text-red-700"
+                                    >
+                                        <X className="h-4 w-4 mr-2" />
+                                        Remove Logo
+                                    </Button>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center h-20 w-20 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                                <div className="text-center text-gray-500">
+                                    <Image className="h-8 w-8 mx-auto mb-1" />
+                                    <p className="text-xs">No Logo</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Logo Upload */}
+                    {isEditing && (
                         <div className="space-y-2">
-                            <Label htmlFor="city">City</Label>
-                            <Input
-                                id="city"
-                                value={formData.city || ''}
-                                onChange={(e) => handleInputChange('city', e.target.value)}
-                                disabled={!isEditing}
-                                placeholder="Green City"
-                            />
+                            <Label htmlFor="logo">Upload New Logo</Label>
+                            <div className="flex items-center space-x-2">
+                                <Input
+                                    id="logo"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleLogoChange}
+                                    className="flex-1"
+                                    disabled={isUploading}
+                                />
+                                {logoFile && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={isUploading}
+                                        onClick={() => setLogoFile(null)}
+                                    >
+                                        <X className="h-4 w-4 mr-2" />
+                                        Clear
+                                    </Button>
+                                )}
+                            </div>
+                            <p className="text-sm text-gray-500">
+                                Recommended: Square image, 200x200px or larger, PNG or JPG format, max 5MB
+                            </p>
+                            {logoFile && (
+                                <p className="text-sm text-green-600">
+                                    ✓ Selected: {logoFile.name} ({(logoFile.size / 1024 / 1024).toFixed(2)} MB)
+                                </p>
+                            )}
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="state">State/Province</Label>
-                            <Input
-                                id="state"
-                                value={formData.state || ''}
-                                onChange={(e) => handleInputChange('state', e.target.value)}
-                                disabled={!isEditing}
-                                placeholder="ST"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="zipCode">ZIP/Postal Code</Label>
-                            <Input
-                                id="zipCode"
-                                value={formData.zipCode || ''}
-                                onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                                disabled={!isEditing}
-                                placeholder="12345"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="country">Country</Label>
-                            <Input
-                                id="country"
-                                value={formData.country || ''}
-                                onChange={(e) => handleInputChange('country', e.target.value)}
-                                disabled={!isEditing}
-                                placeholder="United States"
-                            />
-                        </div>
-                    </div>
+                    )}
                 </CardContent>
             </Card>
 
@@ -294,57 +418,6 @@ export const CompanyInfoManager: React.FC = () => {
                             disabled={!isEditing}
                             placeholder="Monday - Friday: 8:00 AM - 6:00 PM&#10;Saturday: 9:00 AM - 4:00 PM&#10;Sunday: Closed"
                             rows={4}
-                        />
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Social Media & Additional Info */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center">
-                        <Globe className="h-5 w-5 mr-2" />
-                        Additional Information
-                    </CardTitle>
-                    <CardDescription>
-                        Social media links and other business details
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="facebook">Facebook</Label>
-                            <Input
-                                id="facebook"
-                                value={formData.facebook || ''}
-                                onChange={(e) => handleInputChange('facebook', e.target.value)}
-                                disabled={!isEditing}
-                                placeholder="https://facebook.com/solarshine"
-                                type="url"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="linkedin">LinkedIn</Label>
-                            <Input
-                                id="linkedin"
-                                value={formData.linkedin || ''}
-                                onChange={(e) => handleInputChange('linkedin', e.target.value)}
-                                disabled={!isEditing}
-                                placeholder="https://linkedin.com/company/solarshine"
-                                type="url"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="additionalInfo">Additional Information</Label>
-                        <Textarea
-                            id="additionalInfo"
-                            value={formData.additionalInfo || ''}
-                            onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
-                            disabled={!isEditing}
-                            placeholder="Any additional information about your business, certifications, awards, etc."
-                            rows={3}
                         />
                     </div>
                 </CardContent>

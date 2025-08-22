@@ -3,9 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
+import { fetchCompanyInfo } from '@/services/companyService';
 
-// Placeholder for logo from CMS
-const PLACEHOLDER_LOGO = "/placeholder.svg";
+// Fallback logo if no company logo is set
+const FALLBACK_LOGO = "/placeholder.svg";
 
 const menuItems = [
   { title: 'Home', path: '/' },
@@ -20,6 +22,13 @@ const menuItems = [
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Fetch company info to get the logo
+  const { data: companyInfo } = useQuery({
+    queryKey: ['companyInfo'],
+    queryFn: fetchCompanyInfo,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -40,12 +49,25 @@ const Header: React.FC = () => {
     };
   }, []);
 
+  // Use company logo if available, otherwise fallback
+  const logoUrl = companyInfo?.logo_url || FALLBACK_LOGO;
+  const companyName = companyInfo?.name || 'Solar Services';
+
   return (
     <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
       <div className="container-custom mx-auto flex justify-between items-center">
         {/* Logo */}
         <Link to="/" className="z-50">
-          <img src={PLACEHOLDER_LOGO} alt="Solar Services Logo" className="h-10 md:h-12" />
+          <img
+            src={logoUrl}
+            alt={`${companyName} Logo`}
+            className="h-10 md:h-12 object-contain"
+            onError={(e) => {
+              // If company logo fails to load, fallback to placeholder
+              const target = e.target as HTMLImageElement;
+              target.src = FALLBACK_LOGO;
+            }}
+          />
         </Link>
 
         {/* Desktop Navigation */}
@@ -73,9 +95,8 @@ const Header: React.FC = () => {
 
         {/* Mobile Navigation Menu */}
         <div
-          className={`fixed inset-0 bg-white p-6 transition-transform transform duration-300 ease-in-out md:hidden ${
-            isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-          } z-40 flex flex-col`}
+          className={`fixed inset-0 bg-white p-6 transition-transform transform duration-300 ease-in-out md:hidden ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'
+            } z-40 flex flex-col`}
         >
           <div className="mt-20 flex flex-col space-y-6">
             {menuItems.map((item) => (

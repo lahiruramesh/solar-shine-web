@@ -815,7 +815,7 @@
           "default": null
         },
         {
-          "key": "address",
+          "key": "website",
           "type": "string",
           "required": false,
           "array": false,
@@ -823,19 +823,19 @@
           "default": null
         },
         {
-          "key": "email",
+          "key": "logo_url",
           "type": "string",
           "required": false,
           "array": false,
-          "size": 255,
+          "size": 500,
           "default": null
         },
         {
-          "key": "phone",
+          "key": "business_hours",
           "type": "string",
           "required": false,
           "array": false,
-          "size": 50,
+          "size": 1000,
           "default": null
         }
       ],
