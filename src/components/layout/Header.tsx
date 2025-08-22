@@ -23,6 +23,22 @@ const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  // Add custom CSS animation for background zoom effect
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slowZoom {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.05); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   // Fetch company info to get the logo
   const { data: companyInfo } = useQuery({
     queryKey: ['companyInfo'],
@@ -54,14 +70,27 @@ const Header: React.FC = () => {
   const companyName = companyInfo?.name || 'Solar Services';
 
   return (
-    <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
-      <div className="container-custom mx-auto flex justify-between items-center">
+    <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4 border-b border-white/20'}`}>
+      {/* Background Image with Overlay */}
+      <div className={`absolute inset-0 transition-all duration-300 ${scrolled ? 'opacity-0' : 'opacity-100'}`}>
+        <div
+          className="w-full h-full bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')`,
+            animation: 'slowZoom 20s ease-in-out infinite alternate'
+          }}
+        />
+        {/* Dark overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/10 backdrop-blur-sm" />
+      </div>
+
+      <div className="container-custom mx-auto flex justify-between items-center relative z-10">
         {/* Logo */}
         <Link to="/" className="z-50">
           <img
             src={logoUrl}
             alt={`${companyName} Logo`}
-            className="h-10 md:h-12 object-contain"
+            className={`h-10 md:h-12 object-contain transition-all duration-300 ${!scrolled ? 'drop-shadow-lg' : ''}`}
             onError={(e) => {
               // If company logo fails to load, fallback to placeholder
               const target = e.target as HTMLImageElement;
@@ -76,17 +105,19 @@ const Header: React.FC = () => {
             <Link
               key={item.title}
               to={item.path}
-              className="text-brand-dark hover:text-primary font-medium transition-colors"
+              className={`font-medium transition-colors ${scrolled ? 'text-brand-dark hover:text-primary' : 'text-white hover:text-primary drop-shadow-sm'}`}
             >
               {item.title}
             </Link>
           ))}
-          <Button className="btn-primary">Book Appointment</Button>
+          <Button className={`${scrolled ? 'btn-primary' : 'bg-white text-brand-dark hover:bg-gray-100'}`}>
+            Book Appointment
+          </Button>
         </nav>
 
         {/* Mobile Navigation Toggle */}
         <button
-          className="md:hidden z-50 text-brand-dark"
+          className={`md:hidden z-50 transition-colors ${scrolled ? 'text-brand-dark' : 'text-white'}`}
           onClick={toggleMenu}
           aria-label="Toggle menu"
         >
