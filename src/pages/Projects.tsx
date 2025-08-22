@@ -12,7 +12,7 @@ const ProjectsPage: React.FC = () => {
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [categories, setCategories] = useState<string[]>(['All']);
   const [activeCategory, setActiveCategory] = useState("All");
-  
+
   useEffect(() => {
     const loadProjects = async () => {
       try {
@@ -39,7 +39,7 @@ const ProjectsPage: React.FC = () => {
   }, [activeCategory, projects]);
 
   const getCategoryIcon = (category: string) => {
-    switch(category) {
+    switch (category) {
       case "Residential":
         return <Home className="h-5 w-5 text-primary" />;
       case "Commercial":
@@ -78,11 +78,10 @@ const ProjectsPage: React.FC = () => {
                 <motion.button
                   key={category}
                   onClick={() => setActiveCategory(category)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-                    activeCategory === category
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${activeCategory === category
                       ? 'bg-primary text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-100'
-                  }`}
+                    }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -103,7 +102,21 @@ const ProjectsPage: React.FC = () => {
                 >
                   <Card className="overflow-hidden h-full flex flex-col group">
                     <CardHeader className="p-0">
-                      <img src={project.image || undefined} alt={project.title} className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300" />
+                      {project.image_url ? (
+                        <img
+                          src={project.image_url}
+                          alt={project.title}
+                          className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            console.error('Failed to load project image:', project.image_url);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-56 bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-400">No Image</span>
+                        </div>
+                      )}
                     </CardHeader>
                     <CardContent className="p-6 flex-grow">
                       <div className="flex items-center gap-2 mb-2 text-sm text-gray-500">

@@ -6,6 +6,12 @@ import { BlogManager } from './BlogManager';
 import { TestimonialsManager } from './TestimonialsManager';
 import { SpecializedAreasManager } from './SpecializedAreasManager';
 import { AboutContentManager } from './AboutContentManager';
+import { CompanyInfoManager } from './CompanyInfoManager';
+import { SocialLinksManager } from './SocialLinksManager';
+import { FooterLinksManager } from './FooterLinksManager';
+import { NavigationManager } from './NavigationManager';
+import { SEOManager } from './SEOManager';
+import { GlobalSettingsManager } from './GlobalSettingsManager';
 
 interface ContentManagerProps {
   activeSection: string;
@@ -28,6 +34,18 @@ export const ContentManager: React.FC<ContentManagerProps> = ({ activeSection })
         return <TestimonialsManager />;
       case 'about':
         return <AboutContentManager />;
+      case 'company-info':
+        return <CompanyInfoManager />;
+      case 'social-links':
+        return <SocialLinksManager />;
+      case 'footer-links':
+        return <FooterLinksManager />;
+      case 'navigation':
+        return <NavigationManager />;
+      case 'seo':
+        return <SEOManager />;
+      case 'settings':
+        return <GlobalSettingsManager />;
       default:
         return (
           <div className="text-center py-8 text-gray-500">

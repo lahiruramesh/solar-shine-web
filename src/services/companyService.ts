@@ -1,112 +1,108 @@
-import { databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
-import { ID, Query } from 'appwrite';
-import { CompanyInfo, SocialLink, FooterLink } from '@/types/payload-types';
+import { databases, storage, DATABASE_ID, STORAGE_BUCKET_ID, COLLECTIONS, ID, Query } from '@/lib/appwrite';
+import { CompanyInfo } from '@/types/payload-types';
+import { prepareAppwriteData } from '@/lib/utils';
 
-// Company Info Functions
-export async function fetchCompanyInfo(): Promise<CompanyInfo | null> {
+export const fetchCompanyInfo = async (): Promise<CompanyInfo | null> => {
   try {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.COMPANY_INFO, [Query.limit(1)]);
-    return response.documents.length > 0 ? response.documents[0] as unknown as CompanyInfo : null;
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTIONS.COMPANY_INFO,
+      [Query.limit(1)]
+    );
+
+    if (response.documents.length > 0) {
+      const doc = response.documents[0];
+      return {
+        $id: doc.$id,
+        name: doc.name || '',
+        description: doc.description || '',
+        website: doc.website || '',
+        logo_url: doc.logo_url || '',
+        businessHours: doc.business_hours || '',
+      };
+    }
+
+    return null;
   } catch (error) {
     console.error('Error fetching company info:', error);
-    throw error;
+    return null;
   }
-}
+};
 
-export async function updateCompanyInfo(info: CompanyInfo): Promise<boolean> {
+export const updateCompanyInfo = async (companyData: CompanyInfo): Promise<boolean> => {
   try {
-    const { $id, ...data } = info;
-    await databases.updateDocument(DATABASE_ID, COLLECTIONS.COMPANY_INFO, $id, data);
-    return true;
+    // Get the existing company info to check the ID
+    const existingCompany = await fetchCompanyInfo();
+    const id = existingCompany?.$id;
+
+    // Prepare the data for Appwrite
+    const dbData = prepareAppwriteData({
+      name: companyData.name,
+      description: companyData.description,
+      website: companyData.website,
+      logo_url: companyData.logo_url,
+      business_hours: companyData.businessHours,
+    });
+
+    if (Object.keys(dbData).length === 0) {
+      console.warn('No valid fields to update for company info');
+      return false;
+    }
+
+    try {
+      if (id) {
+        // Update existing company info
+        await databases.updateDocument(DATABASE_ID, COLLECTIONS.COMPANY_INFO, id, dbData);
+      } else {
+        // Create new company info
+        if (!dbData.name) {
+          console.error('Name is required for creating new company info');
+          return false;
+        }
+        await databases.createDocument(DATABASE_ID, COLLECTIONS.COMPANY_INFO, ID.unique(), dbData);
+      }
+      return true;
+    } catch (dbError) {
+      console.error('Database operation failed:', dbError);
+      return false;
+    }
   } catch (error) {
     console.error('Error updating company info:', error);
     return false;
   }
-}
+};
 
-// Social Links Functions
-export async function fetchSocialLinks(): Promise<SocialLink[]> {
+export const createCompanyInfo = async (companyData: Omit<CompanyInfo, '$id'>): Promise<CompanyInfo | null> => {
   try {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.SOCIAL_LINKS, [Query.orderAsc('order')]);
-    return response.documents as unknown as SocialLink[];
-  } catch (error) {
-    console.error('Error fetching social links:', error);
-    return [];
-  }
-}
+    const dbData = prepareAppwriteData({
+      name: companyData.name,
+      description: companyData.description,
+      website: companyData.website,
+      logo_url: companyData.logo_url,
+      business_hours: companyData.businessHours,
+    });
 
-export async function updateSocialLink(link: SocialLink): Promise<boolean> {
-  try {
-    const { $id, ...data } = link;
-    await databases.updateDocument(DATABASE_ID, COLLECTIONS.SOCIAL_LINKS, $id, data);
-    return true;
-  } catch (error) {
-    console.error('Error updating social link:', error);
-    return false;
-  }
-}
-
-export async function addSocialLink(link: Omit<SocialLink, '$id'>): Promise<boolean> {
-    try {
-      await databases.createDocument(DATABASE_ID, COLLECTIONS.SOCIAL_LINKS, ID.unique(), link);
-      return true;
-    } catch (error) {
-      console.error('Error adding social link:', error);
-      return false;
+    if (!dbData.name) {
+      throw new Error('Name is required');
     }
-  }
-  
-  export async function deleteSocialLink(id: string): Promise<boolean> {
-    try {
-      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.SOCIAL_LINKS, id);
-      return true;
-    } catch (error) {
-      console.error('Error deleting social link:', error);
-      return false;
-    }
-  }
 
-// Footer Links Functions
-export async function fetchFooterLinks(): Promise<FooterLink[]> {
-  try {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.FOOTER_LINKS, [Query.orderAsc('order')]);
-    return response.documents as unknown as FooterLink[];
+    const response = await databases.createDocument(
+      DATABASE_ID,
+      COLLECTIONS.COMPANY_INFO,
+      ID.unique(),
+      dbData
+    );
+
+    return {
+      $id: response.$id,
+      name: response.name || '',
+      description: response.description || '',
+      website: response.website || '',
+      logo_url: response.logo_url || '',
+      businessHours: response.business_hours || '',
+    };
   } catch (error) {
-    console.error('Error fetching footer links:', error);
-    return [];
+    console.error('Error creating company info:', error);
+    return null;
   }
-}
-
-export async function updateFooterLink(link: FooterLink): Promise<boolean> {
-  try {
-    const { $id, ...data } = link;
-    await databases.updateDocument(DATABASE_ID, COLLECTIONS.FOOTER_LINKS, $id, data);
-    return true;
-  } catch (error) {
-    console.error('Error updating footer link:', error);
-    return false;
-  }
-}
-
-export async function addFooterLink(link: Omit<FooterLink, '$id'>): Promise<boolean> {
-    try {
-      await databases.createDocument(DATABASE_ID, COLLECTIONS.FOOTER_LINKS, ID.unique(), link);
-      return true;
-    } catch (error) {
-      console.error('Error adding footer link:', error);
-      return false;
-    }
-  }
-  
-  export async function deleteFooterLink(id: string): Promise<boolean> {
-    try {
-      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.FOOTER_LINKS, id);
-      return true;
-    } catch (error) {
-      console.error('Error deleting footer link:', error);
-      return false;
-    }
-  }
-
-// Alias for backward compatibility
-export const fetchFooterData = fetchCompanyInfo;
+};

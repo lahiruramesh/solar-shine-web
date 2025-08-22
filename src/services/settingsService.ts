@@ -10,12 +10,11 @@ export async function fetchGlobalSettings(): Promise<GlobalSettings | null> {
     if (response.documents.length > 0) {
       const doc = response.documents[0];
       return {
-        siteName: doc.site_title,
-        logo: doc.logo_url, // Assuming you have a field for the logo URL
-        primaryColor: doc.primary_color,
-        secondaryColor: doc.secondary_color,
-        contactEmail: doc.contact_email,
-        contactPhone: doc.contact_phone,
+        site_title: doc.site_title,
+        site_description: doc.site_description,
+        contact_email: doc.contact_email,
+        contact_phone: doc.contact_phone,
+        address: doc.address,
       } as GlobalSettings;
     }
     return null;

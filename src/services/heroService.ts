@@ -57,7 +57,7 @@ export const updateHeroSection = async (heroData: {
           ID.unique(),
           heroData.background_image_file
         );
-        background_image_url = `${import.meta.env.VITE_APPWRITE_ENDPOINT}/storage/buckets/${STORAGE_BUCKET_ID}/files/${fileResponse.$id}/view`;
+        background_image_url = `${import.meta.env.VITE_APPWRITE_ENDPOINT}/storage/buckets/${STORAGE_BUCKET_ID}/files/${fileResponse.$id}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`;
       } catch (uploadError) {
         console.error('Error uploading image:', uploadError);
         // Continue with the update even if image upload fails

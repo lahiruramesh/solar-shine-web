@@ -1,10 +1,9 @@
 export interface GlobalSettings {
-  siteName: string;
-  logo: string | null;
-  primaryColor: string | null;
-  secondaryColor: string | null;
-  contactEmail: string | null;
-  contactPhone: string | null;
+  site_title: string;
+  site_description: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  address: string | null;
 }
 
 export interface HeroSection {
@@ -38,7 +37,7 @@ export interface Project {
   title: string;
   category: 'Residential' | 'Commercial' | 'Industrial';
   description: string | null;
-  image: string | null;
+  image_url: string | null;
   client: string | null;
   completionDate: string | null;
 }
@@ -48,6 +47,8 @@ export interface Testimonial {
   text: string;
   author: string;
   position: string | null;
+  company?: string;
+  rating?: number;
 }
 
 export interface BlogPost {
@@ -89,9 +90,9 @@ export interface CompanyInfo {
   $id: string;
   name: string;
   description: string;
-  address: string;
-  email: string;
-  phone: string;
+  website?: string;
+  logo_url?: string;
+  businessHours?: string;
 }
 
 export interface AboutContent {

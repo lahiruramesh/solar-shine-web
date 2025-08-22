@@ -1,9 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, FileText, Users, MessageSquare, TrendingUp, Globe } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CalendarDays, FileText, Users, MessageSquare, TrendingUp, Globe, Plus, Eye, Edit, Settings } from 'lucide-react';
+import { fetchHeroSection, fetchServiceCards, fetchProjects, fetchBlogPosts, fetchTestimonials } from '@/services/cmsService';
+import { fetchCompanyInfo } from '@/services/companyService';
 
 export const Dashboard: React.FC = () => {
+  // Fetch real data
+  const { data: heroSection } = useQuery({
+    queryKey: ['heroSection'],
+    queryFn: fetchHeroSection
+  });
+
+  const { data: services } = useQuery({
+    queryKey: ['serviceCards'],
+    queryFn: fetchServiceCards
+  });
+
+  const { data: projects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: fetchProjects
+  });
+
+  const { data: blogPosts } = useQuery({
+    queryKey: ['blogPosts'],
+    queryFn: fetchBlogPosts
+  });
+
+  const { data: testimonials } = useQuery({
+    queryKey: ['testimonials'],
+    queryFn: fetchTestimonials
+  });
+
+  const { data: companyInfo } = useQuery({
+    queryKey: ['companyInfo'],
+    queryFn: fetchCompanyInfo
+  });
+
   const stats = [
     {
       title: 'Total Appointments',
@@ -11,31 +46,35 @@ export const Dashboard: React.FC = () => {
       description: 'This month',
       icon: CalendarDays,
       color: 'bg-blue-500',
-      trend: '+12%'
+      trend: '+12%',
+      link: '/admin?section=appointments'
     },
     {
       title: 'Blog Posts',
-      value: '12',
+      value: blogPosts?.length?.toString() || '0',
       description: 'Published',
       icon: FileText,
       color: 'bg-green-500',
-      trend: '+3'
+      trend: '+3',
+      link: '/admin?section=blog'
     },
     {
       title: 'Projects',
-      value: '8',
+      value: projects?.length?.toString() || '0',
       description: 'Completed',
       icon: Users,
       color: 'bg-purple-500',
-      trend: '+2'
+      trend: '+2',
+      link: '/admin?section=projects'
     },
     {
       title: 'Testimonials',
-      value: '15',
+      value: testimonials?.length?.toString() || '0',
       description: 'Total reviews',
       icon: MessageSquare,
       color: 'bg-orange-500',
-      trend: '+5'
+      trend: '+5',
+      link: '/admin?section=testimonials'
     }
   ];
 
@@ -135,6 +174,57 @@ export const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Content Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Content Overview</CardTitle>
+          <CardDescription>Quick overview of your website content status</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="text-center p-4 border rounded-lg">
+              <div className="text-2xl font-bold text-blue-600 mb-2">
+                {heroSection ? '✅' : '❌'}
+              </div>
+              <div className="font-medium text-sm">Hero Section</div>
+              <div className="text-xs text-gray-500">
+                {heroSection ? 'Configured' : 'Not configured'}
+              </div>
+            </div>
+
+            <div className="text-center p-4 border rounded-lg">
+              <div className="text-2xl font-bold text-green-600 mb-2">
+                {services?.length || 0}
+              </div>
+              <div className="font-medium text-sm">Services</div>
+              <div className="text-xs text-gray-500">
+                {services?.length ? `${services.length} services` : 'No services'}
+              </div>
+            </div>
+
+            <div className="text-center p-4 border rounded-lg">
+              <div className="text-2xl font-bold text-purple-600 mb-2">
+                {projects?.length || 0}
+              </div>
+              <div className="font-medium text-sm">Projects</div>
+              <div className="text-xs text-gray-500">
+                {projects?.length ? `${projects.length} projects` : 'No projects'}
+              </div>
+            </div>
+
+            <div className="text-center p-4 border rounded-lg">
+              <div className="text-2xl font-bold text-orange-600 mb-2">
+                {companyInfo ? '✅' : '❌'}
+              </div>
+              <div className="font-medium text-sm">Company Info</div>
+              <div className="text-xs text-gray-500">
+                {companyInfo ? 'Configured' : 'Not configured'}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* System Status */}
       <Card>

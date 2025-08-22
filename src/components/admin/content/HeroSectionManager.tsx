@@ -25,6 +25,13 @@ export const HeroSectionManager: React.FC = () => {
 
   useEffect(() => {
     loadHeroSection();
+
+    // Cleanup function to revoke object URLs
+    return () => {
+      if (previewImage && previewImage.startsWith('blob:')) {
+        URL.revokeObjectURL(previewImage);
+      }
+    };
   }, []);
 
   const loadHeroSection = async () => {
@@ -34,7 +41,11 @@ export const HeroSectionManager: React.FC = () => {
       if (data) {
         setHeroData(data);
         if (data.background_image) {
-          setPreviewImage(data.background_image);
+          // Ensure the image URL is properly formatted for display
+          const imageUrl = data.background_image.startsWith('http')
+            ? data.background_image
+            : `${import.meta.env.VITE_APPWRITE_ENDPOINT}/storage/buckets/${import.meta.env.VITE_APPWRITE_STORAGE_BUCKET_ID}/files/${data.background_image}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`;
+          setPreviewImage(imageUrl);
         }
       }
       toast.success('Hero section loaded successfully');
@@ -63,7 +74,7 @@ export const HeroSectionManager: React.FC = () => {
         background_image_url: previewImage,
         background_image_file: backgroundImageFile || undefined
       });
-      
+
       if (success) {
         toast.success('Hero section saved successfully');
         loadHeroSection(); // Reload to get updated data
@@ -89,11 +100,9 @@ export const HeroSectionManager: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       setBackgroundImageFile(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPreviewImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      // Create a preview URL for the selected file
+      const previewUrl = URL.createObjectURL(file);
+      setPreviewImage(previewUrl);
     }
   };
 
@@ -265,7 +274,7 @@ export const HeroSectionManager: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div 
+            <div
               className="relative h-64 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center"
               style={{
                 backgroundImage: previewImage ? `url(${previewImage})` : 'none', /* This is just CSS, not a field name */

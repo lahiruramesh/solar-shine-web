@@ -3,9 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
+import { fetchCompanyInfo } from '@/services/companyService';
 
-// Placeholder for logo from CMS
-const PLACEHOLDER_LOGO = "/placeholder.svg";
+// Fallback logo if no company logo is set
+const FALLBACK_LOGO = "/placeholder.svg";
 
 const menuItems = [
   { title: 'Home', path: '/' },
@@ -20,6 +22,49 @@ const menuItems = [
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Function to scroll to appointment section
+  const scrollToAppointment = () => {
+    // Check if we're on the home page
+    if (window.location.pathname === '/') {
+      // On home page, scroll to appointment section
+      const appointmentSection = document.getElementById('appointment-section');
+      if (appointmentSection) {
+        const headerHeight = 80; // Approximate header height
+        const elementPosition = appointmentSection.offsetTop - headerHeight;
+        window.scrollTo({
+          top: elementPosition,
+          behavior: 'smooth'
+        });
+      }
+    } else {
+      // On other pages, navigate to home page and scroll to appointment section
+      window.location.href = '/#appointment-section';
+    }
+  };
+
+  // Add custom CSS animation for background zoom effect
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slowZoom {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.05); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  // Fetch company info to get the logo
+  const { data: companyInfo } = useQuery({
+    queryKey: ['companyInfo'],
+    queryFn: fetchCompanyInfo,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -40,12 +85,55 @@ const Header: React.FC = () => {
     };
   }, []);
 
+  // Handle hash navigation to appointment section
+  useEffect(() => {
+    if (window.location.hash === '#appointment-section') {
+      const appointmentSection = document.getElementById('appointment-section');
+      if (appointmentSection) {
+        setTimeout(() => {
+          const headerHeight = 80; // Approximate header height
+          const elementPosition = appointmentSection.offsetTop - headerHeight;
+          window.scrollTo({
+            top: elementPosition,
+            behavior: 'smooth'
+          });
+        }, 100); // Small delay to ensure page is fully loaded
+      }
+    }
+  }, []);
+
+  // Use company logo if available, otherwise fallback
+  const logoUrl = companyInfo?.logo_url || FALLBACK_LOGO;
+  const companyName = companyInfo?.name || 'Solar Services';
+
   return (
-    <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
-      <div className="container-custom mx-auto flex justify-between items-center">
+    <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4 border-b border-white/20'}`}>
+      {/* Background Image with Overlay */}
+      <div className={`absolute inset-0 transition-all duration-300 ${scrolled ? 'opacity-0' : 'opacity-100'}`}>
+        <div
+          className="w-full h-full bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')`,
+            animation: 'slowZoom 20s ease-in-out infinite alternate'
+          }}
+        />
+        {/* Dark overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/10 backdrop-blur-sm" />
+      </div>
+
+      <div className="container-custom mx-auto flex justify-between items-center relative z-10">
         {/* Logo */}
         <Link to="/" className="z-50">
-          <img src={PLACEHOLDER_LOGO} alt="Solar Services Logo" className="h-10 md:h-12" />
+          <img
+            src={logoUrl}
+            alt={`${companyName} Logo`}
+            className={`h-10 md:h-12 object-contain transition-all duration-300 ${!scrolled ? 'drop-shadow-lg' : ''}`}
+            onError={(e) => {
+              // If company logo fails to load, fallback to placeholder
+              const target = e.target as HTMLImageElement;
+              target.src = FALLBACK_LOGO;
+            }}
+          />
         </Link>
 
         {/* Desktop Navigation */}
@@ -54,17 +142,22 @@ const Header: React.FC = () => {
             <Link
               key={item.title}
               to={item.path}
-              className="text-brand-dark hover:text-primary font-medium transition-colors"
+              className={`font-medium transition-colors ${scrolled ? 'text-brand-dark hover:text-primary' : 'text-white hover:text-primary drop-shadow-sm'}`}
             >
               {item.title}
             </Link>
           ))}
-          <Button className="btn-primary">Book Appointment</Button>
+          <Button
+            className={`${scrolled ? 'btn-primary' : 'bg-white text-brand-dark hover:bg-gray-100'}`}
+            onClick={scrollToAppointment}
+          >
+            Book Appointment
+          </Button>
         </nav>
 
         {/* Mobile Navigation Toggle */}
         <button
-          className="md:hidden z-50 text-brand-dark"
+          className={`md:hidden z-50 transition-colors ${scrolled ? 'text-brand-dark' : 'text-white'}`}
           onClick={toggleMenu}
           aria-label="Toggle menu"
         >
@@ -73,9 +166,8 @@ const Header: React.FC = () => {
 
         {/* Mobile Navigation Menu */}
         <div
-          className={`fixed inset-0 bg-white p-6 transition-transform transform duration-300 ease-in-out md:hidden ${
-            isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-          } z-40 flex flex-col`}
+          className={`fixed inset-0 bg-white p-6 transition-transform transform duration-300 ease-in-out md:hidden ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'
+            } z-40 flex flex-col`}
         >
           <div className="mt-20 flex flex-col space-y-6">
             {menuItems.map((item) => (
@@ -88,7 +180,13 @@ const Header: React.FC = () => {
                 {item.title}
               </Link>
             ))}
-            <Button className="btn-primary w-full mt-4" onClick={() => setIsMenuOpen(false)}>
+            <Button
+              className="btn-primary w-full mt-4"
+              onClick={() => {
+                setIsMenuOpen(false);
+                scrollToAppointment();
+              }}
+            >
               Book Appointment
             </Button>
           </div>
