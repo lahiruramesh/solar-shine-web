@@ -38,26 +38,6 @@ export async function fetchAppointments(): Promise<AppointmentData[]> {
   }
 }
 
-export async function fetchAvailableTimeSlots(date?: string): Promise<TimeSlot[]> {
-  try {
-    const queries = [Query.equal('is_booked', false)];
-    if (date) {
-      queries.push(Query.equal('date', date));
-    }
-    queries.push(Query.orderAsc('date'));
-
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      COLLECTIONS.AVAILABLE_TIME_SLOTS,
-      queries
-    );
-    return response.documents as unknown as TimeSlot[];
-  } catch (error) {
-    console.error('Error fetching available time slots:', error);
-    throw error;
-  }
-}
-
 export async function addAvailableTimeSlot(date: string, timeSlot: string): Promise<boolean> {
     try {
         await databases.createDocument(
@@ -113,6 +93,26 @@ export async function createAppointment(appointmentData: Omit<AppointmentData, '
         return response as unknown as AppointmentData;
     } catch (error) {
         console.error('Error creating appointment:', error);
+        throw error;
+    }
+}
+
+
+export async function isTimeSlotAvailable(date: string, timeSlot: string): Promise<boolean> {
+    try {
+        const response = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.APPOINTMENTS,
+            [
+                Query.equal('date', date),
+                Query.equal('time_slot', timeSlot),
+                Query.equal('status', ['pending', 'confirmed'])
+            ]
+        );
+
+        return response.documents.length === 0; // true if no conflicting appointment
+    } catch (error) {
+        console.error('Error checking time slot availability:', error);
         throw error;
     }
 }
