@@ -97,7 +97,6 @@ export async function createAppointment(appointmentData: Omit<AppointmentData, '
     }
 }
 
-
 export async function isTimeSlotAvailable(date: string, timeSlot: string): Promise<boolean> {
     try {
         const response = await databases.listDocuments(
