@@ -40,7 +40,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({ appointments, refetch
   return (
     <div className="space-y-6">
       {appointments.map((appointment: AppointmentData) => (
-        <Card key={appointment.id} className="overflow-hidden">
+        <Card key={appointment.$id} className="overflow-hidden">
           <div className={`p-1 ${
             appointment.status === 'confirmed' ? 'bg-green-500' : 
             appointment.status === 'cancelled' ? 'bg-red-500' : 'bg-amber-500'
@@ -96,18 +96,13 @@ const AppointmentList: React.FC<AppointmentListProps> = ({ appointments, refetch
                 `}>
                   {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                 </Badge>
-                
-                <p className="text-xs text-brand-gray">
-                  Requested on {format(new Date(appointment.created_at), 'PPP')}
-                </p>
-                
                 <div className="flex gap-2 mt-2">
                   {appointment.status !== 'confirmed' && (
                     <Button 
                       variant="outline" 
                       size="sm"
                       className="flex items-center gap-1 text-green-600 border-green-600 hover:bg-green-50"
-                      onClick={() => handleStatusChange(appointment.id, 'confirmed')}
+                      onClick={() => handleStatusChange(appointment.$id, 'confirmed')}
                     >
                       <Check size={14} />
                       Confirm
@@ -119,7 +114,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({ appointments, refetch
                       variant="outline" 
                       size="sm"
                       className="flex items-center gap-1 text-red-600 border-red-600 hover:bg-red-50"
-                      onClick={() => handleStatusChange(appointment.id, 'cancelled')}
+                      onClick={() => handleStatusChange(appointment.$id, 'cancelled')}
                     >
                       <X size={14} />
                       Cancel
@@ -131,7 +126,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({ appointments, refetch
                       variant="outline" 
                       size="sm"
                       className="flex items-center gap-1"
-                      onClick={() => handleStatusChange(appointment.id, 'pending')}
+                      onClick={() => handleStatusChange(appointment.$id, 'pending')}
                     >
                       Reset to Pending
                     </Button>
