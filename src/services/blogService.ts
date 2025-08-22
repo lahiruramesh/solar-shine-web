@@ -10,10 +10,12 @@ function mapDocumentToBlogPost(doc: any): BlogPost {
   
   if (doc.featured_image_id) {
     try {
-      imageUrl = (storage.getFilePreview(STORAGE_BUCKET_ID, doc.featured_image_id) as any).href;
+      // Use the /view endpoint for direct image access
+      const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID || '685bcfb7001103824569';
+      imageUrl = `https://fra.cloud.appwrite.io/v1/storage/buckets/${STORAGE_BUCKET_ID}/files/${doc.featured_image_id}/view?project=${projectId}`;
       imageId = doc.featured_image_id;
     } catch (error) {
-      console.warn('Failed to get image preview:', error);
+      console.warn('Failed to construct image URL:', error);
     }
   } else if (doc.featured_image) {
     imageUrl = doc.featured_image;
@@ -24,7 +26,7 @@ function mapDocumentToBlogPost(doc: any): BlogPost {
     $id: doc.$id,
     featured_image: imageUrl,
     featured_image_id: imageId,
-    publishDate: doc.publishDate ? new Date(doc.publishDate).toISOString() : undefined,
+    publishDate: doc.publishDate || doc.publish_date || undefined,
   } as unknown as BlogPost;
 }
 
