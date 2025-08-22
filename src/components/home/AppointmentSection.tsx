@@ -375,7 +375,6 @@ setAvailableTimeSlots([]);
                   ></textarea>
                 </div>
               </div>
-
               {/* Submit Button */}
               <div className="mt-6">
                 <Button
