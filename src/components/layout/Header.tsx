@@ -23,6 +23,26 @@ const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  // Function to scroll to appointment section
+  const scrollToAppointment = () => {
+    // Check if we're on the home page
+    if (window.location.pathname === '/') {
+      // On home page, scroll to appointment section
+      const appointmentSection = document.getElementById('appointment-section');
+      if (appointmentSection) {
+        const headerHeight = 80; // Approximate header height
+        const elementPosition = appointmentSection.offsetTop - headerHeight;
+        window.scrollTo({
+          top: elementPosition,
+          behavior: 'smooth'
+        });
+      }
+    } else {
+      // On other pages, navigate to home page and scroll to appointment section
+      window.location.href = '/#appointment-section';
+    }
+  };
+
   // Add custom CSS animation for background zoom effect
   useEffect(() => {
     const style = document.createElement('style');
@@ -63,6 +83,23 @@ const Header: React.FC = () => {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
+  }, []);
+
+  // Handle hash navigation to appointment section
+  useEffect(() => {
+    if (window.location.hash === '#appointment-section') {
+      const appointmentSection = document.getElementById('appointment-section');
+      if (appointmentSection) {
+        setTimeout(() => {
+          const headerHeight = 80; // Approximate header height
+          const elementPosition = appointmentSection.offsetTop - headerHeight;
+          window.scrollTo({
+            top: elementPosition,
+            behavior: 'smooth'
+          });
+        }, 100); // Small delay to ensure page is fully loaded
+      }
+    }
   }, []);
 
   // Use company logo if available, otherwise fallback
@@ -110,7 +147,10 @@ const Header: React.FC = () => {
               {item.title}
             </Link>
           ))}
-          <Button className={`${scrolled ? 'btn-primary' : 'bg-white text-brand-dark hover:bg-gray-100'}`}>
+          <Button
+            className={`${scrolled ? 'btn-primary' : 'bg-white text-brand-dark hover:bg-gray-100'}`}
+            onClick={scrollToAppointment}
+          >
             Book Appointment
           </Button>
         </nav>
@@ -140,7 +180,13 @@ const Header: React.FC = () => {
                 {item.title}
               </Link>
             ))}
-            <Button className="btn-primary w-full mt-4" onClick={() => setIsMenuOpen(false)}>
+            <Button
+              className="btn-primary w-full mt-4"
+              onClick={() => {
+                setIsMenuOpen(false);
+                scrollToAppointment();
+              }}
+            >
               Book Appointment
             </Button>
           </div>

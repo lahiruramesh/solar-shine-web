@@ -53,7 +53,7 @@ const AppointmentSection: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.phone || !formData.email || !formData.service || !selectedDate || !formData.timeSlot) {
       toast.error('Please fill in all required fields');
       return;
@@ -71,7 +71,7 @@ const AppointmentSection: React.FC = () => {
         time_slot: formData.timeSlot,
         message: formData.message,
       };
-      
+
       await createAppointment(appointmentData);
 
       setFormData({
@@ -83,7 +83,7 @@ const AppointmentSection: React.FC = () => {
         message: ''
       });
       setSelectedDate(undefined);
-      
+
       toast.success('Appointment booked successfully! We will contact you shortly.');
     } catch (error) {
       console.error('Error booking appointment:', error);
@@ -94,9 +94,9 @@ const AppointmentSection: React.FC = () => {
   };
 
   return (
-    <section className="section bg-brand-dark text-white">
+    <section id="appointment-section" className="section bg-brand-dark text-white">
       <div className="container-custom">
-        <motion.div 
+        <motion.div
           className="max-w-3xl mx-auto text-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -109,7 +109,7 @@ const AppointmentSection: React.FC = () => {
           </p>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           className="bg-white text-brand-dark rounded-xl p-6 md:p-8 max-w-3xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -240,12 +240,12 @@ const AppointmentSection: React.FC = () => {
                     disabled={!selectedDate || isLoading || availableTimeSlots.length === 0}
                   >
                     <option value="">
-                      {isLoading 
-                        ? 'Loading time slots...' 
-                        : !selectedDate 
-                          ? 'Select a date first' 
-                          : availableTimeSlots.length === 0 
-                            ? 'No available slots for this date' 
+                      {isLoading
+                        ? 'Loading time slots...'
+                        : !selectedDate
+                          ? 'Select a date first'
+                          : availableTimeSlots.length === 0
+                            ? 'No available slots for this date'
                             : 'Select a time'}
                     </option>
                     {availableTimeSlots.map(slot => (
@@ -278,8 +278,8 @@ const AppointmentSection: React.FC = () => {
 
             {/* Submit Button */}
             <div className="mt-6">
-              <Button 
-                className="w-full bg-primary text-black hover:bg-primary/90 py-3" 
+              <Button
+                className="w-full bg-primary text-black hover:bg-primary/90 py-3"
                 type="submit"
                 disabled={submitting}
               >
