@@ -453,14 +453,6 @@ const Contact = () => {
                   <h2 className="text-3xl font-bold mb-2">{contactData.formTitle}</h2>
                   <p className="text-brand-gray mb-8">{contactData.formSubtitle}</p>
 
-                  {/* Email Service Status Indicator */}
-                  {!emailServiceReady && (
-                      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-yellow-800 text-sm">
-                          📧 Direct email sending not configured. Form will open your email client.
-                        </p>
-                      </div>
-                  )}
 
                   {/* Status Message */}
                   {submitStatus.type && (
