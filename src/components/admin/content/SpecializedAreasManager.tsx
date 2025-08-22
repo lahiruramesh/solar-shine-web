@@ -8,14 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Edit, Trash2, Target, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface SpecializedArea {
-  $id?: string;
-  title: string;
-  description: string;
-  image: string;
-  order: number;
-}
+import { fetchSpecializedAreas, addSpecializedArea, updateSpecializedArea, deleteSpecializedArea } from '@/services/specializedAreaService';
+import { SpecializedArea } from '@/types/payload-types';
 
 export const SpecializedAreasManager: React.FC = () => {
   const [specializedAreas, setSpecializedAreas] = useState<SpecializedArea[]>([]);
@@ -33,6 +27,21 @@ export const SpecializedAreasManager: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string>('');
 
+  // Function to get proper image URL for display
+  const getImageUrl = (imageId: string | null) => {
+    if (!imageId) return '/placeholder.svg';
+
+    // If it's already a full URL, return it
+    if (imageId.startsWith('http')) return imageId;
+
+    // If it's an Appwrite file ID, construct the URL
+    const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
+    const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID || '685bcfb7001103824569';
+    const bucketId = import.meta.env.VITE_APPWRITE_STORAGE_BUCKET_ID || '6873ba8f00060c027d7c';
+
+    return `${endpoint}/storage/buckets/${bucketId}/files/${imageId}/view?project=${projectId}`;
+  };
+
   useEffect(() => {
     loadSpecializedAreas();
   }, []);
@@ -40,31 +49,8 @@ export const SpecializedAreasManager: React.FC = () => {
   const loadSpecializedAreas = async () => {
     setIsLoading(true);
     try {
-      // TODO: Implement actual API call
-      const mockAreas: SpecializedArea[] = [
-        {
-          $id: '1',
-          title: 'Residential Solar',
-          description: 'Complete solar solutions for homes, from rooftop installations to energy storage systems.',
-          image: '/placeholder.svg',
-          order: 1
-        },
-        {
-          $id: '2',
-          title: 'Commercial Solar',
-          description: 'Large-scale solar installations for businesses, reducing operational costs and carbon footprint.',
-          image: '/placeholder.svg',
-          order: 2
-        },
-        {
-          $id: '3',
-          title: 'Solar Maintenance',
-          description: 'Professional cleaning, inspection, and maintenance services to keep your solar panels at peak performance.',
-          image: '/placeholder.svg',
-          order: 3
-        }
-      ];
-      setSpecializedAreas(mockAreas);
+      const areas = await fetchSpecializedAreas();
+      setSpecializedAreas(areas);
       toast.success('Specialized areas loaded successfully');
     } catch (error) {
       console.error('Error loading specialized areas:', error);
@@ -82,24 +68,30 @@ export const SpecializedAreasManager: React.FC = () => {
 
     setIsSaving(true);
     try {
-      // TODO: Implement actual API call with image upload
-      const area = { 
-        ...newArea, 
-        $id: Date.now().toString(),
-        order: specializedAreas.length + 1,
-        image: imageFile ? URL.createObjectURL(imageFile) : '/placeholder.svg'
-      };
-      setSpecializedAreas([...specializedAreas, area]);
-      setNewArea({
-        title: '',
-        description: '',
-        image: '',
-        order: 1
-      });
-      setImageFile(null);
-      setPreviewImage('');
-      setIsAddDialogOpen(false);
-      toast.success('Specialized area added successfully');
+      const formData = new FormData();
+      formData.append('title', newArea.title);
+      formData.append('description', newArea.description);
+      formData.append('order', newArea.order.toString());
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      const success = await addSpecializedArea(formData);
+      if (success) {
+        await loadSpecializedAreas(); // Reload the data
+        setNewArea({
+          title: '',
+          description: '',
+          image: '',
+          order: 1
+        });
+        setImageFile(null);
+        setPreviewImage('');
+        setIsAddDialogOpen(false);
+        toast.success('Specialized area added successfully');
+      } else {
+        toast.error('Failed to add specialized area');
+      }
     } catch (error) {
       console.error('Error adding specialized area:', error);
       toast.error('Failed to add specialized area');
@@ -116,13 +108,26 @@ export const SpecializedAreasManager: React.FC = () => {
 
     setIsSaving(true);
     try {
-      // TODO: Implement actual API call
-      setSpecializedAreas(specializedAreas.map(area => 
-        area.$id === editingArea.$id ? editingArea : area
-      ));
-      setEditingArea(null);
-      setIsEditDialogOpen(false);
-      toast.success('Specialized area updated successfully');
+      const formData = new FormData();
+      formData.append('id', editingArea.$id!);
+      formData.append('title', editingArea.title);
+      formData.append('description', editingArea.description);
+      formData.append('order', (editingArea.order || 1).toString());
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      const success = await updateSpecializedArea(formData);
+      if (success) {
+        await loadSpecializedAreas(); // Reload the data
+        setEditingArea(null);
+        setIsEditDialogOpen(false);
+        setImageFile(null);
+        setPreviewImage('');
+        toast.success('Specialized area updated successfully');
+      } else {
+        toast.error('Failed to update specialized area');
+      }
     } catch (error) {
       console.error('Error updating specialized area:', error);
       toast.error('Failed to update specialized area');
@@ -134,9 +139,13 @@ export const SpecializedAreasManager: React.FC = () => {
   const handleDeleteArea = async (id: string) => {
     setIsSaving(true);
     try {
-      // TODO: Implement actual API call
-      setSpecializedAreas(specializedAreas.filter(area => area.$id !== id));
-      toast.success('Specialized area deleted successfully');
+      const success = await deleteSpecializedArea(id);
+      if (success) {
+        await loadSpecializedAreas(); // Reload the data
+        toast.success('Specialized area deleted successfully');
+      } else {
+        toast.error('Failed to delete specialized area');
+      }
     } catch (error) {
       console.error('Error deleting specialized area:', error);
       toast.error('Failed to delete specialized area');
@@ -159,6 +168,8 @@ export const SpecializedAreasManager: React.FC = () => {
 
   const openEditDialog = (area: SpecializedArea) => {
     setEditingArea({ ...area });
+    setImageFile(null);
+    setPreviewImage('');
     setIsEditDialogOpen(true);
   };
 
@@ -173,7 +184,7 @@ export const SpecializedAreasManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Target className="h-6 w-6" />
@@ -185,19 +196,19 @@ export const SpecializedAreasManager: React.FC = () => {
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Add Specialized Area
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh]">
+            <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
               <DialogTitle>Add Specialized Area</DialogTitle>
               <DialogDescription>
                 Add a new specialized service area
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
               <div className="space-y-2">
                 <Label htmlFor="new-title">Title *</Label>
                 <Input
@@ -206,6 +217,7 @@ export const SpecializedAreasManager: React.FC = () => {
                   onChange={(e) => setNewArea({ ...newArea, title: e.target.value })}
                   placeholder="Residential Solar"
                   maxLength={100}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
@@ -217,6 +229,20 @@ export const SpecializedAreasManager: React.FC = () => {
                   placeholder="Describe this specialized area..."
                   rows={4}
                   maxLength={500}
+                  className="w-full resize-none"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-order">Order *</Label>
+                <Input
+                  id="new-order"
+                  type="number"
+                  value={newArea.order}
+                  onChange={(e) => setNewArea({ ...newArea, order: parseInt(e.target.value) || 1 })}
+                  placeholder="1"
+                  min="1"
+                  max="100"
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
@@ -226,7 +252,7 @@ export const SpecializedAreasManager: React.FC = () => {
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="cursor-pointer"
+                  className="cursor-pointer w-full"
                 />
               </div>
               {previewImage && (
@@ -242,7 +268,7 @@ export const SpecializedAreasManager: React.FC = () => {
                 </div>
               )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="sticky bottom-0 bg-background border-t pt-4">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                 Cancel
               </Button>
@@ -261,7 +287,7 @@ export const SpecializedAreasManager: React.FC = () => {
         </Dialog>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 sm:gap-6">
         {specializedAreas.length === 0 ? (
           <Card>
             <CardContent className="text-center py-8 text-muted-foreground">
@@ -270,31 +296,42 @@ export const SpecializedAreasManager: React.FC = () => {
           </Card>
         ) : (
           specializedAreas.map((area) => (
-            <Card key={area.$id}>
-              <CardContent className="p-6">
-                <div className="flex gap-6">
-                  <div className="flex-shrink-0">
+            <Card key={area.$id} className="overflow-hidden">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                  <div className="flex-shrink-0 mx-auto sm:mx-0">
                     <img
-                      src={area.image || '/placeholder.svg'}
+                      src={getImageUrl(area.image)}
                       alt={area.title}
-                      className="w-32 h-32 object-cover rounded-lg"
+                      className="w-full sm:w-32 h-48 sm:h-32 object-cover rounded-lg shadow-sm"
+                      onError={(e) => {
+                        // Fallback to placeholder if loading fails
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder.svg';
+                      }}
                     />
                   </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-start justify-between">
-                      <h3 className="text-xl font-semibold">{area.title}</h3>
-                      <div className="flex gap-2">
+                  <div className="flex-1 space-y-3 text-center sm:text-left">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                      <div className="space-y-1">
+                        <h3 className="text-lg sm:text-xl font-semibold">{area.title}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Order: {area.order || 1}</p>
+                      </div>
+                      <div className="flex justify-center sm:justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => openEditDialog(area)}
+                          className="flex-1 sm:flex-none h-9 sm:h-8"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-4 w-4 mr-2 sm:mr-0" />
+                          <span className="sm:hidden">Edit</span>
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" className="flex-1 sm:flex-none h-9 sm:h-8">
+                              <Trash2 className="h-4 w-4 mr-2 sm:mr-0" />
+                              <span className="sm:hidden">Delete</span>
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -317,7 +354,7 @@ export const SpecializedAreasManager: React.FC = () => {
                         </AlertDialog>
                       </div>
                     </div>
-                    <p className="text-muted-foreground">{area.description}</p>
+                    <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">{area.description}</p>
                   </div>
                 </div>
               </CardContent>
@@ -328,15 +365,15 @@ export const SpecializedAreasManager: React.FC = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh]">
+          <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
             <DialogTitle>Edit Specialized Area</DialogTitle>
             <DialogDescription>
               Update the specialized area details
             </DialogDescription>
           </DialogHeader>
           {editingArea && (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-title">Title *</Label>
                 <Input
@@ -345,6 +382,7 @@ export const SpecializedAreasManager: React.FC = () => {
                   onChange={(e) => setEditingArea({ ...editingArea, title: e.target.value })}
                   placeholder="Residential Solar"
                   maxLength={100}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
@@ -356,21 +394,62 @@ export const SpecializedAreasManager: React.FC = () => {
                   placeholder="Describe this specialized area..."
                   rows={4}
                   maxLength={500}
+                  className="w-full resize-none"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-order">Order *</Label>
+                <Input
+                  id="edit-order"
+                  type="number"
+                  value={editingArea.order || 1}
+                  onChange={(e) => setEditingArea({ ...editingArea, order: parseInt(e.target.value) || 1 })}
+                  placeholder="1"
+                  min="1"
+                  max="100"
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Current Image</Label>
                 <div className="border rounded-lg overflow-hidden">
                   <img
-                    src={editingArea.image || '/placeholder.svg'}
+                    src={getImageUrl(editingArea.image)}
                     alt={editingArea.title}
                     className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      // Fallback to placeholder if loading fails
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder.svg';
+                    }}
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-image">Update Image (Optional)</Label>
+                <Input
+                  id="edit-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="cursor-pointer w-full"
+                />
+              </div>
+              {previewImage && (
+                <div className="space-y-2">
+                  <Label>New Image Preview</Label>
+                  <div className="border rounded-lg overflow-hidden">
+                    <img
+                      src={previewImage}
+                      alt="Preview"
+                      className="w-full h-48 object-cover"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-background border-t pt-4">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancel
             </Button>

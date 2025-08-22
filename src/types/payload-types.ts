@@ -30,6 +30,7 @@ export interface SpecializedArea {
   title: string;
   description: string | null;
   image: string | null;
+  order: number | null;
 }
 
 export interface Project {
