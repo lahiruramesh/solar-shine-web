@@ -47,7 +47,7 @@ class AppwriteCRUDService<T> {
     }
   }
 
-  async create(data: Omit<T, 'id'>): Promise<T> {
+  async create(data: Omit<T, '$id'>): Promise<T> {
     try {
       const response = await databases.createDocument(
         DATABASE_ID,

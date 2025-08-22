@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin, Globe, Youtube, MessageCircle, Share2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCompanyInfo } from '@/services/companyService';
 import { fetchGlobalSettings } from '@/services/settingsService';
+import { socialLinkService } from '@/services/appwriteService';
 
 const Footer: React.FC = () => {
   // Fetch company info from database
@@ -20,6 +21,30 @@ const Footer: React.FC = () => {
     queryFn: fetchGlobalSettings,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
+
+  // Fetch social links from database
+  const { data: socialLinks = [], isLoading: socialLinksLoading, error: socialLinksError } = useQuery({
+    queryKey: ['socialLinks'],
+    queryFn: async () => {
+      try {
+        const result = await socialLinkService.getAll();
+        console.log('Footer: Social links fetched:', result);
+        // Sort by order field to ensure correct display sequence
+        return result.sort((a, b) => (a.order || 1) - (b.order || 1));
+      } catch (error) {
+        console.error('Footer: Error fetching social links:', error);
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Log social links data for debugging
+  React.useEffect(() => {
+    console.log('Footer: Current social links:', socialLinks);
+    console.log('Footer: Social links loading:', socialLinksLoading);
+    console.log('Footer: Social links error:', socialLinksError);
+  }, [socialLinks, socialLinksLoading, socialLinksError]);
 
   // Fallback company info if database is empty
   const fallbackCompanyInfo = {
@@ -37,14 +62,35 @@ const Footer: React.FC = () => {
     phone: globalSettings?.contact_phone || '+94 11 234 5678',
   };
 
+  // Function to get the appropriate icon component based on the icon name
+  const getSocialIcon = (iconName: string) => {
+    const iconMap: { [key: string]: React.ComponentType<any> } = {
+      facebook: Facebook,
+      twitter: Twitter,
+      instagram: Instagram,
+      linkedin: Linkedin,
+      youtube: Youtube,
+      tiktok: MessageCircle,
+      pinterest: Share2,
+      snapchat: MessageCircle,
+      whatsapp: MessageCircle,
+      telegram: MessageCircle,
+      discord: MessageCircle,
+      reddit: Share2,
+      github: Share2,
+      twitch: MessageCircle,
+      spotify: MessageCircle,
+      apple: Share2,
+      google: Share2,
+      microsoft: Share2,
+      amazon: Share2,
+      netflix: MessageCircle,
+    };
+    return iconMap[iconName.toLowerCase()] || Globe;
+  };
 
-
-  const socialLinks = [
-    { name: 'Facebook', icon: Facebook, url: '#' },
-    { name: 'Twitter', icon: Twitter, url: '#' },
-    { name: 'Instagram', icon: Instagram, url: '#' },
-    { name: 'LinkedIn', icon: Linkedin, url: '#' },
-  ];
+  // Only show social links section if there are links
+  const hasSocialLinks = socialLinks && socialLinks.length > 0;
 
   const quickLinks = [
     { name: 'Home', url: '/' },
@@ -84,18 +130,30 @@ const Footer: React.FC = () => {
             </div>
             <p className="mb-4">{company.description}</p>
             <div className="flex space-x-4">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.name}
-                  href={social.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-white hover:text-primary transition-colors"
-                  aria-label={social.name}
-                >
-                  <social.icon size={20} />
-                </a>
-              ))}
+              {socialLinksLoading && (
+                <div className="text-sm text-gray-400">Loading social links...</div>
+              )}
+              {socialLinksError && (
+                <div className="text-sm text-red-400">Error loading social links</div>
+              )}
+              {hasSocialLinks && socialLinks.map((social) => {
+                const IconComponent = getSocialIcon(social.icon);
+                return (
+                  <a
+                    key={social.$id}
+                    href={social.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-white hover:text-primary transition-colors"
+                    aria-label={social.name}
+                  >
+                    <IconComponent size={20} />
+                  </a>
+                );
+              })}
+              {!hasSocialLinks && !socialLinksLoading && !socialLinksError && (
+                <div className="text-sm text-gray-400">No social links available</div>
+              )}
             </div>
           </div>
 
