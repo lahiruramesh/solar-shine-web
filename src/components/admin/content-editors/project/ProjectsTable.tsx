@@ -26,7 +26,7 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ projects, onEdit, onDelet
         {projects.map((project) => (
           <TableRow key={project.id}>
             <TableCell>
-              <img src={project.image || '/placeholder.svg'} alt={project.title} className="w-16 h-16 object-cover rounded-md" />
+              <img src={project.image_url || '/placeholder.svg'} alt={project.title} className="w-16 h-16 object-cover rounded-md" />
             </TableCell>
             <TableCell className="font-medium">{project.title}</TableCell>
             <TableCell>{project.category}</TableCell>

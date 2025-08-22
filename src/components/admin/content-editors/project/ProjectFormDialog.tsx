@@ -22,8 +22,8 @@ const ProjectFormDialog: React.FC<ProjectFormDialogProps> = ({ isOpen, setIsOpen
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (project?.image) {
-      setPreviewUrl(project.image);
+    if (project?.image_url) {
+      setPreviewUrl(project.image_url);
     } else {
       setPreviewUrl(null);
     }
@@ -48,8 +48,8 @@ const ProjectFormDialog: React.FC<ProjectFormDialogProps> = ({ isOpen, setIsOpen
     if (imageFile) {
       formData.append('image', imageFile);
     } else if (!project) {
-        toast.error("Image is required for a new project.");
-        return;
+      toast.error("Image is required for a new project.");
+      return;
     }
     onSave(formData);
   };
@@ -75,7 +75,7 @@ const ProjectFormDialog: React.FC<ProjectFormDialogProps> = ({ isOpen, setIsOpen
                   <option value="Industrial">Industrial</option>
                 </select>
               </div>
-               <div>
+              <div>
                 <Label htmlFor="client">Client</Label>
                 <Input id="client" name="client" defaultValue={project?.client || ''} />
               </div>

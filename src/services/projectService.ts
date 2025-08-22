@@ -8,19 +8,39 @@ export async function fetchProjects(): Promise<Project[]> {
       Query.orderDesc('$createdAt')
     ]);
     return response.documents.map(doc => {
-      // Ensure the image URL is properly formatted
-      const imageUrl = doc.image_url ? 
-        (doc.image_url.startsWith('http') 
-          ? doc.image_url 
-          : `${import.meta.env.VITE_APPWRITE_ENDPOINT}/storage/buckets/${STORAGE_BUCKET_ID}/files/${doc.image_url}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`)
-        : '';
+      console.log('Raw project doc:', doc);
+      console.log('Image URL from DB:', doc.image_url);
       
-      return {
+      // Handle image URL construction
+      let imageUrl: string | undefined;
+      
+      if (doc.image_url) {
+        // Check if it's already a full URL or just a file ID
+        if (doc.image_url.startsWith('http')) {
+          // It's already a full URL, use it as is
+          imageUrl = doc.image_url;
+          console.log('Using existing URL:', imageUrl);
+        } else {
+          // It's a file ID, construct the full URL
+          try {
+            const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID || '685bcfb7001103824569';
+            imageUrl = `https://fra.cloud.appwrite.io/v1/storage/buckets/${STORAGE_BUCKET_ID}/files/${doc.image_url}/view?project=${projectId}`;
+            console.log('Constructed URL:', imageUrl);
+          } catch (error) {
+            console.warn('Failed to construct image URL:', error);
+          }
+        }
+      }
+      
+      const result = {
         ...doc,
         $id: doc.$id,
         image_url: imageUrl,
         completion_date: doc.completion_date || doc.completionDate || '',
       } as Project;
+      
+      console.log('Final project object:', result);
+      return result;
     });
   } catch (error) {
     console.error('Error fetching projects:', error);
@@ -58,7 +78,7 @@ export async function addProject(formData: FormData): Promise<boolean> {
         const imageFile = formData.get('image') as File | null;
         const imageId = await handleImageData(imageFile);
         if (imageId) {
-            (data as any).image = imageId;
+            (data as any).image_url = imageId;
         }
 
         await databases.createDocument(DATABASE_ID, COLLECTIONS.PROJECTS, ID.unique(), data);
@@ -87,7 +107,7 @@ export async function updateProject(formData: FormData): Promise<boolean> {
     const imageFile = formData.get('image') as File | null;
     const imageId = await handleImageData(imageFile);
     if (imageId) {
-        (data as any).image = imageId;
+        (data as any).image_url = imageId;
     }
 
     await databases.updateDocument(DATABASE_ID, COLLECTIONS.PROJECTS, id, data);

@@ -37,7 +37,7 @@ export interface Project {
   title: string;
   category: 'Residential' | 'Commercial' | 'Industrial';
   description: string | null;
-  image: string | null;
+  image_url: string | null;
   client: string | null;
   completionDate: string | null;
 }
