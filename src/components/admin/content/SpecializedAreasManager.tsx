@@ -184,7 +184,7 @@ export const SpecializedAreasManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Target className="h-6 w-6" />
@@ -196,19 +196,19 @@ export const SpecializedAreasManager: React.FC = () => {
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Add Specialized Area
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh]">
+            <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
               <DialogTitle>Add Specialized Area</DialogTitle>
               <DialogDescription>
                 Add a new specialized service area
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
               <div className="space-y-2">
                 <Label htmlFor="new-title">Title *</Label>
                 <Input
@@ -217,6 +217,7 @@ export const SpecializedAreasManager: React.FC = () => {
                   onChange={(e) => setNewArea({ ...newArea, title: e.target.value })}
                   placeholder="Residential Solar"
                   maxLength={100}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
@@ -228,6 +229,7 @@ export const SpecializedAreasManager: React.FC = () => {
                   placeholder="Describe this specialized area..."
                   rows={4}
                   maxLength={500}
+                  className="w-full resize-none"
                 />
               </div>
               <div className="space-y-2">
@@ -240,6 +242,7 @@ export const SpecializedAreasManager: React.FC = () => {
                   placeholder="1"
                   min="1"
                   max="100"
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
@@ -249,7 +252,7 @@ export const SpecializedAreasManager: React.FC = () => {
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="cursor-pointer"
+                  className="cursor-pointer w-full"
                 />
               </div>
               {previewImage && (
@@ -265,7 +268,7 @@ export const SpecializedAreasManager: React.FC = () => {
                 </div>
               )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="sticky bottom-0 bg-background border-t pt-4">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                 Cancel
               </Button>
@@ -284,7 +287,7 @@ export const SpecializedAreasManager: React.FC = () => {
         </Dialog>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 sm:gap-6">
         {specializedAreas.length === 0 ? (
           <Card>
             <CardContent className="text-center py-8 text-muted-foreground">
@@ -293,14 +296,14 @@ export const SpecializedAreasManager: React.FC = () => {
           </Card>
         ) : (
           specializedAreas.map((area) => (
-            <Card key={area.$id}>
-              <CardContent className="p-6">
-                <div className="flex gap-6">
-                  <div className="flex-shrink-0">
+            <Card key={area.$id} className="overflow-hidden">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                  <div className="flex-shrink-0 mx-auto sm:mx-0">
                     <img
                       src={getImageUrl(area.image)}
                       alt={area.title}
-                      className="w-32 h-32 object-cover rounded-lg"
+                      className="w-full sm:w-32 h-48 sm:h-32 object-cover rounded-lg shadow-sm"
                       onError={(e) => {
                         // Fallback to placeholder if loading fails
                         const target = e.target as HTMLImageElement;
@@ -308,24 +311,27 @@ export const SpecializedAreasManager: React.FC = () => {
                       }}
                     />
                   </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-xl font-semibold">{area.title}</h3>
-                        <p className="text-sm text-muted-foreground">Order: {area.order || 1}</p>
+                  <div className="flex-1 space-y-3 text-center sm:text-left">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                      <div className="space-y-1">
+                        <h3 className="text-lg sm:text-xl font-semibold">{area.title}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Order: {area.order || 1}</p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex justify-center sm:justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => openEditDialog(area)}
+                          className="flex-1 sm:flex-none h-9 sm:h-8"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-4 w-4 mr-2 sm:mr-0" />
+                          <span className="sm:hidden">Edit</span>
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" className="flex-1 sm:flex-none h-9 sm:h-8">
+                              <Trash2 className="h-4 w-4 mr-2 sm:mr-0" />
+                              <span className="sm:hidden">Delete</span>
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -348,7 +354,7 @@ export const SpecializedAreasManager: React.FC = () => {
                         </AlertDialog>
                       </div>
                     </div>
-                    <p className="text-muted-foreground">{area.description}</p>
+                    <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">{area.description}</p>
                   </div>
                 </div>
               </CardContent>
@@ -359,15 +365,15 @@ export const SpecializedAreasManager: React.FC = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh]">
+          <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
             <DialogTitle>Edit Specialized Area</DialogTitle>
             <DialogDescription>
               Update the specialized area details
             </DialogDescription>
           </DialogHeader>
           {editingArea && (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-title">Title *</Label>
                 <Input
@@ -376,6 +382,7 @@ export const SpecializedAreasManager: React.FC = () => {
                   onChange={(e) => setEditingArea({ ...editingArea, title: e.target.value })}
                   placeholder="Residential Solar"
                   maxLength={100}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
@@ -387,6 +394,7 @@ export const SpecializedAreasManager: React.FC = () => {
                   placeholder="Describe this specialized area..."
                   rows={4}
                   maxLength={500}
+                  className="w-full resize-none"
                 />
               </div>
               <div className="space-y-2">
@@ -399,6 +407,7 @@ export const SpecializedAreasManager: React.FC = () => {
                   placeholder="1"
                   min="1"
                   max="100"
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
@@ -423,7 +432,7 @@ export const SpecializedAreasManager: React.FC = () => {
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="cursor-pointer"
+                  className="cursor-pointer w-full"
                 />
               </div>
               {previewImage && (
@@ -440,7 +449,7 @@ export const SpecializedAreasManager: React.FC = () => {
               )}
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-background border-t pt-4">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancel
             </Button>
