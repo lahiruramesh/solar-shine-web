@@ -325,7 +325,6 @@ const Contact = () => {
       setIsSubmitting(false);
     }
   };
-
   // Clear status message after 5 seconds
   useEffect(() => {
     if (submitStatus.type) {
