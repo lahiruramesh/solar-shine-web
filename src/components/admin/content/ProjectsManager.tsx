@@ -75,6 +75,7 @@ export const ProjectsManager: React.FC = () => {
 
   useEffect(() => {
     loadProjects();
+    loadCategories();
   }, []);
 
   const loadProjects = async () => {
@@ -103,6 +104,57 @@ export const ProjectsManager: React.FC = () => {
       toast.error('Failed to load projects');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const response = await databases.listDocuments(
+        databaseId,
+        'categories',
+        [Query.orderAsc('order')]
+      );
+
+      if (response.documents.length > 0) {
+        const categoriesData = response.documents.map(doc => ({
+          id: doc.$id,
+          name: doc.name,
+          color: doc.color,
+          order: doc.order
+        }));
+        setCategories(categoriesData);
+      } else {
+        // If no categories exist, create default ones
+        await createDefaultCategories();
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      // If categories collection doesn't exist, create default ones
+      await createDefaultCategories();
+    }
+  };
+
+  const createDefaultCategories = async () => {
+    const defaultCategories = [
+      { name: 'Residential', color: 'bg-blue-100 text-blue-800', order: 1 },
+      { name: 'Commercial', color: 'bg-green-100 text-green-800', order: 2 },
+      { name: 'Industrial', color: 'bg-purple-100 text-purple-800', order: 3 },
+    ];
+
+    try {
+      for (const category of defaultCategories) {
+        await databases.createDocument(
+          databaseId,
+          'categories',
+          ID.unique(),
+          category
+        );
+      }
+
+      // Reload categories after creating defaults
+      await loadCategories();
+    } catch (error) {
+      console.error('Error creating default categories:', error);
     }
   };
 
@@ -246,44 +298,79 @@ export const ProjectsManager: React.FC = () => {
   };
 
   // Category Management Functions
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!categoryFormData.name.trim()) {
       toast.error('Category name is required');
       return;
     }
 
-    const newCategory: Category = {
-      id: categoryFormData.name.toLowerCase().replace(/\s+/g, '-'),
-      name: categoryFormData.name,
-      color: categoryFormData.color,
-      order: categories.length + 1
-    };
+    try {
+      const newCategory = {
+        name: categoryFormData.name,
+        color: categoryFormData.color,
+        order: categories.length + 1
+      };
 
-    setCategories(prev => [...prev, newCategory]);
-    setCategoryFormData({ name: '', color: 'bg-blue-100 text-blue-800' });
-    setIsCategoryDialogOpen(false);
-    toast.success('Category added successfully');
+      const response = await databases.createDocument(
+        databaseId,
+        'categories',
+        ID.unique(),
+        newCategory
+      );
+
+      const savedCategory: Category = {
+        id: response.$id,
+        name: response.name,
+        color: response.color,
+        order: response.order
+      };
+
+      setCategories(prev => [...prev, savedCategory]);
+      setCategoryFormData({ name: '', color: 'bg-blue-100 text-blue-800' });
+      setIsCategoryDialogOpen(false);
+      toast.success('Category added successfully');
+    } catch (error) {
+      console.error('Error adding category:', error);
+      toast.error('Failed to add category');
+    }
   };
 
-  const handleEditCategory = () => {
+  const handleEditCategory = async () => {
     if (!editingCategory || !categoryFormData.name.trim()) {
       toast.error('Category name is required');
       return;
     }
 
-    setCategories(prev => prev.map(cat =>
-      cat.id === editingCategory.id
-        ? { ...cat, name: categoryFormData.name, color: categoryFormData.color }
-        : cat
-    ));
+    try {
+      const updatedCategory = {
+        name: categoryFormData.name,
+        color: categoryFormData.color
+      };
 
-    setEditingCategory(null);
-    setCategoryFormData({ name: '', color: 'bg-blue-100 text-blue-800' });
-    setIsCategoryDialogOpen(false);
-    toast.success('Category updated successfully');
+      await databases.updateDocument(
+        databaseId,
+        'categories',
+        editingCategory.id,
+        updatedCategory
+      );
+
+      setCategories(prev => prev.map(cat =>
+        cat.id === editingCategory.id
+          ? { ...cat, name: categoryFormData.name, color: categoryFormData.color }
+          : cat
+      ));
+
+      setEditingCategory(null);
+      setCategoryFormData({ name: '', color: 'bg-blue-100 text-blue-800' });
+      setIsCategoryDialogOpen(false);
+      toast.success('Category updated successfully');
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast.error('Failed to update category');
+    }
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
+  const handleDeleteCategory = async (categoryId: string) => {
     // Check if category is used by any projects
     const projectsUsingCategory = projects.filter(p => p.category === categories.find(c => c.id === categoryId)?.name);
 
@@ -292,8 +379,19 @@ export const ProjectsManager: React.FC = () => {
       return;
     }
 
-    setCategories(prev => prev.filter(cat => cat.id !== categoryId));
-    toast.success('Category deleted successfully');
+    try {
+      await databases.deleteDocument(
+        databaseId,
+        'categories',
+        categoryId
+      );
+
+      setCategories(prev => prev.filter(cat => cat.id !== categoryId));
+      toast.success('Category deleted successfully');
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast.error('Failed to delete category');
+    }
   };
 
   const openCategoryDialog = (category?: Category) => {
@@ -307,7 +405,7 @@ export const ProjectsManager: React.FC = () => {
     setIsCategoryDialogOpen(true);
   };
 
-  const moveCategory = (categoryId: string, direction: 'up' | 'down') => {
+  const moveCategory = async (categoryId: string, direction: 'up' | 'down') => {
     setCategories(prev => {
       const currentIndex = prev.findIndex(cat => cat.id === categoryId);
       if (currentIndex === -1) return prev;
@@ -322,7 +420,23 @@ export const ProjectsManager: React.FC = () => {
       }
 
       // Update order numbers
-      return newCategories.map((cat, index) => ({ ...cat, order: index + 1 }));
+      const updatedCategories = newCategories.map((cat, index) => ({ ...cat, order: index + 1 }));
+
+      // Save new order to database
+      updatedCategories.forEach(async (cat) => {
+        try {
+          await databases.updateDocument(
+            databaseId,
+            'categories',
+            cat.id,
+            { order: cat.order }
+          );
+        } catch (error) {
+          console.error('Error updating category order:', error);
+        }
+      });
+
+      return updatedCategories;
     });
   };
 
