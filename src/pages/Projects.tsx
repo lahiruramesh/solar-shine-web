@@ -23,7 +23,7 @@ const ProjectsPage: React.FC = () => {
     { id: 'residential', name: 'Residential', color: 'bg-blue-100 text-blue-800', order: 1 },
     { id: 'commercial', name: 'Commercial', color: 'bg-green-100 text-green-800', order: 2 },
     { id: 'industrial', name: 'Industrial', color: 'bg-purple-100 text-purple-800', order: 3 },
-  ]);
+  ].sort((a, b) => a.order - b.order));
   const [activeCategory, setActiveCategory] = useState("All");
 
   useEffect(() => {
@@ -57,11 +57,18 @@ const ProjectsPage: React.FC = () => {
           setCategories(prev => [...prev, ...newCategories]);
         }
 
+        // Sort categories by order after adding new ones
+        setCategories(prev => {
+          const allCategories = [...prev, ...newCategories];
+          return allCategories.sort((a, b) => a.order - b.order);
+        });
+
         console.log('Available categories:', categories.map(c => c.name));
       } catch (error) {
         console.error("Failed to fetch projects:", error);
       }
     };
+
     loadProjects();
   }, []);
 
@@ -92,6 +99,11 @@ const ProjectsPage: React.FC = () => {
       setFilteredProjects(filtered);
     }
   }, [activeCategory, projects]);
+
+  // Ensure categories are always sorted by order
+  useEffect(() => {
+    setCategories(prev => [...prev].sort((a, b) => a.order - b.order));
+  }, [categories.length]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {

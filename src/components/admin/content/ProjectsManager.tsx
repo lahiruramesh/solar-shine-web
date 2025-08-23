@@ -308,7 +308,7 @@ export const ProjectsManager: React.FC = () => {
       const newCategory = {
         name: categoryFormData.name,
         color: categoryFormData.color,
-        order: categories.length + 1
+        order: Math.max(...categories.map(cat => cat.order), 0) + 1 // Get the highest order number + 1
       };
 
       const response = await databases.createDocument(
@@ -386,7 +386,33 @@ export const ProjectsManager: React.FC = () => {
         categoryId
       );
 
-      setCategories(prev => prev.filter(cat => cat.id !== categoryId));
+      // Remove the category and reorder the remaining ones
+      setCategories(prev => {
+        const remainingCategories = prev.filter(cat => cat.id !== categoryId);
+
+        // Reorder remaining categories starting from 1
+        const reorderedCategories = remainingCategories.map((cat, index) => ({
+          ...cat,
+          order: index + 1
+        }));
+
+        // Update order numbers in database
+        reorderedCategories.forEach(async (cat) => {
+          try {
+            await databases.updateDocument(
+              databaseId,
+              'categories',
+              cat.id,
+              { order: cat.order }
+            );
+          } catch (error) {
+            console.error('Error updating category order after delete:', error);
+          }
+        });
+
+        return reorderedCategories;
+      });
+
       toast.success('Category deleted successfully');
     } catch (error) {
       console.error('Error deleting category:', error);
@@ -419,7 +445,7 @@ export const ProjectsManager: React.FC = () => {
           [newCategories[currentIndex + 1], newCategories[currentIndex]];
       }
 
-      // Update order numbers
+      // Update order numbers starting from 1
       const updatedCategories = newCategories.map((cat, index) => ({ ...cat, order: index + 1 }));
 
       // Save new order to database
