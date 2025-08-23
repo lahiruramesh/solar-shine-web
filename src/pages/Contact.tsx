@@ -436,6 +436,7 @@ const Contact = () => {
                     ) : (
                       <p className="text-brand-gray">{contactData.mainOffice.address}</p>
                     )}
+                    {/* Get Directions Link - Commented Out
                     <a
                       href="https://maps.google.com"
                       target="_blank"
@@ -444,6 +445,7 @@ const Contact = () => {
                     >
                       Get directions
                     </a>
+                    */}
                   </CardContent>
                 </Card>
               </motion.div>
