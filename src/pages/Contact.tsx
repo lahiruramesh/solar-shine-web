@@ -473,149 +473,197 @@ const Contact = () => {
         {/* Contact Form and Map Section */}
         <section className="py-16 px-4">
           <div className="container-custom">
-            <div className="flex justify-center">
+            <div className="grid md:grid-cols-2 gap-10">
               {/* Contact Form */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5 }}
-                className="max-w-2xl w-full"
+                className="md:col-span-2 flex justify-center"
               >
-                <h2 className="text-3xl font-bold mb-2 text-center">{contactData.formTitle}</h2>
-                <p className="text-brand-gray mb-8 text-center">{contactData.formSubtitle}</p>
+                <div className="max-w-2xl w-full">
+                  <h2 className="text-3xl font-bold mb-2 text-center">{contactData.formTitle}</h2>
+                  <p className="text-brand-gray mb-8 text-center">{contactData.formSubtitle}</p>
 
-                {/* Status Message */}
-                {submitStatus.type && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`p-4 rounded-lg mb-6 ${submitStatus.type === 'success'
-                      ? 'bg-green-50 border border-green-200 text-green-800'
-                      : 'bg-red-50 border border-red-200 text-red-800'
-                      }`}
-                  >
-                    {submitStatus.message}
-                  </motion.div>
-                )}
+                  {/* Status Message */}
+                  {submitStatus.type && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`p-4 rounded-lg mb-6 ${submitStatus.type === 'success'
+                        ? 'bg-green-50 border border-green-200 text-green-800'
+                        : 'bg-red-50 border border-red-200 text-red-800'
+                        }`}
+                    >
+                      {submitStatus.message}
+                    </motion.div>
+                  )}
 
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Full Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="John Doe" {...field} disabled={isSubmitting} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input placeholder="johndoe@example.com" {...field} disabled={isSubmitting} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Phone Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="+94 XX XXX XXXX" {...field} disabled={isSubmitting} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="service"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Service Interested In</FormLabel>
+                              <FormControl>
+                                <select
+                                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                                  {...field}
+                                  disabled={isSubmitting}
+                                >
+                                  <option value="">Select a service</option>
+                                  <option value="Residential Solar">Residential Solar</option>
+                                  <option value="Commercial Solar">Commercial Solar</option>
+                                  <option value="Industrial Solar">Industrial Solar</option>
+                                  <option value="Maintenance & Support">Maintenance & Support</option>
+                                  <option value="Energy Consultation">Energy Consultation</option>
+                                </select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
                       <FormField
                         control={form.control}
-                        name="name"
+                        name="message"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Full Name</FormLabel>
+                            <FormLabel>Message</FormLabel>
                             <FormControl>
-                              <Input placeholder="John Doe" {...field} disabled={isSubmitting} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input placeholder="johndoe@example.com" {...field} disabled={isSubmitting} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl>
-                              <Input placeholder="+94 XX XXX XXXX" {...field} disabled={isSubmitting} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="service"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Service Interested In</FormLabel>
-                            <FormControl>
-                              <select
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                              <textarea
+                                className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="Please provide details about your project or inquiry..."
                                 {...field}
                                 disabled={isSubmitting}
-                              >
-                                <option value="">Select a service</option>
-                                <option value="Residential Solar">Residential Solar</option>
-                                <option value="Commercial Solar">Commercial Solar</option>
-                                <option value="Industrial Solar">Industrial Solar</option>
-                                <option value="Maintenance & Support">Maintenance & Support</option>
-                                <option value="Energy Consultation">Energy Consultation</option>
-                              </select>
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="bg-primary text-black px-6 py-3 rounded-md font-medium hover:bg-primary/90 transition-all flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            Send Message
+                            <Send className="ml-2 h-4 w-4" />
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  </Form>
+                </div>
+              </motion.div>
+
+              {/* Map */}
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
+                {/* Our Locations Section - Commented Out
+                <h2 className="text-3xl font-bold mb-2">Our Locations</h2>
+                <p className="text-brand-gray mb-8">Visit us at one of our offices across Sri Lanka.</p>
+                */}
+
+                {/* Map Section - Commented Out
+                <div className="rounded-lg overflow-hidden shadow-lg h-[400px]">
+                  <iframe
+                    src={contactData.mapEmbedUrl}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Company office locations"
+                  ></iframe>
+                </div>
+                */}
+
+                {/* Branch Locations Section - Commented Out
+                <div className="mt-8 grid gap-4">
+                  {contactData.locations.map((location, index) => (
+                    <div key={index} className="flex items-start p-3 border-l-4 border-primary">
+                      <div>
+                        <h3 className="font-bold">{location.city} Office</h3>
+                        <p className="text-brand-gray mb-1">{location.address}</p>
+                        {isLoadingSettings ? (
+                          <div className="animate-pulse bg-gray-200 h-3 w-24 rounded"></div>
+                        ) : (
+                          <p className="text-brand-gray">{location.phone}</p>
+                        )}
+                      </div>
                     </div>
-
-                    <FormField
-                      control={form.control}
-                      name="message"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Message</FormLabel>
-                          <FormControl>
-                            <textarea
-                              className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                              placeholder="Please provide details about your project or inquiry..."
-                              {...field}
-                              disabled={isSubmitting}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="bg-primary text-black px-6 py-3 rounded-md font-medium hover:bg-primary/90 transition-all flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          Send Message
-                          <Send className="ml-2 h-4 w-4" />
-                        </>
-                      )}
-                    </button>
-                  </form>
-                </Form>
+                  ))}
+                </div>
+                */}
               </motion.div>
             </div>
           </div>
         </section>
 
-        {/* FAQ Section */}
+        {/* FAQ Section - Commented Out
         <section className="py-16 px-4 bg-brand-light">
           <div className="container-custom max-w-4xl">
             <div className="text-center mb-12">
@@ -680,6 +728,7 @@ const Contact = () => {
             </div>
           </div>
         </section>
+        */}
       </main>
       <Footer />
     </>
