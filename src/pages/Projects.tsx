@@ -251,9 +251,9 @@ const ProjectsPage: React.FC = () => {
                           </CardDescription>
                         </CardContent>
                         <CardFooter className="p-6 pt-0">
-                          <button className="text-primary font-semibold flex items-center gap-2 group-hover:gap-3 transition-all">
-                            Learn More <ArrowRight className="h-4 w-4" />
-                          </button>
+                          {/* <button className="text-primary font-semibold flex items-center gap-2 group-hover:gap-3 transition-all">
+                             Learn More <ArrowRight className="h-4 w-4" />
+                           </button> */}
                         </CardFooter>
                       </Card>
                     </motion.div>
