@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +19,7 @@ interface Project {
   title: string;
   description: string;
   image_url: string;
-  category: string;
+  category: 'Residential' | 'Commercial' | 'Industrial';
   completion_date: string; // ISO date string
   featured: boolean;
 }
@@ -34,7 +35,7 @@ export const ProjectsManager: React.FC = () => {
     title: '',
     description: '',
     image_url: '',
-    category: '',
+    category: 'Residential' as 'Residential' | 'Commercial' | 'Industrial',
     completion_date: '',
     featured: false
   });
@@ -104,6 +105,18 @@ export const ProjectsManager: React.FC = () => {
       return;
     }
 
+    if (!formData.category) {
+      toast.error('Category is required');
+      return;
+    }
+
+    // Validate category
+    const validCategories = ['Residential', 'Commercial', 'Industrial'];
+    if (!validCategories.includes(formData.category)) {
+      toast.error('Invalid category selected');
+      return;
+    }
+
     setSaving(true);
     try {
       const projectData = {
@@ -152,7 +165,7 @@ export const ProjectsManager: React.FC = () => {
       title: project.title,
       description: project.description,
       image_url: project.image_url,
-      category: project.category,
+      category: project.category || 'Residential',
       completion_date: project.completion_date.split('T')[0], // Convert to date input format
       featured: project.featured
     });
@@ -175,7 +188,7 @@ export const ProjectsManager: React.FC = () => {
       title: '',
       description: '',
       image_url: '',
-      category: '',
+      category: 'Residential' as 'Residential' | 'Commercial' | 'Industrial',
       completion_date: '',
       featured: false
     });
@@ -267,13 +280,19 @@ export const ProjectsManager: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
+                <Select
                   value={formData.category}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                  placeholder="e.g., Residential, Commercial, Industrial"
-                  maxLength={100}
-                />
+                  onValueChange={(value) => handleInputChange('category', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Residential">Residential</SelectItem>
+                    <SelectItem value="Commercial">Commercial</SelectItem>
+                    <SelectItem value="Industrial">Industrial</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="completion_date" className="flex items-center gap-2">

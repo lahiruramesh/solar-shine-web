@@ -17,9 +17,20 @@ const ProjectsPage: React.FC = () => {
     const loadProjects = async () => {
       try {
         const fetchedProjects = await fetchProjects();
+        console.log('Fetched projects:', fetchedProjects);
+
         setProjects(fetchedProjects);
         setFilteredProjects(fetchedProjects);
-        const projectCategories = ['All', ...new Set(fetchedProjects.map(p => p.category).filter(Boolean) as string[])];
+
+        // Extract unique categories and filter out any invalid ones
+        const validCategories = ['Residential', 'Commercial', 'Industrial'];
+        const projectCategories = ['All', ...new Set(
+          fetchedProjects
+            .map(p => p.category)
+            .filter(category => category && validCategories.includes(category))
+        )];
+
+        console.log('Available categories:', projectCategories);
         setCategories(projectCategories);
       } catch (error) {
         console.error("Failed to fetch projects:", error);
@@ -29,12 +40,15 @@ const ProjectsPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    console.log('Filtering projects by category:', activeCategory);
+    console.log('Available projects:', projects);
+
     if (activeCategory === "All") {
       setFilteredProjects(projects);
     } else {
-      setFilteredProjects(
-        projects.filter(project => project.category === activeCategory)
-      );
+      const filtered = projects.filter(project => project.category === activeCategory);
+      console.log(`Filtered projects for ${activeCategory}:`, filtered);
+      setFilteredProjects(filtered);
     }
   }, [activeCategory, projects]);
 
@@ -79,8 +93,8 @@ const ProjectsPage: React.FC = () => {
                   key={category}
                   onClick={() => setActiveCategory(category)}
                   className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${activeCategory === category
-                      ? 'bg-primary text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                    ? 'bg-primary text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
                     }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
