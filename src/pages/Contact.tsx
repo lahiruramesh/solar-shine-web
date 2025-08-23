@@ -632,6 +632,7 @@ const Contact = () => {
                   ></iframe>
                 </div>
 
+                {/* Branch Locations Section - Commented Out
                 <div className="mt-8 grid gap-4">
                   {contactData.locations.map((location, index) => (
                     <div key={index} className="flex items-start p-3 border-l-4 border-primary">
@@ -647,6 +648,7 @@ const Contact = () => {
                     </div>
                   ))}
                 </div>
+                */}
               </motion.div>
             </div>
           </div>
