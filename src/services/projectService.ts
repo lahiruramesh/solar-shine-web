@@ -36,18 +36,14 @@ export async function fetchProjects(): Promise<Project[]> {
         }
       }
       
-      // Ensure category is one of the valid types
-      const validCategories = ['Residential', 'Commercial', 'Industrial'];
-      const category = validCategories.includes(doc.category) ? doc.category : 'Residential';
-      
       const result: Project = {
         $id: doc.$id,
         title: doc.title,
         description: doc.description,
         image_url: imageUrl,
-        category: category,
+        category: doc.category || 'Uncategorized',
         client: doc.client || null,
-        completionDate: doc.completion_date || doc.completionDate || null,
+        completion_date: doc.completion_date || doc.completionDate || null,
       };
       
       console.log('Final project object:', result);
