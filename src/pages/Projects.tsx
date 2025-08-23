@@ -34,42 +34,66 @@ const ProjectsPage: React.FC = () => {
 
         setProjects(fetchedProjects);
         setFilteredProjects(fetchedProjects);
-
-        // Extract unique categories from projects and merge with default categories
-        const projectCategories = fetchedProjects.map(p => p.category).filter(Boolean);
-        const uniqueProjectCategories = [...new Set(projectCategories)];
-
-        console.log('Project categories found:', projectCategories);
-        console.log('Unique project categories:', uniqueProjectCategories);
-
-        // Add any new categories found in projects
-        const newCategories = uniqueProjectCategories
-          .filter(catName => !categories.some(c => c.name === catName))
-          .map((catName, index) => ({
-            id: catName.toLowerCase().replace(/\s+/g, '-'),
-            name: catName,
-            color: getCategoryColor(catName),
-            order: categories.length + index
-          }));
-
-        if (newCategories.length > 0) {
-          console.log('Adding new categories:', newCategories);
-          setCategories(prev => [...prev, ...newCategories]);
-        }
-
-        // Sort categories by order after adding new ones
-        setCategories(prev => {
-          const allCategories = [...prev, ...newCategories];
-          return allCategories.sort((a, b) => a.order - b.order);
-        });
-
-        console.log('Available categories:', categories.map(c => c.name));
       } catch (error) {
         console.error("Failed to fetch projects:", error);
       }
     };
 
+    const loadCategories = async () => {
+      try {
+        // Import the databases and Query from appwrite
+        const { databases, Query } = await import('@/lib/appwrite');
+        const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+
+        const response = await databases.listDocuments(
+          databaseId,
+          'categories',
+          [Query.orderAsc('order')]
+        );
+
+        if (response.documents.length > 0) {
+          const categoriesData = response.documents.map(doc => ({
+            id: doc.$id,
+            name: doc.name,
+            color: doc.color,
+            order: doc.order
+          }));
+
+          // Add "All" category at the beginning
+          const allCategories = [
+            { id: 'all', name: 'All', color: 'bg-gray-100 text-gray-800', order: 0 },
+            ...categoriesData
+          ];
+
+          setCategories(allCategories);
+          console.log('Loaded categories from database:', allCategories);
+        } else {
+          // If no categories exist, use default ones
+          const defaultCategories = [
+            { id: 'all', name: 'All', color: 'bg-gray-100 text-gray-800', order: 0 },
+            { id: 'residential', name: 'Residential', color: 'bg-blue-100 text-blue-800', order: 1 },
+            { id: 'commercial', name: 'Commercial', color: 'bg-green-100 text-green-800', order: 2 },
+            { id: 'industrial', name: 'Industrial', color: 'bg-purple-100 text-purple-800', order: 3 },
+          ];
+          setCategories(defaultCategories);
+          console.log('Using default categories:', defaultCategories);
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        // Fallback to default categories
+        const defaultCategories = [
+          { id: 'all', name: 'All', color: 'bg-gray-100 text-gray-800', order: 0 },
+          { id: 'residential', name: 'Residential', color: 'bg-blue-100 text-blue-800', order: 1 },
+          { id: 'commercial', name: 'Commercial', color: 'bg-green-100 text-green-800', order: 2 },
+          { id: 'industrial', name: 'Industrial', color: 'bg-purple-100 text-purple-800', order: 3 },
+        ];
+        setCategories(defaultCategories);
+        console.log('Using fallback categories:', defaultCategories);
+      }
+    };
+
     loadProjects();
+    loadCategories();
   }, []);
 
   const getCategoryColor = (categoryName: string): string => {
@@ -100,10 +124,7 @@ const ProjectsPage: React.FC = () => {
     }
   }, [activeCategory, projects]);
 
-  // Ensure categories are always sorted by order
-  useEffect(() => {
-    setCategories(prev => [...prev].sort((a, b) => a.order - b.order));
-  }, [categories.length]);
+
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -154,7 +175,7 @@ const ProjectsPage: React.FC = () => {
                     onClick={() => setActiveCategory(category.name)}
                     className={`px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200 ${activeCategory === category.name
                       ? 'bg-primary text-white shadow-lg scale-105'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 hover:scale-102'
+                      : category.color + ' hover:scale-102'
                       }`}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -215,7 +236,10 @@ const ProjectsPage: React.FC = () => {
                         <CardContent className="p-6 flex-grow">
                           <div className="flex items-center gap-2 mb-3">
                             {getCategoryIcon(project.category || 'Uncategorized')}
-                            <Badge className={getCategoryColor(project.category || 'Uncategorized')}>
+                            <Badge className={
+                              categories.find(cat => cat.name === project.category)?.color ||
+                              getCategoryColor(project.category || 'Uncategorized')
+                            }>
                               {project.category || 'Uncategorized'}
                             </Badge>
                           </div>
