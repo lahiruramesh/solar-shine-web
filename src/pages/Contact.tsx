@@ -10,7 +10,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchGlobalSettings } from '@/services/settingsService';
-import { GlobalSettings } from '@/types/payload-types';
+import { fetchCompanyInfo } from '@/services/companyService';
+import { GlobalSettings, CompanyInfo } from '@/types/payload-types';
 
 // EmailJS Service Implementation
 const ContactUsFormData = {
@@ -229,6 +230,7 @@ const Contact = () => {
     message: ''
   });
   const [globalSettings, setGlobalSettings] = useState<GlobalSettings | null>(null);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   const form = useForm({
@@ -243,13 +245,17 @@ const Contact = () => {
   });
 
   useEffect(() => {
-    // Load global settings
-    const loadGlobalSettings = async () => {
+    // Load global settings and company info
+    const loadData = async () => {
       try {
-        const settings = await fetchGlobalSettings();
+        const [settings, company] = await Promise.all([
+          fetchGlobalSettings(),
+          fetchCompanyInfo()
+        ]);
         setGlobalSettings(settings);
+        setCompanyInfo(company);
       } catch (error) {
-        console.error('Failed to load global settings:', error);
+        console.error('Failed to load data:', error);
       } finally {
         setIsLoadingSettings(false);
       }
@@ -269,7 +275,7 @@ const Contact = () => {
       }
     };
 
-    loadGlobalSettings();
+    loadData();
     initEmail();
   }, []);
 
@@ -321,7 +327,7 @@ const Contact = () => {
     }
   }, [submitStatus]);
 
-  // Dynamic contact data based on global settings
+  // Dynamic contact data based on global settings and company info
   const contactData = {
     title: "Contact Us",
     subtitle: "Get in touch with our team for any inquiries about our solar services and solutions.",
@@ -329,7 +335,7 @@ const Contact = () => {
       address: globalSettings?.address || "123 Solar Street, Colombo 05, Sri Lanka",
       phone: globalSettings?.contact_phone || "+94 11 234 5678",
       email: globalSettings?.contact_email || "info@solarcompany.com",
-      hours: "Monday - Friday: 8:30 AM - 5:30 PM"
+      hours: companyInfo?.businessHours || "Monday - Friday: 8:30 AM - 5:30 PM"
     },
     locations: [
       {
@@ -461,8 +467,11 @@ const Contact = () => {
                       <Clock className="text-primary" size={28} />
                     </div>
                     <h3 className="font-bold text-lg mb-2">Working Hours</h3>
-                    <p className="text-brand-gray">{contactData.mainOffice.hours}</p>
-                    <p className="text-brand-gray mt-1">Weekends: By appointment</p>
+                    <div className="text-brand-gray space-y-1">
+                      <p>Monday - Friday: 8:30 AM - 5:30 PM</p>
+                      <p>Saturday: 9:00 AM - 2:00 PM</p>
+                      <p>Sunday: Closed</p>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
