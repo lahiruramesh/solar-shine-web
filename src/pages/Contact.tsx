@@ -473,16 +473,17 @@ const Contact = () => {
         {/* Contact Form and Map Section */}
         <section className="py-16 px-4">
           <div className="container-custom">
-            <div className="grid md:grid-cols-2 gap-10">
+            <div className="flex justify-center">
               {/* Contact Form */}
               <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5 }}
+                className="max-w-2xl w-full"
               >
-                <h2 className="text-3xl font-bold mb-2">{contactData.formTitle}</h2>
-                <p className="text-brand-gray mb-8">{contactData.formSubtitle}</p>
+                <h2 className="text-3xl font-bold mb-2 text-center">{contactData.formTitle}</h2>
+                <p className="text-brand-gray mb-8 text-center">{contactData.formSubtitle}</p>
 
                 {/* Status Message */}
                 {submitStatus.type && (
@@ -609,52 +610,6 @@ const Contact = () => {
                     </button>
                   </form>
                 </Form>
-              </motion.div>
-
-              {/* Map */}
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                {/* Our Locations Section - Commented Out
-                <h2 className="text-3xl font-bold mb-2">Our Locations</h2>
-                <p className="text-brand-gray mb-8">Visit us at one of our offices across Sri Lanka.</p>
-                */}
-
-                {/* Map Section - Commented Out
-                <div className="rounded-lg overflow-hidden shadow-lg h-[400px]">
-                  <iframe
-                    src={contactData.mapEmbedUrl}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Company office locations"
-                  ></iframe>
-                </div>
-                */}
-
-                {/* Branch Locations Section - Commented Out
-                <div className="mt-8 grid gap-4">
-                  {contactData.locations.map((location, index) => (
-                    <div key={index} className="flex items-start p-3 border-l-4 border-primary">
-                      <div>
-                        <h3 className="font-bold">{location.city} Office</h3>
-                        <p className="text-brand-gray mb-1">{location.address}</p>
-                        {isLoadingSettings ? (
-                          <div className="animate-pulse bg-gray-200 h-3 w-24 rounded"></div>
-                        ) : (
-                          <p className="text-brand-gray">{location.phone}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                */}
               </motion.div>
             </div>
           </div>
