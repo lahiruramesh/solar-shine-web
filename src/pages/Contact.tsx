@@ -618,9 +618,12 @@ const Contact = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5 }}
               >
+                {/* Our Locations Section - Commented Out
                 <h2 className="text-3xl font-bold mb-2">Our Locations</h2>
                 <p className="text-brand-gray mb-8">Visit us at one of our offices across Sri Lanka.</p>
+                */}
 
+                {/* Map Section - Commented Out
                 <div className="rounded-lg overflow-hidden shadow-lg h-[400px]">
                   <iframe
                     src={contactData.mapEmbedUrl}
@@ -633,6 +636,7 @@ const Contact = () => {
                     title="Company office locations"
                   ></iframe>
                 </div>
+                */}
 
                 {/* Branch Locations Section - Commented Out
                 <div className="mt-8 grid gap-4">
