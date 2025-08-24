@@ -327,8 +327,8 @@ export const ServicesManager: React.FC = () => {
         setBannerData(data);
         if (data.background_image) {
           try {
-            const imageUrl = storage.getFilePreview(STORAGE_BUCKET_ID, data.background_image);
-            setBackgroundImagePreview(String(imageUrl));
+            const imageUrl = getImageUrl(data.background_image);
+            setBackgroundImagePreview(imageUrl || '');
           } catch (error) {
             console.error('Error loading background image:', error);
           }
