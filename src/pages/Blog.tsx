@@ -67,6 +67,9 @@ const Blog: React.FC = () => {
 
   const filteredAndSortedPosts = posts
     .filter(post => {
+      // Only show published posts
+      if (!post.published) return false;
+
       // Check if the post matches the selected category
       const matchesCategory =
         activeCategory === "All" ||
@@ -245,8 +248,8 @@ const Blog: React.FC = () => {
                     size="sm"
                     onClick={() => setActiveCategory(category)}
                     className={`rounded-full transition-all duration-200 ${activeCategory === category
-                        ? 'bg-primary text-black shadow-lg hover:bg-primary/90'
-                        : 'hover:bg-gray-100 hover:border-primary/30'
+                      ? 'bg-primary text-black shadow-lg hover:bg-primary/90'
+                      : 'hover:bg-gray-100 hover:border-primary/30'
                       }`}
                   >
                     {category}
@@ -299,7 +302,7 @@ const Blog: React.FC = () => {
           {/* Results Count */}
           <div className="mb-8 text-center">
             <p className="text-gray-600">
-              {filteredAndSortedPosts.length} article{filteredAndSortedPosts.length !== 1 ? 's' : ''} found
+              {filteredAndSortedPosts.length} published article{filteredAndSortedPosts.length !== 1 ? 's' : ''} found
               {searchQuery && ` for "${searchQuery}"`}
               {activeCategory !== 'All' && ` in ${activeCategory}`}
             </p>
@@ -308,8 +311,8 @@ const Blog: React.FC = () => {
           {/* Blog Content */}
           {isLoading ? (
             <div className={`grid gap-8 ${viewMode === 'grid'
-                ? 'md:grid-cols-2 lg:grid-cols-3'
-                : 'grid-cols-1'
+              ? 'md:grid-cols-2 lg:grid-cols-3'
+              : 'grid-cols-1'
               }`}>
               {Array.from({ length: 6 }).map((_, index) => (
                 <div key={index} className="bg-white rounded-2xl shadow-lg overflow-hidden animate-pulse">
@@ -336,19 +339,24 @@ const Blog: React.FC = () => {
             >
               <div className="max-w-md mx-auto">
                 <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-600 mb-2">No articles found</h3>
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">No published articles found</h3>
                 <p className="text-gray-500 mb-6">
-                  Try adjusting your search terms or category filter to find what you're looking for.
+                  {searchQuery || activeCategory !== 'All'
+                    ? 'Try adjusting your search terms or category filter to find what you\'re looking for.'
+                    : 'We\'re working on some great content. Check back soon!'
+                  }
                 </p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setActiveCategory('All');
-                  }}
-                >
-                  Clear filters
-                </Button>
+                {(searchQuery || activeCategory !== 'All') && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setActiveCategory('All');
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                )}
               </div>
             </motion.div>
           ) : (
@@ -356,8 +364,8 @@ const Blog: React.FC = () => {
               <motion.div
                 key={`${viewMode}-${sortBy}-${activeCategory}-${searchQuery}`}
                 className={`grid gap-8 ${viewMode === 'grid'
-                    ? 'md:grid-cols-2 lg:grid-cols-3'
-                    : 'grid-cols-1'
+                  ? 'md:grid-cols-2 lg:grid-cols-3'
+                  : 'grid-cols-1'
                   }`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

@@ -42,6 +42,12 @@ const BlogPostPage: React.FC = () => {
       try {
         const fetchedPost = await fetchBlogPostBySlug(slug);
         if (fetchedPost) {
+          // Check if the post is published
+          if (!fetchedPost.published) {
+            setError('This article is not yet published.');
+            setIsLoading(false);
+            return;
+          }
           setPost(fetchedPost);
         } else {
           setError('Blog post not found.');
