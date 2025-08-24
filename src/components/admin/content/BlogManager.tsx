@@ -42,10 +42,28 @@ export const BlogManager: React.FC = () => {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadPosts();
   }, []);
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.title?.trim()) {
+      errors.title = 'Title is required';
+    }
+
+    if (!formData.slug?.trim()) {
+      errors.slug = 'Slug is required';
+    } else if (!/^[a-z0-9-]+$/.test(formData.slug)) {
+      errors.slug = 'Slug can only contain lowercase letters, numbers, and hyphens';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const loadPosts = async () => {
     try {
@@ -112,6 +130,7 @@ export const BlogManager: React.FC = () => {
     });
     setImageFile(null);
     setImagePreview(null);
+    setFormErrors({});
   };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,13 +142,7 @@ export const BlogManager: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.title?.trim()) {
-      toast.error("Title is required");
-      return;
-    }
-
-    if (!formData.slug?.trim()) {
-      toast.error("Slug is required");
+    if (!validateForm()) {
       return;
     }
 
@@ -252,104 +265,146 @@ export const BlogManager: React.FC = () => {
             DB: {DATABASE_ID} | Collection: {COLLECTIONS.BLOG_POSTS}
           </div>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          if (!open) {
+            handleCloseDialog();
+          }
+        }}>
           <DialogTrigger asChild>
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="mr-2 h-4 w-4" />
               Add Post
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>
+          <DialogContent className="w-[95vw] max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col p-0">
+            <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
+              <DialogTitle className="text-xl font-semibold">
                 {editingPost ? 'Edit Blog Post' : 'Add New Blog Post'}
               </DialogTitle>
-              <DialogDescription>
-                {editingPost ? 'Update the blog post details.' : 'Fill in the details for the new blog post.'}
+              <DialogDescription className="text-sm text-muted-foreground">
+                {editingPost ? 'Update the blog post details below.' : 'Fill in the details for the new blog post below.'}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="flex-1 overflow-y-auto space-y-6 py-4 px-6">
               <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title" className="text-sm font-medium">Title *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value, slug: generateSlug(e.target.value) }))}
                   placeholder="Enter post title"
+                  className="w-full"
                 />
+                {formErrors.title && <p className="text-xs text-red-500">{formErrors.title}</p>}
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="slug">Slug</Label>
+                <Label htmlFor="slug" className="text-sm font-medium">Slug</Label>
                 <Input
                   id="slug"
                   value={formData.slug}
                   onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
                   placeholder="post-slug"
+                  className="w-full"
                 />
+                <p className="text-xs text-muted-foreground">URL-friendly version of the title</p>
+                {formErrors.slug && <p className="text-xs text-red-500">{formErrors.slug}</p>}
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="excerpt">Excerpt</Label>
+                <Label htmlFor="excerpt" className="text-sm font-medium">Excerpt</Label>
                 <Textarea
                   id="excerpt"
                   value={formData.excerpt || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, excerpt: e.target.value }))}
                   placeholder="Short summary of the post"
-                  rows={2}
+                  rows={3}
+                  className="w-full resize-none"
                 />
+                <p className="text-xs text-muted-foreground">Brief description that appears in previews</p>
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="content">Content</Label>
+                <Label htmlFor="content" className="text-sm font-medium">Content</Label>
                 <Textarea
                   id="content"
                   value={formData.content || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                   placeholder="Main content of the blog post"
-                  rows={6}
+                  rows={8}
+                  className="min-h-[200px] w-full resize-none"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="author">Author</Label>
+                  <Label htmlFor="author" className="text-sm font-medium">Author</Label>
                   <Input
                     id="author"
                     value={formData.author || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, author: e.target.value }))}
                     placeholder="Author name"
+                    className="w-full"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="publishDate">Publish Date</Label>
+                  <Label htmlFor="publishDate" className="text-sm font-medium">Publish Date</Label>
                   <Input
                     id="publishDate"
                     type="date"
                     value={formData.publishDate ? new Date(formData.publishDate).toISOString().split('T')[0] : ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, publishDate: e.target.value }))}
+                    className="w-full"
                   />
                 </div>
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="featured_image">Featured Image</Label>
+                <Label htmlFor="featured_image" className="text-sm font-medium">Featured Image</Label>
                 <Input
                   id="featured_image"
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
+                  className="w-full"
                 />
-                {uploading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {imagePreview && (
-                  <img src={imagePreview} alt="Preview" className="mt-2 h-32 w-auto rounded-md" />
+                {uploading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Uploading image...
+                  </div>
                 )}
+                {imagePreview && (
+                  <div className="mt-2">
+                    <img src={imagePreview} alt="Preview" className="h-32 w-auto rounded-md border" />
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">Recommended size: 1200x630px for optimal display</p>
               </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={handleCloseDialog}>
+            <div className="flex justify-end gap-3 pt-6 pb-6 px-6 border-t bg-background flex-shrink-0">
+              <Button
+                variant="outline"
+                onClick={handleCloseDialog}
+                className="min-w-[80px]"
+                disabled={saving || uploading}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={saving || uploading}>
+              <Button
+                onClick={handleSave}
+                disabled={saving || uploading}
+                className="min-w-[120px]"
+              >
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Saving...
+                  </>
+                ) : uploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
                   </>
                 ) : (
                   <>
