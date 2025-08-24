@@ -89,12 +89,12 @@ const Services: React.FC = () => {
   const [activeService, setActiveService] = useState<string | null>(null);
   const [bannerData, setBannerData] = useState<ServicesBanner | null>(null);
   const [isLoadingBanner, setIsLoadingBanner] = useState(true);
-  const [mainServices, setMainServices] = useState<ServiceCard[]>([]);
+  const [services, setServices] = useState<ServiceCard[]>([]);
   const [isLoadingServices, setIsLoadingServices] = useState(true);
 
   useEffect(() => {
     loadBannerData();
-    loadMainServices();
+    loadServices();
   }, []);
 
   const loadBannerData = async () => {
@@ -108,23 +108,21 @@ const Services: React.FC = () => {
     }
   };
 
-  const loadMainServices = async () => {
+  const loadServices = async () => {
     try {
       setIsLoadingServices(true);
       const services = await fetchServiceCards();
-      // Filter only main services and sort by order_index
-      const mainServicesData = services
-        .filter(service => service.service_type === 'main')
-        .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+      // Sort services by order_index
+      const sortedServices = services.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
 
-      setMainServices(mainServicesData);
+      setServices(sortedServices);
 
       // Set the first service as active if available
-      if (mainServicesData.length > 0 && !activeService) {
-        setActiveService(mainServicesData[0].$id);
+      if (sortedServices.length > 0 && !activeService) {
+        setActiveService(sortedServices[0].$id);
       }
     } catch (error) {
-      console.error('Error loading main services:', error);
+      console.error('Error loading services:', error);
     } finally {
       setIsLoadingServices(false);
     }
@@ -218,7 +216,7 @@ const Services: React.FC = () => {
         <section className="py-20 px-4">
           <div className="container-custom">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Core Services</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Services</h2>
               <p className="text-lg text-brand-gray max-w-3xl mx-auto">
                 We provide comprehensive solar solutions tailored to different sectors, each with unique energy requirements and considerations.
               </p>
@@ -229,11 +227,11 @@ const Services: React.FC = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-brand-gray">Loading services...</p>
               </div>
-            ) : mainServices.length > 0 ? (
+            ) : services.length > 0 ? (
               <>
                 {/* Service Tabs */}
                 <div className="flex flex-wrap justify-center gap-4 mb-12">
-                  {mainServices.map((service) => {
+                  {services.map((service) => {
                     const IconComponent = getIconComponent(service.icon || '🏠');
                     return (
                       <button
@@ -252,7 +250,7 @@ const Services: React.FC = () => {
                 </div>
 
                 {/* Active Service Content */}
-                {mainServices.map((service) => {
+                {services.map((service) => {
                   const IconComponent = getIconComponent(service.icon || '🏠');
                   const parsedFeatures = parseFeatures(service.features || []);
 

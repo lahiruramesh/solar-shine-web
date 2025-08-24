@@ -26,16 +26,14 @@ export const ServicesManager: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceCard | null>(null);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState<Omit<ServiceCard, '$id'>>({
+  const [formData, setFormData] = useState<Partial<ServiceCard>>({
     title: '',
     description: '',
-    icon: '',
-    link_url: '',
+    icon: '🏠',
     order_index: 0,
     image: '',
     benefits: [],
-    features: [],
-    service_type: 'additional'
+    features: []
   });
   const [showBannerSection, setShowBannerSection] = useState(false);
   const [bannerData, setBannerData] = useState<ServicesBanner>({
@@ -127,12 +125,10 @@ export const ServicesManager: React.FC = () => {
       title: service.title,
       description: service.description || '',
       icon: service.icon || '',
-      link_url: service.link_url || '',
       order_index: service.order_index || 0,
       image: service.image || '',
       benefits: service.benefits || [],
-      features: service.features || [],
-      service_type: service.service_type || 'additional'
+      features: service.features || []
     });
     setServiceImagePreview(service.image || '');
     setIsDialogOpen(true);
@@ -178,13 +174,11 @@ export const ServicesManager: React.FC = () => {
     setFormData({
       title: '',
       description: '',
-      icon: '',
-      link_url: '',
+      icon: '🏠',
       order_index: services.length,
       image: '',
       benefits: [],
-      features: [],
-      service_type: 'additional'
+      features: []
     });
     setEditingService(null);
     setServiceImageFile(null);
@@ -439,18 +433,6 @@ export const ServicesManager: React.FC = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="service_type">Service Type</Label>
-                  <select
-                    id="service_type"
-                    value={formData.service_type}
-                    onChange={(e) => handleInputChange('service_type', e.target.value)}
-                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-                  >
-                    <option value="main">Main Service</option>
-                    <option value="additional">Additional Service</option>
-                  </select>
-                </div>
               </div>
 
               <Separator />
@@ -753,103 +735,25 @@ export const ServicesManager: React.FC = () => {
               <TableRow>
                 <TableHead>Order</TableHead>
                 <TableHead>Title</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead>Icon</TableHead>
+                <TableHead>Order</TableHead>
+                <TableHead>Image</TableHead>
                 <TableHead>Benefits</TableHead>
                 <TableHead>Features</TableHead>
-                <TableHead>Image</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {services.map((service, index) => (
                 <TableRow key={service.$id}>
+                  <TableCell className="font-medium">{service.title}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {service.order_index}
-                      </Badge>
-                      <div className="flex flex-col gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleReorder(service.$id!, 'up')}
-                          disabled={index === 0}
-                        >
-                          <ArrowUp className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleReorder(service.$id!, 'down')}
-                          disabled={index === services.length - 1}
-                        >
-                          <ArrowDown className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
+                    <span className="text-2xl">{service.icon}</span>
                   </TableCell>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      {service.icon && (
-                        <span className="text-lg">{service.icon}</span>
-                      )}
-                      {service.title}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={service.service_type === 'main' ? 'default' : 'secondary'}>
-                      {service.service_type === 'main' ? 'Main' : 'Additional'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="max-w-xs text-sm text-muted-foreground truncate">
-                      {service.description}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="max-w-xs">
-                      {service.benefits && service.benefits.length > 0 ? (
-                        <div className="space-y-1">
-                          {service.benefits.slice(0, 2).map((benefit, idx) => (
-                            <div key={idx} className="text-xs bg-muted px-2 py-1 rounded">
-                              {benefit}
-                            </div>
-                          ))}
-                          {service.benefits.length > 2 && (
-                            <div className="text-xs text-muted-foreground">
-                              +{service.benefits.length - 2} more
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">None</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="max-w-xs">
-                      {service.features && service.features.length > 0 ? (
-                        <div className="space-y-1">
-                          {service.features.slice(0, 2).map((feature, idx) => (
-                            <div key={idx} className="text-xs bg-muted px-2 py-1 rounded">
-                              <div className="text-xs truncate">{feature}</div>
-                            </div>
-                          ))}
-                          {service.features.length > 2 && (
-                            <div className="text-xs text-muted-foreground">
-                              +{service.features.length - 2} more
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">None</span>
-                      )}
-                    </div>
-                  </TableCell>
+                  <TableCell>{service.order_index}</TableCell>
                   <TableCell>
                     {service.image ? (
-                      <div className="w-16 h-12 rounded border overflow-hidden">
+                      <div className="w-16 h-16 rounded overflow-hidden">
                         <img
                           src={service.image}
                           alt={service.title}
@@ -857,28 +761,71 @@ export const ServicesManager: React.FC = () => {
                         />
                       </div>
                     ) : (
-                      <div className="w-16 h-12 rounded border bg-muted flex items-center justify-center">
-                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-400">
+                        No Image
                       </div>
                     )}
                   </TableCell>
+                  <TableCell>
+                    {service.benefits && service.benefits.length > 0 ? (
+                      <div className="max-w-xs">
+                        <div className="text-sm font-medium mb-1">Benefits:</div>
+                        <ul className="text-xs space-y-1">
+                          {service.benefits.slice(0, 3).map((benefit, index) => (
+                            <li key={index} className="flex items-start">
+                              <span className="text-primary mr-1">•</span>
+                              <span className="truncate">{benefit}</span>
+                            </li>
+                          ))}
+                          {service.benefits.length > 3 && (
+                            <li className="text-xs text-gray-500">
+                              +{service.benefits.length - 3} more
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-sm">No benefits</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {service.features && service.features.length > 0 ? (
+                      <div className="max-w-xs">
+                        <div className="text-sm font-medium mb-1">Features:</div>
+                        <ul className="text-xs space-y-1">
+                          {service.features.slice(0, 3).map((feature, index) => (
+                            <li key={index} className="flex items-start">
+                              <span className="text-primary mr-1">•</span>
+                              <span className="truncate">{feature}</span>
+                            </li>
+                          ))}
+                          {service.features.length > 3 && (
+                            <li className="text-xs text-gray-500">
+                              +{service.features.length - 3} more
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 text-sm">No features</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(service)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(service.$id!)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(service)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(service.$id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      Delete
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
