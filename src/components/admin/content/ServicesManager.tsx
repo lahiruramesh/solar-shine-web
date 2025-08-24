@@ -4,18 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Plus, Edit, Trash2, Save, Wrench, ArrowUp, ArrowDown } from 'lucide-react';
-import { ServiceCard } from '@/types/payload-types';
-import { 
-  fetchServiceCards, 
-  addServiceCard, 
-  updateServiceCard, 
-  deleteServiceCard 
+import { Loader2, Plus, Edit, Trash2, Save, Wrench, ArrowUp, ArrowDown, Info, ImageIcon, Upload, X } from 'lucide-react';
+import { ServiceCard, ServicesBanner } from '@/types/payload-types';
+import {
+  fetchServiceCards,
+  addServiceCard,
+  updateServiceCard,
+  deleteServiceCard
 } from '@/services/serviceCardService';
+import { fetchServicesBanner, updateServicesBanner } from '@/services/servicesBannerService';
+import { storage, STORAGE_BUCKET_ID } from '@/lib/appwrite';
 
 export const ServicesManager: React.FC = () => {
   const [services, setServices] = useState<ServiceCard[]>([]);
@@ -30,9 +33,19 @@ export const ServicesManager: React.FC = () => {
     link_url: '',
     order_index: 0
   });
+  const [showBannerSection, setShowBannerSection] = useState(false);
+  const [bannerData, setBannerData] = useState<ServicesBanner>({
+    title: '',
+    subtitle: '',
+    background_image: '',
+  });
+  const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
+  const [backgroundImagePreview, setBackgroundImagePreview] = useState<string>('');
+  const [isSavingBanner, setIsSavingBanner] = useState(false);
 
   useEffect(() => {
     loadServices();
+    loadBannerData();
   }, []);
 
   const loadServices = async () => {
@@ -140,6 +153,82 @@ export const ServicesManager: React.FC = () => {
       ...prev,
       [field]: value
     }));
+  };
+
+  const loadBannerData = async () => {
+    try {
+      const data = await fetchServicesBanner();
+      if (data) {
+        setBannerData(data);
+        if (data.background_image) {
+          try {
+            const imageUrl = storage.getFilePreview(STORAGE_BUCKET_ID, data.background_image);
+            setBackgroundImagePreview(imageUrl.href);
+          } catch (error) {
+            console.error('Error loading background image:', error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading banner data:', error);
+    }
+  };
+
+  const handleBannerInputChange = (field: keyof ServicesBanner, value: string) => {
+    setBannerData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleBannerImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBackgroundImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setBackgroundImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeBannerImage = () => {
+    setBackgroundImageFile(null);
+    setBackgroundImagePreview('');
+    setBannerData(prev => ({
+      ...prev,
+      background_image: ''
+    }));
+  };
+
+  const handleSaveBanner = async () => {
+    if (!bannerData.title.trim()) {
+      toast.error('Banner title is required');
+      return;
+    }
+
+    setIsSavingBanner(true);
+    try {
+      const success = await updateServicesBanner({
+        title: bannerData.title,
+        subtitle: bannerData.subtitle || '',
+        background_image_url: bannerData.background_image,
+        background_image_file: backgroundImageFile,
+      });
+
+      if (success) {
+        toast.success('Services banner updated successfully');
+        await loadBannerData();
+        setBackgroundImageFile(null);
+      } else {
+        toast.error('Failed to update services banner');
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsSavingBanner(false);
+    }
   };
 
   if (loading) {
@@ -258,6 +347,135 @@ export const ServicesManager: React.FC = () => {
         </Dialog>
       </div>
 
+      {/* Banner Management Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Services Page Banner</CardTitle>
+              <CardDescription>
+                Manage the banner section displayed at the top of the Services page
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowBannerSection(!showBannerSection)}
+            >
+              {showBannerSection ? 'Hide' : 'Show'} Banner Settings
+            </Button>
+          </div>
+        </CardHeader>
+        {showBannerSection && (
+          <CardContent className="space-y-6">
+            {/* Banner Content Form */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Banner Content</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="banner-title">Title *</Label>
+                  <Input
+                    id="banner-title"
+                    value={bannerData.title}
+                    onChange={(e) => handleBannerInputChange('title', e.target.value)}
+                    placeholder="Enter banner title"
+                    maxLength={255}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="banner-subtitle">Subtitle</Label>
+                  <Input
+                    id="banner-subtitle"
+                    value={bannerData.subtitle || ''}
+                    onChange={(e) => handleBannerInputChange('subtitle', e.target.value)}
+                    placeholder="Enter banner subtitle"
+                    maxLength={500}
+                  />
+                </div>
+              </div>
+
+
+
+
+            </div>
+
+            <Separator />
+
+            {/* Background Image */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Background Image</h3>
+
+              <div className="space-y-4">
+                {/* Current Image Preview */}
+                {backgroundImagePreview && (
+                  <div className="relative">
+                    <img
+                      src={backgroundImagePreview}
+                      alt="Background preview"
+                      className="w-full h-48 object-cover rounded-lg border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={removeBannerImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+
+                {/* Image Upload */}
+                <div className="space-y-2">
+                  <Label htmlFor="banner-background-image">Upload New Image</Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="banner-background-image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBannerImageChange}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('banner-background-image')?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Browse
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Recommended size: 1920x600px. Max file size: 5MB.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <div className="flex justify-end pt-4">
+              <Button
+                onClick={handleSaveBanner}
+                disabled={isSavingBanner}
+                className="min-w-[120px]"
+              >
+                {isSavingBanner ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  'Save Banner'
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Service Cards</CardTitle>
@@ -339,7 +557,7 @@ export const ServicesManager: React.FC = () => {
               ))}
             </TableBody>
           </Table>
-          
+
           {services.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Wrench className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />

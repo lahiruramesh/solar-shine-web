@@ -41,6 +41,7 @@ console.log('   Your project already has an appwrite.json file with all collecti
 console.log('   Collections included:');
 console.log('      - global_settings (Site configuration)');
 console.log('      - hero_section (Homepage hero)');
+console.log('      - services_banner (Services page banner)');
 console.log('      - service_cards (Service offerings)');
 console.log('      - projects (Portfolio projects)');
 console.log('      - blog_posts (Blog content)');
@@ -87,8 +88,15 @@ const collections = [
       { key: 'title', type: 'string', size: 255, required: true },
       { key: 'subtitle', type: 'string', size: 500, required: false },
       { key: 'description', type: 'string', size: 1000, required: false },
-      { key: 'cta_text', type: 'string', size: 100, required: false },
-      { key: 'cta_url', type: 'string', size: 255, required: false },
+      { key: 'background_image', type: 'string', size: 255, required: false }
+    ]
+  },
+  { 
+    id: 'services_banner', 
+    name: 'Services Banner',
+    attributes: [
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'subtitle', type: 'string', size: 500, required: false },
       { key: 'background_image', type: 'string', size: 255, required: false }
     ]
   },

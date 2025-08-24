@@ -16,6 +16,13 @@ export interface HeroSection {
   background_image: string | null;
 }
 
+export interface ServicesBanner {
+  $id?: string;
+  title: string;
+  subtitle: string | null;
+  background_image: string | null;
+}
+
 export interface ServiceCard {
   $id: string;
   title: string;
