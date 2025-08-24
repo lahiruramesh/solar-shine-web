@@ -147,6 +147,25 @@ const Services: React.FC = () => {
     return iconMap[iconName] || Home; // Default to Home if icon not found
   };
 
+  // Helper function to get image URL from Appwrite storage
+  const getImageUrl = (imageId: string | null | undefined): string | null => {
+    if (!imageId) return null;
+
+    try {
+      // If it's already a full URL, return it as is
+      if (imageId.startsWith('http')) {
+        return imageId;
+      }
+
+      // Get the direct file URL from Appwrite storage
+      const fileUrl = storage.getFileView(STORAGE_BUCKET_ID, imageId);
+      return (fileUrl as any).href || fileUrl.toString();
+    } catch (error) {
+      console.error('Error getting image URL:', error);
+      return null;
+    }
+  };
+
   // Helper function to parse features from string format
   const parseFeatures = (features: string[]) => {
     return features.map(feature => {
@@ -294,11 +313,24 @@ const Services: React.FC = () => {
 
                         <div className="rounded-lg overflow-hidden shadow-lg">
                           {service.image ? (
-                            <img
-                              src={service.image}
-                              alt={service.title}
-                              className="w-full h-full object-cover"
-                            />
+                            (() => {
+                              const imageUrl = getImageUrl(service.image);
+                              return imageUrl ? (
+                                <img
+                                  src={imageUrl}
+                                  alt={service.title}
+                                  className="w-full h-full object-cover transition-opacity duration-300"
+                                  onError={() => {
+                                    // If image fails to load, show fallback
+                                    console.error('Image failed to load for service:', service.title);
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
+                                  <IconComponent size={64} className="text-gray-400" />
+                                </div>
+                              );
+                            })()
                           ) : (
                             <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
                               <IconComponent size={64} className="text-gray-400" />
