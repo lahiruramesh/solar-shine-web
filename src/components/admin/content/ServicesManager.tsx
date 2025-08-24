@@ -116,7 +116,8 @@ export const ServicesManager: React.FC = () => {
         await updateServiceCard({ $id: editingService.$id, ...serviceData });
         setTimeout(() => toast.success('Service updated successfully'), 0);
       } else {
-        await addServiceCard({ ...serviceData, order_index: services.length });
+        // Use the order_index from formData which is properly calculated in resetForm
+        await addServiceCard({ ...serviceData, order_index: formData.order_index || 0 });
         setTimeout(() => toast.success('Service created successfully'), 0);
       }
 
@@ -155,6 +156,25 @@ export const ServicesManager: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this service?')) return;
     try {
       await deleteServiceCard(serviceId);
+
+      // Get the deleted service to know its order_index
+      const deletedService = services.find(s => s.$id === serviceId);
+      if (deletedService) {
+        // Find all services that had a higher order_index than the deleted one
+        const servicesToUpdate = services
+          .filter(s => s.$id !== serviceId && (s.order_index || 0) > (deletedService.order_index || 0))
+          .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
+        // Update their order indices to fill the gap
+        for (let i = 0; i < servicesToUpdate.length; i++) {
+          const newOrderIndex = (deletedService.order_index || 0) + i;
+          await updateServiceCard({
+            $id: servicesToUpdate[i].$id,
+            order_index: newOrderIndex
+          });
+        }
+      }
+
       setTimeout(() => toast.success('Service deleted successfully'), 0);
       await loadServices();
     } catch (error) {
@@ -175,9 +195,20 @@ export const ServicesManager: React.FC = () => {
     const otherService = services[targetIndex];
 
     try {
-      // Swap order indices
-      await updateServiceCard({ $id: serviceToMove.$id, order_index: otherService.order_index });
-      await updateServiceCard({ $id: otherService.$id, order_index: serviceToMove.order_index });
+      // Create a new array with the reordered services
+      const newServices = [...services];
+      [newServices[serviceIndex], newServices[targetIndex]] = [newServices[targetIndex], newServices[serviceIndex]];
+
+      // Update the order_index for all affected services
+      const updates = newServices.map((service, index) => ({
+        $id: service.$id,
+        order_index: index
+      }));
+
+      // Update all services with their new order indices
+      for (const update of updates) {
+        await updateServiceCard(update);
+      }
 
       await loadServices();
       setTimeout(() => toast.success('Service order updated'), 0);
@@ -188,10 +219,13 @@ export const ServicesManager: React.FC = () => {
   };
 
   const resetForm = () => {
+    // Find the highest order_index and add 1 for the new service
+    const maxOrderIndex = services.length > 0 ? Math.max(...services.map(s => s.order_index || 0)) : -1;
+
     setFormData({
       title: '',
       description: '',
-      order_index: services.length,
+      order_index: maxOrderIndex + 1,
       image: '',
       benefits: [],
       features: []
@@ -269,7 +303,7 @@ export const ServicesManager: React.FC = () => {
       }
 
       // At this point, fileUrl is guaranteed to be non-null due to the check above
-      return fileUrl!.toString();
+      return fileUrl?.toString() || '';
     } catch (error) {
       console.error('Error getting image URL for ID:', imageId, error);
       return null;
@@ -782,146 +816,156 @@ export const ServicesManager: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Order</TableHead>
-                <TableHead>Image</TableHead>
-                <TableHead>Benefits</TableHead>
-                <TableHead>Features</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {services.map((service, index) => (
-                <TableRow key={service.$id}>
-                  <TableCell className="font-medium">{service.title}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">{service.order_index}</Badge>
-                      <div className="flex flex-col gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleReorder(service.$id!, 'up')}
-                          disabled={index === 0}
-                          className="h-6 w-6 p-0"
-                        >
-                          <ArrowUp className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleReorder(service.$id!, 'down')}
-                          disabled={index === services.length - 1}
-                          className="h-6 w-6 p-0"
-                        >
-                          <ArrowDown className="h-3 w-3" />
-                        </Button>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[200px]">Title</TableHead>
+                  <TableHead className="w-[100px]">Order</TableHead>
+                  <TableHead className="w-[120px]">Image</TableHead>
+                  <TableHead className="w-[200px]">Benefits</TableHead>
+                  <TableHead className="w-[200px]">Features</TableHead>
+                  <TableHead className="w-[120px] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {services.map((service, index) => (
+                  <TableRow key={service.$id}>
+                    <TableCell className="font-medium max-w-[200px]">
+                      <div className="truncate" title={service.title}>
+                        {service.title}
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {service.image ? (
-                      <div className="w-20 h-20 rounded-lg overflow-hidden border shadow-sm">
-                        <img
-                          src={getImageUrl(service.image) || ''}
-                          alt={service.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            // If image fails to load, show fallback
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const fallback = target.nextElementSibling as HTMLElement;
-                            if (fallback) fallback.style.display = 'flex';
-                          }}
-                        />
-                        {/* Fallback for failed images */}
-                        <div
-                          className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-400 text-xs hidden"
-                          style={{ display: 'none' }}
-                        >
-                          <div className="text-center">
-                            <div className="text-lg mb-1">📷</div>
-                            <div>Image</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{service.order_index}</Badge>
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleReorder(service.$id!, 'up')}
+                            disabled={index === 0}
+                            className="h-6 w-6 p-0"
+                          >
+                            <ArrowUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleReorder(service.$id!, 'down')}
+                            disabled={index === services.length - 1}
+                            className="h-6 w-6 p-0"
+                          >
+                            <ArrowDown className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {service.image ? (
+                        <div className="w-20 h-20 rounded-lg overflow-hidden border shadow-sm relative">
+                          <img
+                            src={getImageUrl(service.image) || ''}
+                            alt={service.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // If image fails to load, show fallback
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const fallback = target.nextElementSibling as HTMLElement;
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                          {/* Fallback for failed images */}
+                          <div
+                            className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-400 text-xs"
+                            style={{ display: 'none' }}
+                          >
+                            <div className="text-center">
+                              <div className="text-lg mb-1">📷</div>
+                              <div>Image</div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg border flex items-center justify-center text-gray-400">
-                        <div className="text-center">
-                          <div className="text-lg mb-1">📷</div>
-                          <div className="text-xs">No Image</div>
+                      ) : (
+                        <div className="w-20 h-20 bg-gray-100 rounded-lg border flex items-center justify-center text-gray-400">
+                          <div className="text-center">
+                            <div className="text-lg mb-1">📷</div>
+                            <div className="text-xs">No Image</div>
+                          </div>
                         </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="max-w-[200px]">
+                      {service.benefits && service.benefits.length > 0 ? (
+                        <div>
+                          <div className="text-sm font-medium mb-1">Benefits:</div>
+                          <ul className="text-xs space-y-1">
+                            {service.benefits.slice(0, 3).map((benefit, index) => (
+                              <li key={index} className="flex items-start">
+                                <span className="text-primary mr-1">•</span>
+                                <span className="truncate">{benefit}</span>
+                              </li>
+                            ))}
+                            {service.benefits.length > 3 && (
+                              <li className="text-xs text-gray-500">
+                                +{service.benefits.length - 3} more
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">No benefits</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="max-w-[200px]">
+                      {service.features && service.features.length > 0 ? (
+                        <div>
+                          <div className="text-sm font-medium mb-1">Features:</div>
+                          <ul className="text-xs space-y-1">
+                            {service.features.slice(0, 3).map((feature, index) => (
+                              <li key={index} className="flex items-start">
+                                <span className="text-primary mr-1">•</span>
+                                <span className="truncate">{feature}</span>
+                              </li>
+                            ))}
+                            {service.features.length > 3 && (
+                              <li className="text-xs text-gray-500">
+                                +{service.features.length - 3} more
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      ) : (
+                        <span className="text-gray-500 text-sm">No features</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(service)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(service.$id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
                       </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {service.benefits && service.benefits.length > 0 ? (
-                      <div className="max-w-xs">
-                        <div className="text-sm font-medium mb-1">Benefits:</div>
-                        <ul className="text-xs space-y-1">
-                          {service.benefits.slice(0, 3).map((benefit, index) => (
-                            <li key={index} className="flex items-start">
-                              <span className="text-primary mr-1">•</span>
-                              <span className="truncate">{benefit}</span>
-                            </li>
-                          ))}
-                          {service.benefits.length > 3 && (
-                            <li className="text-xs text-gray-500">
-                              +{service.benefits.length - 3} more
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 text-sm">No benefits</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {service.features && service.features.length > 0 ? (
-                      <div className="max-w-xs">
-                        <div className="text-sm font-medium mb-1">Features:</div>
-                        <ul className="text-xs space-y-1">
-                          {service.features.slice(0, 3).map((feature, index) => (
-                            <li key={index} className="flex items-start">
-                              <span className="text-primary mr-1">•</span>
-                              <span className="truncate">{feature}</span>
-                            </li>
-                          ))}
-                          {service.features.length > 3 && (
-                            <li className="text-xs text-gray-500">
-                              +{service.features.length - 3} more
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    ) : (
-                      <span className="text-gray-500 text-sm">No features</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(service)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(service.$id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
           {services.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
