@@ -54,6 +54,16 @@ export const BlogManager: React.FC = () => {
     loadPosts();
   }, []);
 
+  // Update input fields when form data changes (for normalized display)
+  useEffect(() => {
+    if (Array.isArray(formData.categories)) {
+      setCategoriesInput(formData.categories.join(', '));
+    }
+    if (Array.isArray(formData.tags)) {
+      setTagsInput(formData.tags.join(', '));
+    }
+  }, [formData.categories, formData.tags]);
+
   const validateForm = () => {
     const errors: Record<string, string> = {};
 
@@ -259,6 +269,38 @@ export const BlogManager: React.FC = () => {
     }
   };
 
+  const formatCategories = (categories: string[] | undefined) => {
+    if (!Array.isArray(categories) || categories.length === 0) {
+      return <span className="text-xs text-muted-foreground">No categories</span>;
+    }
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {categories.map((category, index) => (
+          <Badge key={index} variant="outline" className="text-xs capitalize">
+            {category}
+          </Badge>
+        ))}
+      </div>
+    );
+  };
+
+  const formatTags = (tags: string[] | undefined) => {
+    if (!Array.isArray(tags) || tags.length === 0) {
+      return <span className="text-xs text-muted-foreground">No tags</span>;
+    }
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {tags.map((tag, index) => (
+          <Badge key={index} variant="secondary" className="text-xs capitalize">
+            {tag}
+          </Badge>
+        ))}
+      </div>
+    );
+  };
+
   if (isAuthLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -422,20 +464,29 @@ export const BlogManager: React.FC = () => {
                   onBlur={(e) => {
                     // Process the final value when user leaves the field
                     const inputValue = e.target.value;
-                    const categories = inputValue.split(',').map(cat => cat.trim()).filter(cat => cat);
+                    // Normalize categories: split by comma, trim, convert to lowercase, remove duplicates
+                    const categories = inputValue
+                      .split(',')
+                      .map(cat => cat.trim())
+                      .filter(cat => cat)
+                      .map(cat => cat.toLowerCase())
+                      .filter((cat, index, arr) => arr.indexOf(cat) === index); // Remove duplicates
                     setFormData(prev => ({ ...prev, categories }));
                   }}
                   placeholder="Category 1, Category 2, Category 3"
                   className="w-full"
                 />
-                <p className="text-xs text-muted-foreground">Separate multiple categories with commas</p>
+                <p className="text-xs text-muted-foreground">Separate multiple categories with commas. Categories will be automatically normalized and duplicates removed.</p>
                 {Array.isArray(formData.categories) && formData.categories.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {formData.categories.map((category, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {category}
-                      </Badge>
-                    ))}
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground mb-2">Preview (normalized):</p>
+                    <div className="flex flex-wrap gap-1">
+                      {formData.categories.map((category, index) => (
+                        <Badge key={index} variant="outline" className="text-xs capitalize">
+                          {category}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {formErrors.categories && <p className="text-xs text-red-500">{formErrors.categories}</p>}
@@ -452,20 +503,29 @@ export const BlogManager: React.FC = () => {
                   onBlur={(e) => {
                     // Process the final value when user leaves the field
                     const inputValue = e.target.value;
-                    const tags = inputValue.split(',').map(tag => tag.trim()).filter(tag => tag);
+                    // Normalize tags: split by comma, trim, convert to lowercase, remove duplicates
+                    const tags = inputValue
+                      .split(',')
+                      .map(tag => tag.trim())
+                      .filter(tag => tag)
+                      .map(tag => tag.toLowerCase())
+                      .filter((tag, index, arr) => arr.indexOf(tag) === index); // Remove duplicates
                     setFormData(prev => ({ ...prev, tags }));
                   }}
                   placeholder="Tag 1, Tag 2, Tag 3"
                   className="w-full"
                 />
-                <p className="text-xs text-muted-foreground">Separate multiple tags with commas</p>
+                <p className="text-xs text-muted-foreground">Separate multiple tags with commas. Tags will be automatically normalized and duplicates removed.</p>
                 {Array.isArray(formData.tags) && formData.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {formData.tags.map((tag, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground mb-2">Preview (normalized):</p>
+                    <div className="flex flex-wrap gap-1">
+                      {formData.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs capitalize">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {formErrors.tags && <p className="text-xs text-red-500">{formErrors.tags}</p>}
@@ -551,6 +611,7 @@ export const BlogManager: React.FC = () => {
                 <TableHead>Title</TableHead>
                 <TableHead>Author</TableHead>
                 <TableHead>Categories</TableHead>
+                <TableHead>Tags</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -563,17 +624,10 @@ export const BlogManager: React.FC = () => {
                     {post.author || 'Unknown'}
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {Array.isArray(post.categories) && post.categories.length > 0 ? (
-                        post.categories.map((category, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {category}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-xs text-muted-foreground">No categories</span>
-                      )}
-                    </div>
+                    {formatCategories(post.categories)}
+                  </TableCell>
+                  <TableCell>
+                    {formatTags(post.tags)}
                   </TableCell>
                   <TableCell>{getStatusBadge(post)}</TableCell>
                   <TableCell className="text-right">
