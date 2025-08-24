@@ -27,6 +27,7 @@ function mapDocumentToBlogPost(doc: any): BlogPost {
     featured_image: imageUrl,
     featured_image_id: imageId,
     publishDate: doc.publishDate || doc.publish_date || undefined,
+    published: doc.published !== undefined ? doc.published : false,
   } as unknown as BlogPost;
 }
 
@@ -35,7 +36,9 @@ export async function fetchBlogPosts(): Promise<BlogPost[]> {
     const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.BLOG_POSTS, [
       Query.orderDesc('publishDate')
     ]);
-    return response.documents.map(mapDocumentToBlogPost);
+    const posts = response.documents.map(mapDocumentToBlogPost);
+    console.log('Fetched blog posts:', posts.map(p => ({ id: p.$id, title: p.title, published: p.published })));
+    return posts;
   } catch (error) {
     console.error('Error fetching blog posts:', error);
     throw error;
@@ -72,6 +75,7 @@ export async function createBlogPost(postData: Partial<Omit<BlogPost, '$id' | 'f
             content: postData.content || null,
             author: postData.author || null,
             publishDate: postData.publishDate || new Date().toISOString(),
+            published: postData.published || false,
             categories: postData.categories || null,
             tags: postData.tags || null,
         };
@@ -88,6 +92,7 @@ export async function createBlogPost(postData: Partial<Omit<BlogPost, '$id' | 'f
             }
         });
 
+        console.log('Creating blog post with data:', dataToSave);
         const response = await databases.createDocument(DATABASE_ID, COLLECTIONS.BLOG_POSTS, ID.unique(), dataToSave);
         return response.$id;
     } catch (error) {
@@ -106,8 +111,8 @@ export async function updateBlogPost(id: string, postData: Partial<Omit<BlogPost
         await storage.deleteFile(STORAGE_BUCKET_ID, oldImageId);
     }
 
-    const { title, slug, excerpt, content, author, publishDate, featured_image_id, categories, tags } = postData;
-    const dataToUpdate: any = { title, slug, excerpt, content, author, publishDate, featured_image_id, categories, tags };
+    const { title, slug, excerpt, content, author, publishDate, published, featured_image_id, categories, tags } = postData;
+    const dataToUpdate: any = { title, slug, excerpt, content, author, publishDate, published, featured_image_id, categories, tags };
     
     // Appwrite expects null for empty optional fields, not undefined.
     for (const key in dataToUpdate) {
@@ -116,6 +121,7 @@ export async function updateBlogPost(id: string, postData: Partial<Omit<BlogPost
       }
     }
 
+    console.log('Updating blog post with data:', dataToUpdate);
     await databases.updateDocument(DATABASE_ID, COLLECTIONS.BLOG_POSTS, id, dataToUpdate);
     return true;
   } catch (error) {

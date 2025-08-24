@@ -60,6 +60,7 @@ export interface BlogPost {
   content?: string;
   author?: string;
   publishDate?: string;
+  published?: boolean;
   featured_image?: string; // URL for display
   featured_image_id?: string; // ID for storage
   categories?: string[];

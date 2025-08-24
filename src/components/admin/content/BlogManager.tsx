@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import {
   fetchBlogPosts,
@@ -38,11 +39,16 @@ export const BlogManager: React.FC = () => {
     author: '',
     publishDate: '',
     featured_image_id: '',
-    slug: ''
+    slug: '',
+    published: false,
+    categories: [],
+    tags: []
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [categoriesInput, setCategoriesInput] = useState<string>('');
+  const [tagsInput, setTagsInput] = useState<string>('');
 
   useEffect(() => {
     loadPosts();
@@ -59,6 +65,15 @@ export const BlogManager: React.FC = () => {
       errors.slug = 'Slug is required';
     } else if (!/^[a-z0-9-]+$/.test(formData.slug)) {
       errors.slug = 'Slug can only contain lowercase letters, numbers, and hyphens';
+    }
+
+    // Validate categories and tags format
+    if (formData.categories && !Array.isArray(formData.categories)) {
+      errors.categories = 'Categories must be an array';
+    }
+
+    if (formData.tags && !Array.isArray(formData.tags)) {
+      errors.tags = 'Tags must be an array';
     }
 
     setFormErrors(errors);
@@ -96,8 +111,13 @@ export const BlogManager: React.FC = () => {
         author: post.author || '',
         publishDate: post.publishDate ? new Date(post.publishDate).toISOString().split('T')[0] : '',
         featured_image_id: post.featured_image_id || '',
-        slug: post.slug
+        slug: post.slug,
+        published: post.published,
+        categories: post.categories || [],
+        tags: post.tags || []
       });
+      setCategoriesInput(Array.isArray(post.categories) ? post.categories.join(', ') : '');
+      setTagsInput(Array.isArray(post.tags) ? post.tags.join(', ') : '');
       setImagePreview(post.featured_image || null);
     } else {
       setEditingPost(null);
@@ -108,8 +128,13 @@ export const BlogManager: React.FC = () => {
         author: '',
         publishDate: new Date().toISOString().split('T')[0],
         featured_image_id: '',
-        slug: ''
+        slug: '',
+        published: false,
+        categories: [],
+        tags: []
       });
+      setCategoriesInput('');
+      setTagsInput('');
       setImagePreview(null);
     }
     setImageFile(null);
@@ -126,8 +151,13 @@ export const BlogManager: React.FC = () => {
       author: '',
       publishDate: '',
       featured_image_id: '',
-      slug: ''
+      slug: '',
+      published: false,
+      categories: [],
+      tags: []
     });
+    setCategoriesInput('');
+    setTagsInput('');
     setImageFile(null);
     setImagePreview(null);
     setFormErrors({});
@@ -168,6 +198,9 @@ export const BlogManager: React.FC = () => {
         featured_image_id: imageId,
         publishDate: formData.publishDate ? new Date(formData.publishDate).toISOString() : new Date().toISOString(),
       };
+
+      console.log('Saving blog post with data:', postData);
+      console.log('Published field value:', postData.published);
 
       if (editingPost) {
         const success = await updateBlogPost(editingPost.$id, postData);
@@ -211,14 +244,19 @@ export const BlogManager: React.FC = () => {
   };
 
   const getStatusBadge = (post: BlogPost) => {
-    const date = post.publishDate ? new Date(post.publishDate) : null;
-    const isPublished = date && date <= new Date();
-
-    return (
-      <Badge variant={isPublished ? 'default' : 'secondary'}>
-        {isPublished ? 'Published' : 'Draft'}
-      </Badge>
-    );
+    if (post.published) {
+      return (
+        <Badge variant="default">
+          Published
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="secondary">
+          Draft
+        </Badge>
+      );
+    }
   };
 
   if (isAuthLoading) {
@@ -360,6 +398,80 @@ export const BlogManager: React.FC = () => {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="published" className="text-sm font-medium">Publish Status</Label>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="published"
+                    checked={formData.published || false}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, published: checked }))}
+                  />
+                  <Label htmlFor="published" className="text-sm">
+                    Publish immediately (uncheck for draft)
+                  </Label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="categories" className="text-sm font-medium">Categories</Label>
+                <Input
+                  id="categories"
+                  value={categoriesInput}
+                  onChange={(e) => {
+                    setCategoriesInput(e.target.value);
+                  }}
+                  onBlur={(e) => {
+                    // Process the final value when user leaves the field
+                    const inputValue = e.target.value;
+                    const categories = inputValue.split(',').map(cat => cat.trim()).filter(cat => cat);
+                    setFormData(prev => ({ ...prev, categories }));
+                  }}
+                  placeholder="Category 1, Category 2, Category 3"
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">Separate multiple categories with commas</p>
+                {Array.isArray(formData.categories) && formData.categories.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {formData.categories.map((category, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {formErrors.categories && <p className="text-xs text-red-500">{formErrors.categories}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tags" className="text-sm font-medium">Tags</Label>
+                <Input
+                  id="tags"
+                  value={tagsInput}
+                  onChange={(e) => {
+                    setTagsInput(e.target.value);
+                  }}
+                  onBlur={(e) => {
+                    // Process the final value when user leaves the field
+                    const inputValue = e.target.value;
+                    const tags = inputValue.split(',').map(tag => tag.trim()).filter(tag => tag);
+                    setFormData(prev => ({ ...prev, tags }));
+                  }}
+                  placeholder="Tag 1, Tag 2, Tag 3"
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">Separate multiple tags with commas</p>
+                {Array.isArray(formData.tags) && formData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {formData.tags.map((tag, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {formErrors.tags && <p className="text-xs text-red-500">{formErrors.tags}</p>}
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="featured_image" className="text-sm font-medium">Featured Image</Label>
                 <Input
                   id="featured_image"
@@ -377,6 +489,13 @@ export const BlogManager: React.FC = () => {
                 {imagePreview && (
                   <div className="mt-2">
                     <img src={imagePreview} alt="Preview" className="h-32 w-auto rounded-md border" />
+                    <p className="text-xs text-muted-foreground mt-1">Current image preview</p>
+                  </div>
+                )}
+                {editingPost?.featured_image && !imagePreview && (
+                  <div className="mt-2">
+                    <img src={editingPost.featured_image} alt="Current" className="h-32 w-auto rounded-md border" />
+                    <p className="text-xs text-muted-foreground mt-1">Current featured image</p>
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">Recommended size: 1200x630px for optimal display</p>
@@ -430,7 +549,8 @@ export const BlogManager: React.FC = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
-                <TableHead>Excerpt</TableHead>
+                <TableHead>Author</TableHead>
+                <TableHead>Categories</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -439,9 +559,20 @@ export const BlogManager: React.FC = () => {
               {posts.map((post) => (
                 <TableRow key={post.$id}>
                   <TableCell className="font-medium">{post.title}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {post.author || 'Unknown'}
+                  </TableCell>
                   <TableCell>
-                    <div className="max-w-xs text-sm text-muted-foreground truncate">
-                      {post.excerpt}
+                    <div className="flex flex-wrap gap-1">
+                      {Array.isArray(post.categories) && post.categories.length > 0 ? (
+                        post.categories.map((category, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {category}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No categories</span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>{getStatusBadge(post)}</TableCell>
