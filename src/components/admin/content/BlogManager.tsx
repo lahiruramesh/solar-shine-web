@@ -130,7 +130,7 @@ export const BlogManager: React.FC = () => {
         categories: post.categories || [],
         tags: post.tags || []
       });
-      setCategoriesInput(Array.isArray(post.categories) ? post.categories.join(', ') : '');
+      setCategoriesInput(Array.isArray(post.categories) && post.categories.length > 0 ? post.categories.join(', ') : '');
       setTagsInput(Array.isArray(post.tags) ? post.tags.join(', ') : '');
       setImagePreview(post.featured_image || null);
     } else {
@@ -211,6 +211,9 @@ export const BlogManager: React.FC = () => {
         ...formData,
         featured_image_id: imageId,
         publishDate: formData.publishDate ? new Date(formData.publishDate).toISOString() : new Date().toISOString(),
+        // Ensure categories and tags are always arrays with defaults
+        categories: formData.categories && formData.categories.length > 0 ? formData.categories : ['uncategorized'],
+        tags: formData.tags && formData.tags.length > 0 ? formData.tags : []
       };
 
       console.log('Saving blog post with data:', postData);
@@ -477,9 +480,14 @@ export const BlogManager: React.FC = () => {
                       .filter((cat, index, arr) => arr.indexOf(cat) === index) // Remove duplicates
                       .slice(0, 1); // Limit to 1 category
 
-                    // Update input field to show only the first category
-                    const firstCategory = categories[0] || '';
-                    setCategoriesInput(firstCategory);
+                    // If no category provided, set default to "uncategorized"
+                    if (categories.length === 0) {
+                      categories.push('uncategorized');
+                    }
+
+                    // Update input field to show the category (or default)
+                    const categoryToShow = categories[0] || 'uncategorized';
+                    setCategoriesInput(categoryToShow === 'uncategorized' ? '' : categoryToShow);
                     setFormData(prev => ({ ...prev, categories }));
 
                     // Show warning if user tried to enter more than 1 category

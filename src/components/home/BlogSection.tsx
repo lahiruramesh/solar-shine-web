@@ -98,7 +98,7 @@ const BlogSection: React.FC<BlogSectionProps> = ({ posts }) => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="absolute top-4 left-4">
                       <Badge variant="secondary" className="bg-white/90 text-gray-800 hover:bg-white">
-                        {post.categories && post.categories.length > 0
+                        {post.categories && post.categories.length > 0 && post.categories[0] !== 'uncategorized'
                           ? post.categories[0]
                           : "Uncategorized"}
                       </Badge>

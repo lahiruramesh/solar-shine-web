@@ -55,15 +55,19 @@ const Blog: React.FC = () => {
 
   // Extract unique categories from posts, defaulting to "Uncategorized" if no categories
   const categories = ["All", ...Array.from(new Set(
-    posts.map(p => {
-      // If categories array exists and has items, use the first category
-      if (p.categories && p.categories.length > 0) {
-        return p.categories[0];
-      }
-      // Otherwise return "Uncategorized"
-      return "Uncategorized";
-    })
-  ))];
+    posts
+      .filter(post => post.published) // Only consider published posts for category list
+      .map(p => {
+        // If categories array exists and has items, use the first category
+        if (p.categories && p.categories.length > 0 && p.categories[0] !== 'uncategorized') {
+          return p.categories[0];
+        }
+        // Otherwise return "Uncategorized"
+        return "Uncategorized";
+      })
+  )).filter(category => category !== "Uncategorized" || posts.some(p =>
+    p.published && (!p.categories || p.categories.length === 0 || p.categories[0] === 'uncategorized')
+  ))]; // Only show "Uncategorized" if there are actually uncategorized posts
 
   const filteredAndSortedPosts = posts
     .filter(post => {
@@ -113,7 +117,7 @@ const Blog: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="absolute top-4 left-4">
             <Badge variant="secondary" className="bg-white/90 text-gray-800 hover:bg-white">
-              {post.categories && post.categories.length > 0
+              {post.categories && post.categories.length > 0 && post.categories[0] !== 'uncategorized'
                 ? post.categories[0]
                 : "Uncategorized"}
             </Badge>
@@ -170,7 +174,7 @@ const Blog: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Badge variant="outline" className="text-xs">
-                  {post.categories && post.categories.length > 0
+                  {post.categories && post.categories.length > 0 && post.categories[0] !== 'uncategorized'
                     ? post.categories[0]
                     : "Uncategorized"}
                 </Badge>

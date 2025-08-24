@@ -148,9 +148,13 @@ const BlogPostPage: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
                   <div className="flex items-center gap-2 mb-4">
-                    {post.categories && post.categories.length > 0 && (
+                    {post.categories && post.categories.length > 0 && post.categories[0] !== 'uncategorized' ? (
                       <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                         {post.categories[0]}
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                        Uncategorized
                       </Badge>
                     )}
                     <Badge variant="outline" className="bg-white/20 text-white border-white/30">

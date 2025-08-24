@@ -28,6 +28,8 @@ function mapDocumentToBlogPost(doc: any): BlogPost {
     featured_image_id: imageId,
     publishDate: doc.publishDate || doc.publish_date || undefined,
     published: doc.published !== undefined ? doc.published : false,
+    categories: doc.categories && doc.categories.length > 0 ? doc.categories : ['uncategorized'],
+    tags: doc.tags || [],
   } as unknown as BlogPost;
 }
 
@@ -76,8 +78,8 @@ export async function createBlogPost(postData: Partial<Omit<BlogPost, '$id' | 'f
             author: postData.author || null,
             publishDate: postData.publishDate || new Date().toISOString(),
             published: postData.published || false,
-            categories: postData.categories || null,
-            tags: postData.tags || null,
+            categories: postData.categories && postData.categories.length > 0 ? postData.categories : ['uncategorized'],
+            tags: postData.tags || [],
         };
 
         // Add featured_image_id if it exists
@@ -112,7 +114,18 @@ export async function updateBlogPost(id: string, postData: Partial<Omit<BlogPost
     }
 
     const { title, slug, excerpt, content, author, publishDate, published, featured_image_id, categories, tags } = postData;
-    const dataToUpdate: any = { title, slug, excerpt, content, author, publishDate, published, featured_image_id, categories, tags };
+    const dataToUpdate: any = { 
+      title, 
+      slug, 
+      excerpt, 
+      content, 
+      author, 
+      publishDate, 
+      published, 
+      featured_image_id, 
+      categories: categories && categories.length > 0 ? categories : ['uncategorized'],
+      tags: tags || []
+    };
     
     // Appwrite expects null for empty optional fields, not undefined.
     for (const key in dataToUpdate) {
