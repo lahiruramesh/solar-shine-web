@@ -262,3 +262,35 @@
     }
   }
 }
+
+/* Header and Navigation Spacing */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  padding-top: 0; /* Remove any default body padding */
+}
+
+/* Ensure content is properly spaced below fixed header */
+main {
+  position: relative;
+  z-index: 1;
+}
+
+/* Blog Post Specific Styles */
+.blog-content {
+  @apply max-w-4xl mx-auto;
+}
+
+.blog-content .prose {
+  @apply text-base sm:text-lg;
+}
+
+.blog-content .prose h1:first-child {
+  @apply mt-0;
+}
+
+.blog-content .prose p:first-of-type {
+  @apply text-lg text-gray-600 leading-8;
+}

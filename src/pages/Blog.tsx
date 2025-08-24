@@ -213,7 +213,7 @@ const Blog: React.FC = () => {
   return (
     <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       <Header />
-      <main className="py-12 sm:py-16">
+      <main className="pt-24 pb-12 sm:pt-28 sm:pb-16">
         <div className="container-custom">
           {/* Header Section */}
           <motion.div

@@ -83,12 +83,15 @@ const BlogPostPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="text-center">
-          <Loader2 className="h-16 w-16 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-lg text-gray-600">Loading article...</p>
+      <>
+        <Header />
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-24">
+          <div className="text-center">
+            <Loader2 className="h-16 w-16 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-lg text-gray-600">Loading article...</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -124,7 +127,7 @@ const BlogPostPage: React.FC = () => {
   return (
     <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       <Header />
-      <main className="py-12 sm:py-16">
+      <main className="pt-24 pb-12 sm:pt-28 sm:pb-16">
         <div className="container-custom max-w-4xl mx-auto">
           <motion.article
             initial={{ opacity: 0, y: 20 }}
@@ -165,9 +168,9 @@ const BlogPostPage: React.FC = () => {
               </motion.div>
             )}
 
-            <div className="p-8">
+            <div className="p-6 sm:p-8">
               {/* Navigation */}
-              <div className="mb-8">
+              <div className="mb-6 sm:mb-8">
                 <Link to="/blog">
                   <Button variant="ghost" className="text-gray-500 hover:text-primary">
                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -178,16 +181,16 @@ const BlogPostPage: React.FC = () => {
 
               {/* Article Header */}
               <motion.div
-                className="mb-8"
+                className="mb-6 sm:mb-8"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
               >
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight mb-6 leading-tight">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-gray-900 tracking-tight mb-4 sm:mb-6 leading-tight">
                   {post.title}
                 </h1>
 
-                <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 mb-6">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-gray-600 mb-4 sm:mb-6">
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-2 text-primary" />
                     <span>{formatDate(post.publishDate)}</span>
@@ -205,15 +208,15 @@ const BlogPostPage: React.FC = () => {
                 </div>
 
                 {post.excerpt && (
-                  <div className="bg-gray-50 rounded-xl p-6 border-l-4 border-primary">
-                    <p className="text-lg text-gray-700 italic leading-relaxed">
+                  <div className="bg-gray-50 rounded-xl p-4 sm:p-6 border-l-4 border-primary">
+                    <p className="text-base sm:text-lg text-gray-700 italic leading-relaxed">
                       "{post.excerpt}"
                     </p>
                   </div>
                 )}
               </motion.div>
 
-              <Separator className="my-8" />
+              <Separator className="my-6 sm:my-8" />
 
               {/* Article Content */}
               <div className="blog-content prose prose-lg max-w-none text-gray-800 leading-relaxed">
@@ -266,9 +269,9 @@ const BlogPostPage: React.FC = () => {
                             <HeadingTag
                               key={index}
                               className={`font-bold text-gray-900 mb-4 mt-8 first:mt-0 ${level === 1 ? 'text-3xl' :
-                                  level === 2 ? 'text-2xl' :
-                                    level === 3 ? 'text-xl' :
-                                      level === 4 ? 'text-lg' : 'text-base'
+                                level === 2 ? 'text-2xl' :
+                                  level === 3 ? 'text-xl' :
+                                    level === 4 ? 'text-lg' : 'text-base'
                                 }`}
                             >
                               {text}
@@ -325,7 +328,7 @@ const BlogPostPage: React.FC = () => {
 
               {/* Article Footer */}
               <motion.div
-                className="mt-12 pt-8 border-t border-gray-200"
+                className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
