@@ -29,7 +29,6 @@ export const ServicesManager: React.FC = () => {
   const [formData, setFormData] = useState<Partial<ServiceCard>>({
     title: '',
     description: '',
-    icon: '🏠',
     order_index: 0,
     image: '',
     benefits: [],
@@ -105,8 +104,12 @@ export const ServicesManager: React.FC = () => {
       }
 
       const serviceData = {
-        ...formData,
-        image: imageUrl
+        title: formData.title!,
+        description: formData.description || '',
+        image: imageUrl,
+        order_index: formData.order_index || 0,
+        benefits: formData.benefits || [],
+        features: formData.features || []
       };
 
       if (editingService) {
@@ -133,7 +136,6 @@ export const ServicesManager: React.FC = () => {
     setFormData({
       title: service.title,
       description: service.description || '',
-      icon: service.icon || '',
       order_index: service.order_index || 0,
       image: service.image || '',
       benefits: service.benefits || [],
@@ -184,7 +186,6 @@ export const ServicesManager: React.FC = () => {
     setFormData({
       title: '',
       description: '',
-      icon: '🏠',
       order_index: services.length,
       image: '',
       benefits: [],
@@ -290,7 +291,7 @@ export const ServicesManager: React.FC = () => {
         if (data.background_image) {
           try {
             const imageUrl = storage.getFilePreview(STORAGE_BUCKET_ID, data.background_image);
-            setBackgroundImagePreview(imageUrl.href);
+            setBackgroundImagePreview(imageUrl.toString());
           } catch (error) {
             console.error('Error loading background image:', error);
           }
@@ -426,29 +427,16 @@ export const ServicesManager: React.FC = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="icon">Icon</Label>
-                    <Input
-                      id="icon"
-                      value={formData.icon}
-                      onChange={(e) => handleInputChange('icon', e.target.value)}
-                      placeholder="e.g., solar-panel, wrench, home"
-                      maxLength={100}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="order_index">Display Order</Label>
-                    <Input
-                      id="order_index"
-                      type="number"
-                      value={formData.order_index}
-                      onChange={(e) => handleInputChange('order_index', parseInt(e.target.value) || 0)}
-                      placeholder="Enter display order"
-                      min={0}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="order_index">Display Order</Label>
+                  <Input
+                    id="order_index"
+                    type="number"
+                    value={formData.order_index}
+                    onChange={(e) => handleInputChange('order_index', parseInt(e.target.value) || 0)}
+                    placeholder="Enter display order"
+                    min={0}
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -784,7 +772,6 @@ export const ServicesManager: React.FC = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
-                <TableHead>Icon</TableHead>
                 <TableHead>Order</TableHead>
                 <TableHead>Image</TableHead>
                 <TableHead>Benefits</TableHead>
@@ -796,9 +783,6 @@ export const ServicesManager: React.FC = () => {
               {services.map((service, index) => (
                 <TableRow key={service.$id}>
                   <TableCell className="font-medium">{service.title}</TableCell>
-                  <TableCell>
-                    <span className="text-2xl">{service.icon}</span>
-                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">{service.order_index}</Badge>

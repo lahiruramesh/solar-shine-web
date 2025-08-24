@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { motion } from 'framer-motion';
-import { BadgeCheck, Home, Building, Factory, Sun, Battery, Wrench, Shield, BarChart3, Zap } from 'lucide-react';
+import { BadgeCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchServicesBanner } from '@/services/servicesBannerService';
 import { fetchServiceCards } from '@/services/serviceCardService';
@@ -14,33 +14,27 @@ import { ServicesBanner, ServiceCard } from '@/types/payload-types';
 const additionalServices = [
   {
     title: "Solar System Design",
-    description: "Custom-designed solar systems that maximize energy production while considering aesthetic and space constraints.",
-    icon: Sun
+    description: "Custom-designed solar systems that maximize energy production while considering aesthetic and space constraints."
   },
   {
     title: "Battery Storage Solutions",
-    description: "Advanced energy storage systems that provide power during outages and help manage energy consumption.",
-    icon: Battery
+    description: "Advanced energy storage systems that provide power during outages and help manage energy consumption."
   },
   {
     title: "Maintenance & Repairs",
-    description: "Regular maintenance and prompt repairs to ensure your solar system operates at peak efficiency throughout its lifespan.",
-    icon: Wrench
+    description: "Regular maintenance and prompt repairs to ensure your solar system operates at peak efficiency throughout its lifespan."
   },
   {
     title: "System Monitoring",
-    description: "Real-time monitoring solutions that track performance and alert you to any issues requiring attention.",
-    icon: BarChart3
+    description: "Real-time monitoring solutions that track performance and alert you to any issues requiring attention."
   },
   {
     title: "Energy Efficiency Consulting",
-    description: "Comprehensive assessments and recommendations to improve overall energy efficiency alongside solar installation.",
-    icon: Zap
+    description: "Comprehensive assessments and recommendations to improve overall energy efficiency alongside solar installation."
   },
   {
     title: "Warranty & Support",
-    description: "Extended warranty options and ongoing customer support to give you peace of mind about your investment.",
-    icon: Shield
+    description: "Extended warranty options and ongoing customer support to give you peace of mind about your investment."
   }
 ];
 
@@ -128,22 +122,7 @@ const Services: React.FC = () => {
     }
   };
 
-  // Helper function to get icon component based on service icon
-  const getIconComponent = (iconName: string) => {
-    const iconMap: { [key: string]: any } = {
-      '🏠': Home,
-      '🏢': Building,
-      '🏭': Factory,
-      '☀️': Sun,
-      '🔋': Battery,
-      '🔧': Wrench,
-      '🛡️': Shield,
-      '📊': BarChart3,
-      '⚡': Zap
-    };
 
-    return iconMap[iconName] || Home; // Default to Home if icon not found
-  };
 
   // Helper function to get image URL from Appwrite storage
   const getImageUrl = (imageId: string | null | undefined): string | null => {
@@ -231,27 +210,22 @@ const Services: React.FC = () => {
               <>
                 {/* Service Tabs */}
                 <div className="flex flex-wrap justify-center gap-4 mb-12">
-                  {services.map((service) => {
-                    const IconComponent = getIconComponent(service.icon || '🏠');
-                    return (
-                      <button
-                        key={service.$id}
-                        onClick={() => setActiveService(service.$id)}
-                        className={`px-6 py-3 rounded-full transition-colors flex items-center gap-2 ${activeService === service.$id
-                          ? "bg-primary text-black"
-                          : "bg-white border border-gray-200 hover:border-primary"
-                          }`}
-                      >
-                        <IconComponent size={20} />
-                        {service.title}
-                      </button>
-                    );
-                  })}
+                  {services.map((service) => (
+                    <button
+                      key={service.$id}
+                      onClick={() => setActiveService(service.$id)}
+                      className={`px-6 py-3 rounded-full transition-colors ${activeService === service.$id
+                        ? "bg-primary text-black"
+                        : "bg-white border border-gray-200 hover:border-primary"
+                        }`}
+                    >
+                      {service.title}
+                    </button>
+                  ))}
                 </div>
 
                 {/* Active Service Content */}
                 {services.map((service) => {
-                  const IconComponent = getIconComponent(service.icon || '🏠');
                   const parsedFeatures = parseFeatures(service.features || []);
 
                   return (
@@ -291,7 +265,7 @@ const Services: React.FC = () => {
                                   <div key={index}>
                                     <h5 className="font-bold">{feature.name}</h5>
                                     {feature.description && (
-                                      <p className="text-brand-gray">{feature.description}</p>
+                                      <p className="text-gray-400">{feature.description}</p>
                                     )}
                                   </div>
                                 ))}
@@ -319,19 +293,19 @@ const Services: React.FC = () => {
                                   alt={service.title}
                                   className="w-full h-full object-cover transition-opacity duration-300"
                                   onError={() => {
-                                    // If image fails to load, show fallback
+                                    // If image failed to load, show fallback
                                     console.error('Image failed to load for service:', service.title);
                                   }}
                                 />
                               ) : (
                                 <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
-                                  <IconComponent size={64} className="text-gray-400" />
+                                  <div className="text-4xl text-gray-400">📷</div>
                                 </div>
                               );
                             })()
                           ) : (
                             <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
-                              <IconComponent size={64} className="text-gray-400" />
+                              <div className="text-4xl text-gray-400">📷</div>
                             </div>
                           )}
                         </div>
@@ -370,9 +344,6 @@ const Services: React.FC = () => {
                 >
                   <Card className="h-full">
                     <CardHeader>
-                      <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4">
-                        <service.icon className="text-primary" size={24} />
-                      </div>
                       <CardTitle>{service.title}</CardTitle>
                       <CardDescription>{service.description}</CardDescription>
                     </CardHeader>

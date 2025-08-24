@@ -12,13 +12,13 @@ import { ServiceCard } from '@/types/payload-types';
 
 const ServicesEditor: React.FC = () => {
   const queryClient = useQueryClient();
-  const [newService, setNewService] = useState({ title: '', description: '', icon: '' });
-  
+  const [newService, setNewService] = useState({ title: '', description: '' });
+
   const { data: services, isLoading } = useQuery({
     queryKey: ['serviceCards'],
     queryFn: fetchServiceCards
   });
-  
+
   const updateMutation = useMutation({
     mutationFn: updateServiceCard,
     onSuccess: () => {
@@ -27,17 +27,17 @@ const ServicesEditor: React.FC = () => {
     },
     onError: () => toast.error('Failed to update service')
   });
-  
+
   const addMutation = useMutation({
     mutationFn: addServiceCard,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['serviceCards'] });
-      setNewService({ title: '', description: '', icon: '' });
+      setNewService({ title: '', description: '' });
       toast.success('Service added');
     },
     onError: () => toast.error('Failed to add service')
   });
-  
+
   const deleteMutation = useMutation({
     mutationFn: deleteServiceCard,
     onSuccess: () => {
@@ -46,20 +46,20 @@ const ServicesEditor: React.FC = () => {
     },
     onError: () => toast.error('Failed to delete service')
   });
-  
+
   const handleAddService = () => {
     if (!newService.title || !newService.description) {
       toast.error('Title and description are required');
       return;
     }
-    
+
     addMutation.mutate(newService);
   };
-  
+
   if (isLoading) {
     return <div className="flex justify-center p-6">Loading services data...</div>;
   }
-  
+
   return (
     <div className="space-y-6">
       <Card>
@@ -72,47 +72,33 @@ const ServicesEditor: React.FC = () => {
               <div key={service.$id} className="border rounded-lg p-5 space-y-4">
                 <div>
                   <Label htmlFor={`title-${service.$id}`}>Title</Label>
-                  <Input 
+                  <Input
                     id={`title-${service.$id}`}
-                    value={service.title} 
+                    value={service.title}
                     onChange={(e) => {
-                      const updatedService = {...service, title: e.target.value};
+                      const updatedService = { ...service, title: e.target.value };
                       updateMutation.mutate(updatedService);
                     }}
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor={`description-${service.$id}`}>Description</Label>
-                  <Textarea 
+                  <Textarea
                     id={`description-${service.$id}`}
-                    value={service.description || ''} 
+                    value={service.description || ''}
                     onChange={(e) => {
-                      const updatedService = {...service, description: e.target.value};
+                      const updatedService = { ...service, description: e.target.value };
                       updateMutation.mutate(updatedService);
                     }}
                     rows={3}
                   />
                 </div>
-                
-                <div>
-                  <Label htmlFor={`icon-${service.$id}`}>Icon Name</Label>
-                  <Input 
-                    id={`icon-${service.$id}`}
-                    value={service.icon || ''} 
-                    onChange={(e) => {
-                      const updatedService = {...service, icon: e.target.value};
-                      updateMutation.mutate(updatedService);
-                    }}
-                    placeholder="solar-panel"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Use lucide-react icon names: solar-panel, lightbulb, tool, zap
-                  </p>
-                </div>
-                
+
+
+
                 <div className="flex justify-end">
-                  <Button 
+                  <Button
                     variant="destructive"
                     onClick={() => deleteMutation.mutate(service.$id)}
                   >
@@ -122,45 +108,34 @@ const ServicesEditor: React.FC = () => {
                 </div>
               </div>
             ))}
-            
+
             <div className="mt-8 border-t pt-6">
               <h3 className="text-lg font-medium mb-4">Add New Service</h3>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="new-service-title">Title</Label>
-                  <Input 
+                  <Input
                     id="new-service-title"
-                    value={newService.title} 
-                    onChange={(e) => setNewService({...newService, title: e.target.value})}
+                    value={newService.title}
+                    onChange={(e) => setNewService({ ...newService, title: e.target.value })}
                     placeholder="Solar Panel Installation"
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="new-service-description">Description</Label>
-                  <Textarea 
+                  <Textarea
                     id="new-service-description"
-                    value={newService.description} 
-                    onChange={(e) => setNewService({...newService, description: e.target.value})}
+                    value={newService.description}
+                    onChange={(e) => setNewService({ ...newService, description: e.target.value })}
                     placeholder="Expert installation of high-quality solar panels..."
                     rows={3}
                   />
                 </div>
-                
-                <div>
-                  <Label htmlFor="new-service-icon">Icon Name</Label>
-                  <Input 
-                    id="new-service-icon"
-                    value={newService.icon} 
-                    onChange={(e) => setNewService({...newService, icon: e.target.value})}
-                    placeholder="solar-panel"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Use lucide-react icon names: solar-panel, lightbulb, tool, zap
-                  </p>
-                </div>
-                
-                <Button 
+
+
+
+                <Button
                   onClick={handleAddService}
                   className="mt-2"
                 >

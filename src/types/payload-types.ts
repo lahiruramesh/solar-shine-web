@@ -27,7 +27,6 @@ export interface ServiceCard {
   $id: string;
   title: string;
   description: string | null;
-  icon: string | null;
   link_url?: string;
   order_index?: number;
   // Additional fields to match hardcoded services
