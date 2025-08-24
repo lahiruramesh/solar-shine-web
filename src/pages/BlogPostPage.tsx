@@ -150,7 +150,7 @@ const BlogPostPage: React.FC = () => {
                   <div className="flex items-center gap-2 mb-4">
                     {post.categories && post.categories.length > 0 && post.categories[0] !== 'uncategorized' ? (
                       <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                        {post.categories[0]}
+                        {post.categories[0].charAt(0).toUpperCase() + post.categories[0].slice(1)}
                       </Badge>
                     ) : (
                       <Badge variant="secondary" className="bg-white/20 text-white border-white/30">

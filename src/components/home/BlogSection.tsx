@@ -99,7 +99,7 @@ const BlogSection: React.FC<BlogSectionProps> = ({ posts }) => {
                     <div className="absolute top-4 left-4">
                       <Badge variant="secondary" className="bg-white/90 text-gray-800 hover:bg-white">
                         {post.categories && post.categories.length > 0 && post.categories[0] !== 'uncategorized'
-                          ? post.categories[0]
+                          ? post.categories[0].charAt(0).toUpperCase() + post.categories[0].slice(1)
                           : "Uncategorized"}
                       </Badge>
                     </div>

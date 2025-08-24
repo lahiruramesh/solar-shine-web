@@ -60,7 +60,9 @@ const Blog: React.FC = () => {
       .map(p => {
         // If categories array exists and has items, use the first category
         if (p.categories && p.categories.length > 0 && p.categories[0] !== 'uncategorized') {
-          return p.categories[0];
+          // Capitalize first letter of category
+          const category = p.categories[0];
+          return category.charAt(0).toUpperCase() + category.slice(1);
         }
         // Otherwise return "Uncategorized"
         return "Uncategorized";
@@ -77,8 +79,10 @@ const Blog: React.FC = () => {
       // Check if the post matches the selected category
       const matchesCategory =
         activeCategory === "All" ||
-        // Check in categories array if it exists
-        (post.categories && post.categories.includes(activeCategory)) ||
+        // Check in categories array if it exists (case-insensitive)
+        (post.categories && post.categories.some(cat =>
+          cat.toLowerCase() === activeCategory.toLowerCase()
+        )) ||
         // If no categories and "Uncategorized" is selected
         (!post.categories && activeCategory === "Uncategorized");
 
@@ -118,7 +122,7 @@ const Blog: React.FC = () => {
           <div className="absolute top-4 left-4">
             <Badge variant="secondary" className="bg-white/90 text-gray-800 hover:bg-white">
               {post.categories && post.categories.length > 0 && post.categories[0] !== 'uncategorized'
-                ? post.categories[0]
+                ? post.categories[0].charAt(0).toUpperCase() + post.categories[0].slice(1)
                 : "Uncategorized"}
             </Badge>
           </div>
@@ -175,7 +179,7 @@ const Blog: React.FC = () => {
               <div className="flex items-center gap-2 mb-3">
                 <Badge variant="outline" className="text-xs">
                   {post.categories && post.categories.length > 0 && post.categories[0] !== 'uncategorized'
-                    ? post.categories[0]
+                    ? post.categories[0].charAt(0).toUpperCase() + post.categories[0].slice(1)
                     : "Uncategorized"}
                 </Badge>
                 <span className="text-xs text-gray-500">
