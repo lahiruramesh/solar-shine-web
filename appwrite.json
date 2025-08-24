@@ -203,6 +203,38 @@
           "required": false,
           "array": false,
           "default": null
+        },
+        {
+          "key": "image",
+          "type": "string",
+          "required": false,
+          "array": false,
+          "size": 255,
+          "default": null
+        },
+        {
+          "key": "benefits",
+          "type": "string",
+          "required": false,
+          "array": true,
+          "size": 200,
+          "default": null
+        },
+        {
+          "key": "features",
+          "type": "string",
+          "required": false,
+          "array": true,
+          "size": 500,
+          "default": null
+        },
+        {
+          "key": "service_type",
+          "type": "string",
+          "required": false,
+          "array": false,
+          "size": 20,
+          "default": "additional"
         }
       ],
       "indexes": []

@@ -18,7 +18,7 @@ import {
   deleteServiceCard
 } from '@/services/serviceCardService';
 import { fetchServicesBanner, updateServicesBanner } from '@/services/servicesBannerService';
-import { storage, STORAGE_BUCKET_ID } from '@/lib/appwrite';
+import { storage, STORAGE_BUCKET_ID, ID } from '@/lib/appwrite';
 
 export const ServicesManager: React.FC = () => {
   const [services, setServices] = useState<ServiceCard[]>([]);
@@ -31,7 +31,11 @@ export const ServicesManager: React.FC = () => {
     description: '',
     icon: '',
     link_url: '',
-    order_index: 0
+    order_index: 0,
+    image: '',
+    benefits: [],
+    features: [],
+    service_type: 'additional'
   });
   const [showBannerSection, setShowBannerSection] = useState(false);
   const [bannerData, setBannerData] = useState<ServicesBanner>({
@@ -42,6 +46,13 @@ export const ServicesManager: React.FC = () => {
   const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
   const [backgroundImagePreview, setBackgroundImagePreview] = useState<string>('');
   const [isSavingBanner, setIsSavingBanner] = useState(false);
+
+  // New state variables for service form
+  const [newBenefit, setNewBenefit] = useState('');
+  const [newFeatureName, setNewFeatureName] = useState('');
+  const [newFeatureDescription, setNewFeatureDescription] = useState('');
+  const [serviceImageFile, setServiceImageFile] = useState<File | null>(null);
+  const [serviceImagePreview, setServiceImagePreview] = useState<string>('');
 
   useEffect(() => {
     loadServices();
@@ -70,11 +81,32 @@ export const ServicesManager: React.FC = () => {
 
     setSaving(true);
     try {
+      let imageUrl = formData.image;
+
+      // Handle image upload if there's a new image file
+      if (serviceImageFile) {
+        try {
+          const fileId = ID.unique();
+          await storage.createFile(STORAGE_BUCKET_ID, fileId, serviceImageFile);
+          imageUrl = fileId;
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          toast.error('Failed to upload image');
+          setSaving(false);
+          return;
+        }
+      }
+
+      const serviceData = {
+        ...formData,
+        image: imageUrl
+      };
+
       if (editingService) {
-        await updateServiceCard({ $id: editingService.$id, ...formData });
+        await updateServiceCard({ $id: editingService.$id, ...serviceData });
         toast.success('Service updated successfully');
       } else {
-        await addServiceCard({ ...formData, order_index: services.length });
+        await addServiceCard({ ...serviceData, order_index: services.length });
         toast.success('Service created successfully');
       }
 
@@ -96,8 +128,13 @@ export const ServicesManager: React.FC = () => {
       description: service.description || '',
       icon: service.icon || '',
       link_url: service.link_url || '',
-      order_index: service.order_index || 0
+      order_index: service.order_index || 0,
+      image: service.image || '',
+      benefits: service.benefits || [],
+      features: service.features || [],
+      service_type: service.service_type || 'additional'
     });
+    setServiceImagePreview(service.image || '');
     setIsDialogOpen(true);
   };
 
@@ -143,15 +180,82 @@ export const ServicesManager: React.FC = () => {
       description: '',
       icon: '',
       link_url: '',
-      order_index: services.length
+      order_index: services.length,
+      image: '',
+      benefits: [],
+      features: [],
+      service_type: 'additional'
     });
     setEditingService(null);
+    setServiceImageFile(null);
+    setServiceImagePreview('');
+    setNewBenefit('');
+    setNewFeatureName('');
+    setNewFeatureDescription('');
   };
 
   const handleInputChange = (field: keyof typeof formData, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  // Helper functions for managing benefits and features
+  const addBenefit = () => {
+    if (newBenefit.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        benefits: [...(prev.benefits || []), newBenefit.trim()]
+      }));
+      setNewBenefit('');
+    }
+  };
+
+  const removeBenefit = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      benefits: prev.benefits?.filter((_, i) => i !== index) || []
+    }));
+  };
+
+  const addFeature = () => {
+    if (newFeatureName.trim() && newFeatureDescription.trim()) {
+      const featureString = `${newFeatureName.trim()}: ${newFeatureDescription.trim()}`;
+      setFormData(prev => ({
+        ...prev,
+        features: [...(prev.features || []), featureString]
+      }));
+      setNewFeatureName('');
+      setNewFeatureDescription('');
+    }
+  };
+
+  const removeFeature = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features?.filter((_, i) => i !== index) || []
+    }));
+  };
+
+  const handleServiceImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setServiceImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setServiceImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeServiceImage = () => {
+    setServiceImageFile(null);
+    setServiceImagePreview('');
+    setFormData(prev => ({
+      ...prev,
+      image: ''
     }));
   };
 
@@ -271,58 +375,218 @@ export const ServicesManager: React.FC = () => {
                 }
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
-                  placeholder="Enter service title"
-                  maxLength={255}
-                />
+            <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium border-b pb-2">Basic Information</h3>
+
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title *</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
+                    placeholder="Enter service title"
+                    maxLength={255}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    placeholder="Enter service description"
+                    maxLength={500}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="icon">Icon</Label>
+                    <Input
+                      id="icon"
+                      value={formData.icon}
+                      onChange={(e) => handleInputChange('icon', e.target.value)}
+                      placeholder="e.g., solar-panel, wrench, home"
+                      maxLength={100}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="order_index">Display Order</Label>
+                    <Input
+                      id="order_index"
+                      type="number"
+                      value={formData.order_index}
+                      onChange={(e) => handleInputChange('order_index', parseInt(e.target.value) || 0)}
+                      placeholder="Enter display order"
+                      min={0}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="link_url">Link URL</Label>
+                  <Input
+                    id="link_url"
+                    value={formData.link_url}
+                    onChange={(e) => handleInputChange('link_url', e.target.value)}
+                    placeholder="Enter link URL (optional)"
+                    maxLength={255}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="service_type">Service Type</Label>
+                  <select
+                    id="service_type"
+                    value={formData.service_type}
+                    onChange={(e) => handleInputChange('service_type', e.target.value)}
+                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  >
+                    <option value="main">Main Service</option>
+                    <option value="additional">Additional Service</option>
+                  </select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Enter service description"
-                  maxLength={500}
-                  rows={3}
-                />
+
+              <Separator />
+
+              {/* Service Image */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium border-b pb-2">Service Image</h3>
+
+                {serviceImagePreview && (
+                  <div className="relative">
+                    <img
+                      src={serviceImagePreview}
+                      alt="Service preview"
+                      className="w-full h-32 object-cover rounded-lg border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={removeServiceImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="service-image">Upload Image</Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="service-image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleServiceImageChange}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('service-image')?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Browse
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="icon">Icon</Label>
-                <Input
-                  id="icon"
-                  value={formData.icon}
-                  onChange={(e) => handleInputChange('icon', e.target.value)}
-                  placeholder="e.g., solar-panel, wrench, home"
-                  maxLength={100}
-                />
+
+              <Separator />
+
+              {/* Benefits Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium border-b pb-2">Benefits</h3>
+
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={newBenefit}
+                      onChange={(e) => setNewBenefit(e.target.value)}
+                      placeholder="Enter a benefit"
+                      maxLength={200}
+                    />
+                    <Button type="button" onClick={addBenefit} size="sm">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {formData.benefits && formData.benefits.length > 0 && (
+                  <div className="space-y-2">
+                    {formData.benefits.map((benefit, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                        <span className="text-sm">{benefit}</span>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeBenefit(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="link_url">Link URL</Label>
-                <Input
-                  id="link_url"
-                  value={formData.link_url}
-                  onChange={(e) => handleInputChange('link_url', e.target.value)}
-                  placeholder="Enter link URL (optional)"
-                  maxLength={255}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="order_index">Display Order</Label>
-                <Input
-                  id="order_index"
-                  type="number"
-                  value={formData.order_index}
-                  onChange={(e) => handleInputChange('order_index', parseInt(e.target.value) || 0)}
-                  placeholder="Enter display order"
-                  min={0}
-                />
+
+              <Separator />
+
+              {/* Features Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium border-b pb-2">Features</h3>
+
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 gap-2">
+                    <Input
+                      value={newFeatureName}
+                      onChange={(e) => setNewFeatureName(e.target.value)}
+                      placeholder="Feature name"
+                      maxLength={100}
+                    />
+                    <Textarea
+                      value={newFeatureDescription}
+                      onChange={(e) => setNewFeatureDescription(e.target.value)}
+                      placeholder="Feature description"
+                      maxLength={300}
+                      rows={2}
+                    />
+                    <Button type="button" onClick={addFeature} size="sm" className="w-fit">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Feature
+                    </Button>
+                  </div>
+                </div>
+
+                {formData.features && formData.features.length > 0 && (
+                  <div className="space-y-2">
+                    {formData.features.map((feature, index) => (
+                      <div key={index} className="p-3 bg-muted rounded-md">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-sm">{feature}</span>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => removeFeature(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex justify-end gap-2">
@@ -489,8 +753,11 @@ export const ServicesManager: React.FC = () => {
               <TableRow>
                 <TableHead>Order</TableHead>
                 <TableHead>Title</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>Icon</TableHead>
+                <TableHead>Benefits</TableHead>
+                <TableHead>Features</TableHead>
+                <TableHead>Image</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -523,7 +790,17 @@ export const ServicesManager: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">
-                    {service.title}
+                    <div className="flex items-center gap-2">
+                      {service.icon && (
+                        <span className="text-lg">{service.icon}</span>
+                      )}
+                      {service.title}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={service.service_type === 'main' ? 'default' : 'secondary'}>
+                      {service.service_type === 'main' ? 'Main' : 'Additional'}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="max-w-xs text-sm text-muted-foreground truncate">
@@ -531,9 +808,59 @@ export const ServicesManager: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary">
-                      {service.icon || 'None'}
-                    </Badge>
+                    <div className="max-w-xs">
+                      {service.benefits && service.benefits.length > 0 ? (
+                        <div className="space-y-1">
+                          {service.benefits.slice(0, 2).map((benefit, idx) => (
+                            <div key={idx} className="text-xs bg-muted px-2 py-1 rounded">
+                              {benefit}
+                            </div>
+                          ))}
+                          {service.benefits.length > 2 && (
+                            <div className="text-xs text-muted-foreground">
+                              +{service.benefits.length - 2} more
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">None</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="max-w-xs">
+                      {service.features && service.features.length > 0 ? (
+                        <div className="space-y-1">
+                          {service.features.slice(0, 2).map((feature, idx) => (
+                            <div key={idx} className="text-xs bg-muted px-2 py-1 rounded">
+                              <div className="text-xs truncate">{feature}</div>
+                            </div>
+                          ))}
+                          {service.features.length > 2 && (
+                            <div className="text-xs text-muted-foreground">
+                              +{service.features.length - 2} more
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">None</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {service.image ? (
+                      <div className="w-16 h-12 rounded border overflow-hidden">
+                        <img
+                          src={service.image}
+                          alt={service.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-16 h-12 rounded border bg-muted flex items-center justify-center">
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">

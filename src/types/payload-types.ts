@@ -30,6 +30,11 @@ export interface ServiceCard {
   icon: string | null;
   link_url?: string;
   order_index?: number;
+  // Additional fields to match hardcoded services
+  image?: string | null;
+  benefits?: string[];
+  features?: string[]; // Store as formatted strings: "Name: Description"
+  service_type?: 'main' | 'additional'; // To distinguish between main services and additional services
 }
 
 export interface SpecializedArea {
