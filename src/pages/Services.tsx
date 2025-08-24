@@ -176,7 +176,7 @@ const Services: React.FC = () => {
             <div className="absolute inset-0 z-0">
               <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40 z-10" />
               <img
-                src={bannerData.background_image}
+                src={getImageUrl(bannerData.background_image) || ''}
                 alt="Solar services"
                 className="w-full h-full object-cover"
               />
