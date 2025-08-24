@@ -19,6 +19,7 @@ import {
 } from '@/services/serviceCardService';
 import { fetchServicesBanner, updateServicesBanner } from '@/services/servicesBannerService';
 import { storage, STORAGE_BUCKET_ID, ID } from '@/lib/appwrite';
+import { AdditionalServicesManager } from './AdditionalServicesManager';
 
 export const ServicesManager: React.FC = () => {
   const [services, setServices] = useState<ServiceCard[]>([]);
@@ -976,6 +977,9 @@ export const ServicesManager: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Additional Services Management */}
+      <AdditionalServicesManager />
     </div>
   );
 };

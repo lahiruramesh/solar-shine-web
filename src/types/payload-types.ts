@@ -36,6 +36,14 @@ export interface ServiceCard {
   service_type?: 'main' | 'additional'; // To distinguish between main services and additional services
 }
 
+export interface AdditionalService {
+  $id: string;
+  title: string;
+  description: string | null;
+  icon: string; // Store the icon name (e.g., "Sun", "Battery", "Wrench")
+  order_index?: number;
+}
+
 export interface SpecializedArea {
   $id: string;
   title: string;

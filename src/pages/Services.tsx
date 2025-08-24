@@ -3,46 +3,15 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { motion } from 'framer-motion';
-import { BadgeCheck, Sun, Battery, Wrench, BarChart3, Zap, Shield } from 'lucide-react';
+import { BadgeCheck, Sun, Battery, Wrench, BarChart3, Zap, Shield, Home, Building, Factory, Settings, Lightbulb, CheckCircle, Star, Heart } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchServicesBanner } from '@/services/servicesBannerService';
 import { fetchServiceCards } from '@/services/serviceCardService';
+import { fetchAdditionalServices } from '@/services/additionalServiceService';
 import { storage, STORAGE_BUCKET_ID } from '@/lib/appwrite';
-import { ServicesBanner, ServiceCard } from '@/types/payload-types';
+import { ServicesBanner, ServiceCard, AdditionalService } from '@/types/payload-types';
 
-// Additional services with Lucide React icons
-const additionalServices = [
-  {
-    title: "Solar System Design",
-    description: "Custom-designed solar systems that maximize energy production while considering aesthetic and space constraints.",
-    icon: Sun
-  },
-  {
-    title: "Battery Storage Solutions",
-    description: "Advanced energy storage systems that provide power during outages and help manage energy consumption.",
-    icon: Battery
-  },
-  {
-    title: "Maintenance & Repairs",
-    description: "Regular maintenance and prompt repairs to ensure your solar system operates at peak efficiency throughout its lifespan.",
-    icon: Wrench
-  },
-  {
-    title: "System Monitoring",
-    description: "Real-time monitoring solutions that track performance and alert you to any issues requiring attention.",
-    icon: BarChart3
-  },
-  {
-    title: "Energy Efficiency Consulting",
-    description: "Comprehensive assessments and recommendations to improve overall energy efficiency alongside solar installation.",
-    icon: Zap
-  },
-  {
-    title: "Warranty & Support",
-    description: "Extended warranty options and ongoing customer support to give you peace of mind about your investment.",
-    icon: Shield
-  }
-];
+
 
 const process = {
   title: "Our Service Process",
@@ -91,10 +60,13 @@ const Services: React.FC = () => {
   const [isLoadingBanner, setIsLoadingBanner] = useState(true);
   const [services, setServices] = useState<ServiceCard[]>([]);
   const [isLoadingServices, setIsLoadingServices] = useState(true);
+  const [additionalServices, setAdditionalServices] = useState<AdditionalService[]>([]);
+  const [isLoadingAdditionalServices, setIsLoadingAdditionalServices] = useState(true);
 
   useEffect(() => {
     loadBannerData();
     loadServices();
+    loadAdditionalServices();
   }, []);
 
   const loadBannerData = async () => {
@@ -126,6 +98,53 @@ const Services: React.FC = () => {
     } finally {
       setIsLoadingServices(false);
     }
+  };
+
+  const loadAdditionalServices = async () => {
+    try {
+      setIsLoadingAdditionalServices(true);
+      const additionalServicesData = await fetchAdditionalServices();
+      // Sort by order_index
+      const sortedAdditionalServices = additionalServicesData.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+      setAdditionalServices(sortedAdditionalServices);
+    } catch (error) {
+      console.error('Error loading additional services:', error);
+    } finally {
+      setIsLoadingAdditionalServices(false);
+    }
+  };
+
+  // Helper function to render icons dynamically
+  const renderIcon = (iconName: string) => {
+    const iconMap: { [key: string]: React.ComponentType<any> } = {
+      Sun,
+      Battery,
+      Wrench,
+      BarChart3,
+      Zap,
+      Shield,
+      Home,
+      Building,
+      Factory,
+      Settings,
+
+      Lightbulb,
+      CheckCircle,
+      Star,
+      Heart
+    };
+
+    const IconComponent = iconMap[iconName];
+    if (IconComponent) {
+      return <IconComponent className="text-primary" size={24} />;
+    }
+
+    // Fallback to first letter if icon not found
+    return (
+      <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-xs font-medium text-primary">
+        {iconName.charAt(0)}
+      </div>
+    );
   };
 
 
@@ -339,27 +358,39 @@ const Services: React.FC = () => {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {additionalServices.map((service, index) => (
-                <motion.div
-                  key={service.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <Card className="h-full">
-                    <CardHeader>
-                      <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4">
-                        <service.icon className="text-primary" size={24} />
-                      </div>
-                      <CardTitle>{service.title}</CardTitle>
-                      <CardDescription>{service.description}</CardDescription>
-                    </CardHeader>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
+            {isLoadingAdditionalServices ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-brand-gray">Loading additional services...</p>
+              </div>
+            ) : additionalServices.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {additionalServices.map((service, index) => (
+                  <motion.div
+                    key={service.$id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <Card className="h-full">
+                      <CardHeader>
+                        <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                          {renderIcon(service.icon)}
+                        </div>
+                        <CardTitle>{service.title}</CardTitle>
+                        <CardDescription>{service.description}</CardDescription>
+                      </CardHeader>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-brand-gray">
+                <p>No additional services available at the moment.</p>
+                <p>Please check back later or contact us for more information.</p>
+              </div>
+            )}
           </div>
         </section>
 

@@ -112,6 +112,16 @@ const collections = [
     ]
   },
   { 
+    id: 'additional_services', 
+    name: 'Additional Services',
+    attributes: [
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'description', type: 'string', size: 500, required: false },
+      { key: 'icon', type: 'string', size: 100, required: true },
+      { key: 'order_index', type: 'integer', required: false }
+    ]
+  },
+  { 
     id: 'projects', 
     name: 'Projects',
     attributes: [
