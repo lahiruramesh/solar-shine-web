@@ -28,6 +28,7 @@ export const COLLECTIONS = {
   GLOBAL_SETTINGS: 'global_settings',
   HERO_SECTION: 'hero_section',
   SERVICE_CARDS: 'service_cards',
+  ADDITIONAL_SERVICES: 'additional_services',
   SPECIALIZED_AREAS: 'specialized_areas',
   PROJECTS: 'projects',
   TESTIMONIALS: 'testimonials',

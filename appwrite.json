@@ -102,19 +102,43 @@
           "default": null
         },
         {
-          "key": "cta_text",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 100,
-          "default": null
-        },
-        {
-          "key": "cta_url",
+          "key": "background_image",
           "type": "string",
           "required": false,
           "array": false,
           "size": 255,
+          "default": null
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "$id": "services_banner",
+      "$permissions": [
+        "read(\"any\")",
+        "create(\"users\")",
+        "update(\"users\")",
+        "delete(\"users\")"
+      ],
+      "databaseId": "6873ba790033a7d5cfdb",
+      "name": "Services Banner",
+      "enabled": true,
+      "documentSecurity": false,
+      "attributes": [
+        {
+          "key": "title",
+          "type": "string",
+          "required": true,
+          "array": false,
+          "size": 255,
+          "default": null
+        },
+        {
+          "key": "subtitle",
+          "type": "string",
+          "required": false,
+          "array": false,
+          "size": 500,
           "default": null
         },
         {
@@ -179,6 +203,38 @@
           "required": false,
           "array": false,
           "default": null
+        },
+        {
+          "key": "image",
+          "type": "string",
+          "required": false,
+          "array": false,
+          "size": 255,
+          "default": null
+        },
+        {
+          "key": "benefits",
+          "type": "string",
+          "required": false,
+          "array": true,
+          "size": 200,
+          "default": null
+        },
+        {
+          "key": "features",
+          "type": "string",
+          "required": false,
+          "array": true,
+          "size": 500,
+          "default": null
+        },
+        {
+          "key": "service_type",
+          "type": "string",
+          "required": false,
+          "array": false,
+          "size": 20,
+          "default": "additional"
         }
       ],
       "indexes": []

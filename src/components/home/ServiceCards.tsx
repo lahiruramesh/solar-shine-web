@@ -1,16 +1,10 @@
 
 import React, { useRef } from 'react';
-import { ChevronLeft, ChevronRight, Sun, PieChart, BarChart, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ServiceCard } from '@/types/payload-types';
 
-// Map of icon names to Lucide React components
-const iconMap: Record<string, React.ElementType> = {
-  'solar-panel': Sun,
-  'lightbulb': PieChart,
-  'tool': BarChart,
-  'zap': Zap,
-};
+
 
 interface ServiceCardsProps {
   services: ServiceCard[];
@@ -59,8 +53,6 @@ const ServiceCards: React.FC<ServiceCardsProps> = ({ services }) => {
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {services.map((service, index) => {
-              // Default to Sun icon if the icon string doesn't match any in our map
-              const IconComponent = iconMap[service.icon] || Sun;
               const cardColor = index % 2 === 0 ? 'bg-primary' : 'bg-brand-black';
 
               return (
@@ -74,7 +66,7 @@ const ServiceCards: React.FC<ServiceCardsProps> = ({ services }) => {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
                   <div className={`${cardColor} w-14 h-14 rounded-lg flex items-center justify-center mb-4`}>
-                    <IconComponent className="text-white" size={28} />
+                    <div className="text-white text-2xl">⚡</div>
                   </div>
                   <h3 className="text-xl font-bold mb-2">{service.title}</h3>
                   <p className="text-brand-gray flex-grow">{service.description}</p>

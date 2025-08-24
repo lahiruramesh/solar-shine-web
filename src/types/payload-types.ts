@@ -16,13 +16,47 @@ export interface HeroSection {
   background_image: string | null;
 }
 
+export interface ServicesBanner {
+  $id?: string;
+  title: string;
+  subtitle: string | null;
+  background_image: string | null;
+}
+
 export interface ServiceCard {
   $id: string;
   title: string;
   description: string | null;
-  icon: string | null;
   link_url?: string;
   order_index?: number;
+  // Additional fields to match hardcoded services
+  image?: string | null;
+  benefits?: string[];
+  features?: string[]; // Store as formatted strings: "Name: Description"
+  service_type?: 'main' | 'additional'; // To distinguish between main services and additional services
+}
+
+export interface AdditionalService {
+  $id: string;
+  title: string;
+  description: string | null;
+  icon: string; // Store the icon name (e.g., "Sun", "Battery", "Wrench")
+  order_index?: number;
+}
+
+export interface ServiceProcessStep {
+  $id: string;
+  number: string; // e.g., "01", "02", "03"
+  title: string;
+  description: string;
+  order_index: number;
+}
+
+export interface ServiceProcess {
+  $id: string;
+  title: string;
+  subtitle: string | null;
+  steps: ServiceProcessStep[];
 }
 
 export interface SpecializedArea {
