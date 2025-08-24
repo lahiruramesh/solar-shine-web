@@ -36,11 +36,11 @@ export interface SpecializedArea {
 export interface Project {
   $id: string;
   title: string;
-  category: 'Residential' | 'Commercial' | 'Industrial';
+  category: string; // Allow dynamic categories
   description: string | null;
   image_url: string | null;
   client: string | null;
-  completionDate: string | null;
+  completion_date: string | null; // Match the field name used in Projects page
 }
 
 export interface Testimonial {

@@ -7,8 +7,12 @@ export async function fetchProjects(): Promise<Project[]> {
     const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PROJECTS, [
       Query.orderDesc('$createdAt')
     ]);
+    
+    console.log('Raw projects response:', response.documents);
+    
     return response.documents.map(doc => {
-      console.log('Raw project doc:', doc);
+      console.log('Processing project doc:', doc);
+      console.log('Category from DB:', doc.category);
       console.log('Image URL from DB:', doc.image_url);
       
       // Handle image URL construction
@@ -32,12 +36,15 @@ export async function fetchProjects(): Promise<Project[]> {
         }
       }
       
-      const result = {
-        ...doc,
+      const result: Project = {
         $id: doc.$id,
+        title: doc.title,
+        description: doc.description,
         image_url: imageUrl,
-        completion_date: doc.completion_date || doc.completionDate || '',
-      } as Project;
+        category: doc.category || 'Uncategorized',
+        client: doc.client || null,
+        completion_date: doc.completion_date || doc.completionDate || null,
+      };
       
       console.log('Final project object:', result);
       return result;
