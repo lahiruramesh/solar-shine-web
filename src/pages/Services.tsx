@@ -3,38 +3,44 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { motion } from 'framer-motion';
-import { BadgeCheck } from 'lucide-react';
+import { BadgeCheck, Sun, Battery, Wrench, BarChart3, Zap, Shield } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchServicesBanner } from '@/services/servicesBannerService';
 import { fetchServiceCards } from '@/services/serviceCardService';
 import { storage, STORAGE_BUCKET_ID } from '@/lib/appwrite';
 import { ServicesBanner, ServiceCard } from '@/types/payload-types';
 
-// Additional services remain unchanged
+// Additional services with Lucide React icons
 const additionalServices = [
   {
     title: "Solar System Design",
-    description: "Custom-designed solar systems that maximize energy production while considering aesthetic and space constraints."
+    description: "Custom-designed solar systems that maximize energy production while considering aesthetic and space constraints.",
+    icon: Sun
   },
   {
     title: "Battery Storage Solutions",
-    description: "Advanced energy storage systems that provide power during outages and help manage energy consumption."
+    description: "Advanced energy storage systems that provide power during outages and help manage energy consumption.",
+    icon: Battery
   },
   {
     title: "Maintenance & Repairs",
-    description: "Regular maintenance and prompt repairs to ensure your solar system operates at peak efficiency throughout its lifespan."
+    description: "Regular maintenance and prompt repairs to ensure your solar system operates at peak efficiency throughout its lifespan.",
+    icon: Wrench
   },
   {
     title: "System Monitoring",
-    description: "Real-time monitoring solutions that track performance and alert you to any issues requiring attention."
+    description: "Real-time monitoring solutions that track performance and alert you to any issues requiring attention.",
+    icon: BarChart3
   },
   {
     title: "Energy Efficiency Consulting",
-    description: "Comprehensive assessments and recommendations to improve overall energy efficiency alongside solar installation."
+    description: "Comprehensive assessments and recommendations to improve overall energy efficiency alongside solar installation.",
+    icon: Zap
   },
   {
     title: "Warranty & Support",
-    description: "Extended warranty options and ongoing customer support to give you peace of mind about your investment."
+    description: "Extended warranty options and ongoing customer support to give you peace of mind about your investment.",
+    icon: Shield
   }
 ];
 
@@ -344,6 +350,9 @@ const Services: React.FC = () => {
                 >
                   <Card className="h-full">
                     <CardHeader>
+                      <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                        <service.icon className="text-primary" size={24} />
+                      </div>
                       <CardTitle>{service.title}</CardTitle>
                       <CardDescription>{service.description}</CardDescription>
                     </CardHeader>
