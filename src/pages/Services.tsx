@@ -8,51 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { fetchServicesBanner } from '@/services/servicesBannerService';
 import { fetchServiceCards } from '@/services/serviceCardService';
 import { fetchAdditionalServices } from '@/services/additionalServiceService';
+import { fetchServiceProcessSteps } from '@/services/serviceProcessService';
 import { storage, STORAGE_BUCKET_ID } from '@/lib/appwrite';
-import { ServicesBanner, ServiceCard, AdditionalService } from '@/types/payload-types';
+import { ServicesBanner, ServiceCard, AdditionalService, ServiceProcessStep } from '@/types/payload-types';
 
 
 
-const process = {
-  title: "Our Service Process",
-  steps: [
-    {
-      number: "01",
-      title: "Initial Consultation",
-      description: "We discuss your energy needs, budget, and goals to determine the best approach for your solar project."
-    },
-    {
-      number: "02",
-      title: "Site Assessment",
-      description: "Our technicians evaluate your property to assess solar potential, optimal panel placement, and any technical considerations."
-    },
-    {
-      number: "03",
-      title: "Custom Design",
-      description: "We create a tailored system design that maximizes energy production and meets your specific requirements."
-    },
-    {
-      number: "04",
-      title: "Proposal & Agreement",
-      description: "You receive a detailed proposal including system specifications, costs, financing options, and projected savings."
-    },
-    {
-      number: "05",
-      title: "Installation",
-      description: "Our experienced team installs your solar system with minimal disruption to your home or business."
-    },
-    {
-      number: "06",
-      title: "Commissioning & Activation",
-      description: "We perform thorough testing and coordinate with utilities to ensure your system is safely connected to the grid."
-    },
-    {
-      number: "07",
-      title: "Ongoing Support",
-      description: "We provide monitoring, maintenance, and customer support throughout the life of your solar system."
-    }
-  ]
-};
+const processTitle = "Our Service Process";
 
 const Services: React.FC = () => {
   const [activeService, setActiveService] = useState<string | null>(null);
@@ -62,11 +24,14 @@ const Services: React.FC = () => {
   const [isLoadingServices, setIsLoadingServices] = useState(true);
   const [additionalServices, setAdditionalServices] = useState<AdditionalService[]>([]);
   const [isLoadingAdditionalServices, setIsLoadingAdditionalServices] = useState(true);
+  const [processSteps, setProcessSteps] = useState<ServiceProcessStep[]>([]);
+  const [isLoadingProcessSteps, setIsLoadingProcessSteps] = useState(true);
 
   useEffect(() => {
     loadBannerData();
     loadServices();
     loadAdditionalServices();
+    loadProcessSteps();
   }, []);
 
   const loadBannerData = async () => {
@@ -111,6 +76,20 @@ const Services: React.FC = () => {
       console.error('Error loading additional services:', error);
     } finally {
       setIsLoadingAdditionalServices(false);
+    }
+  };
+
+  const loadProcessSteps = async () => {
+    try {
+      setIsLoadingProcessSteps(true);
+      const processStepsData = await fetchServiceProcessSteps();
+      // Sort by order_index
+      const sortedProcessSteps = processStepsData.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+      setProcessSteps(sortedProcessSteps);
+    } catch (error) {
+      console.error('Error loading process steps:', error);
+    } finally {
+      setIsLoadingProcessSteps(false);
     }
   };
 
@@ -161,7 +140,7 @@ const Services: React.FC = () => {
 
       // Get the direct file URL from Appwrite storage
       const fileUrl = storage.getFileView(STORAGE_BUCKET_ID, imageId);
-      return (fileUrl as any).href || fileUrl.toString();
+      return String(fileUrl);
     } catch (error) {
       console.error('Error getting image URL:', error);
       return null;
@@ -398,7 +377,7 @@ const Services: React.FC = () => {
         <section className="py-20 px-4">
           <div className="container-custom">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">{process.title}</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">{processTitle}</h2>
               <p className="text-lg text-brand-gray max-w-3xl mx-auto">
                 Our streamlined process ensures a smooth experience from initial consultation to system activation.
               </p>
@@ -408,28 +387,40 @@ const Services: React.FC = () => {
               {/* Process line */}
               <div className="absolute left-[26px] top-0 h-full w-1 bg-gray-200 hidden md:block"></div>
 
-              <div className="space-y-8">
-                {process.steps.map((step, index) => (
-                  <motion.div
-                    key={step.number}
-                    className="flex gap-6"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                  >
-                    <div className="relative">
-                      <div className="bg-primary text-black w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg z-10 relative">
-                        {step.number}
+              {isLoadingProcessSteps ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-brand-gray">Loading process steps...</p>
+                </div>
+              ) : processSteps.length > 0 ? (
+                <div className="space-y-8">
+                  {processSteps.map((step, index) => (
+                    <motion.div
+                      key={step.$id}
+                      className="flex gap-6"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                      <div className="relative">
+                        <div className="bg-primary text-black w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg z-10 relative">
+                          {step.number}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex-1 bg-white p-6 rounded-lg shadow-md">
-                      <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                      <p className="text-brand-gray">{step.description}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+                      <div className="flex-1 bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold mb-2">{step.title}</h3>
+                        <p className="text-brand-gray">{step.description}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-brand-gray">
+                  <p>No process steps available at the moment.</p>
+                  <p>Please check back later or contact us for more information.</p>
+                </div>
+              )}
             </div>
           </div>
         </section>

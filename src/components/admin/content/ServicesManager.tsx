@@ -20,6 +20,7 @@ import {
 import { fetchServicesBanner, updateServicesBanner } from '@/services/servicesBannerService';
 import { storage, STORAGE_BUCKET_ID, ID } from '@/lib/appwrite';
 import { AdditionalServicesManager } from './AdditionalServicesManager';
+import { ServiceProcessManager } from './ServiceProcessManager';
 
 export const ServicesManager: React.FC = () => {
   const [services, setServices] = useState<ServiceCard[]>([]);
@@ -57,12 +58,7 @@ export const ServicesManager: React.FC = () => {
     loadBannerData();
   }, []);
 
-  // Show success toast when services are loaded
-  useEffect(() => {
-    if (!loading && services.length > 0) {
-      toast.success('Services loaded successfully');
-    }
-  }, [loading, services.length]);
+
 
   const loadServices = async () => {
     try {
@@ -71,10 +67,7 @@ export const ServicesManager: React.FC = () => {
       setServices(servicesData);
     } catch (error) {
       console.error('Error loading services:', error);
-      // Show error toast in next tick to avoid render phase updates
-      setTimeout(() => {
-        toast.error('Failed to load services');
-      }, 0);
+      toast.error('Failed to load services');
     } finally {
       setLoading(false);
     }
@@ -115,11 +108,11 @@ export const ServicesManager: React.FC = () => {
 
       if (editingService) {
         await updateServiceCard({ $id: editingService.$id, ...serviceData });
-        setTimeout(() => toast.success('Service updated successfully'), 0);
+        toast.success('Service updated successfully');
       } else {
         // Use the order_index from formData which is properly calculated in resetForm
         await addServiceCard({ ...serviceData, order_index: formData.order_index || 0 });
-        setTimeout(() => toast.success('Service created successfully'), 0);
+        toast.success('Service created successfully');
       }
 
       await loadServices();
@@ -127,7 +120,7 @@ export const ServicesManager: React.FC = () => {
       setIsDialogOpen(false);
     } catch (error) {
       console.error('Error saving service:', error);
-      setTimeout(() => toast.error('Failed to save service'), 0);
+      toast.error('Failed to save service');
     } finally {
       setSaving(false);
     }
@@ -176,11 +169,11 @@ export const ServicesManager: React.FC = () => {
         }
       }
 
-      setTimeout(() => toast.success('Service deleted successfully'), 0);
+      toast.success('Service deleted successfully');
       await loadServices();
     } catch (error) {
       console.error('Error deleting service:', error);
-      setTimeout(() => toast.error('Failed to delete service'), 0);
+      toast.error('Failed to delete service');
     }
   };
 
@@ -212,10 +205,10 @@ export const ServicesManager: React.FC = () => {
       }
 
       await loadServices();
-      setTimeout(() => toast.success('Service order updated'), 0);
+      toast.success('Service order updated');
     } catch (error) {
       console.error('Error reordering service:', error);
-      setTimeout(() => toast.error('Failed to reorder service'), 0);
+      toast.error('Failed to reorder service');
     }
   };
 
@@ -298,13 +291,8 @@ export const ServicesManager: React.FC = () => {
 
       if (!fileUrl) return null;
 
-      // Try to get the href property if it exists, otherwise use toString
-      if (typeof fileUrl === 'object' && 'href' in fileUrl) {
-        return (fileUrl as any).href;
-      }
-
-      // At this point, fileUrl is guaranteed to be non-null due to the check above
-      return fileUrl?.toString() || '';
+      // Convert to string safely - Appwrite returns URL objects
+      return String(fileUrl);
     } catch (error) {
       console.error('Error getting image URL for ID:', imageId, error);
       return null;
@@ -340,7 +328,7 @@ export const ServicesManager: React.FC = () => {
         if (data.background_image) {
           try {
             const imageUrl = storage.getFilePreview(STORAGE_BUCKET_ID, data.background_image);
-            setBackgroundImagePreview(imageUrl.toString());
+            setBackgroundImagePreview(String(imageUrl));
           } catch (error) {
             console.error('Error loading background image:', error);
           }
@@ -395,14 +383,14 @@ export const ServicesManager: React.FC = () => {
       });
 
       if (success) {
-        setTimeout(() => toast.success('Services banner updated successfully'), 0);
+        toast.success('Services banner updated successfully');
         await loadBannerData();
         setBackgroundImageFile(null);
       } else {
-        setTimeout(() => toast.error('Failed to update services banner'), 0);
+        toast.error('Failed to update services banner');
       }
     } catch (error) {
-      setTimeout(() => toast.error('An unexpected error occurred'), 0);
+      toast.error('An unexpected error occurred');
     } finally {
       setIsSavingBanner(false);
     }
@@ -980,6 +968,9 @@ export const ServicesManager: React.FC = () => {
 
       {/* Additional Services Management */}
       <AdditionalServicesManager />
+
+      {/* Service Process Management */}
+      <ServiceProcessManager />
     </div>
   );
 };

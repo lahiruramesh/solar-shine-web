@@ -44,6 +44,21 @@ export interface AdditionalService {
   order_index?: number;
 }
 
+export interface ServiceProcessStep {
+  $id: string;
+  number: string; // e.g., "01", "02", "03"
+  title: string;
+  description: string;
+  order_index: number;
+}
+
+export interface ServiceProcess {
+  $id: string;
+  title: string;
+  subtitle: string | null;
+  steps: ServiceProcessStep[];
+}
+
 export interface SpecializedArea {
   $id: string;
   title: string;

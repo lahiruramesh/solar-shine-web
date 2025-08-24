@@ -122,6 +122,16 @@ const collections = [
     ]
   },
   { 
+    id: 'service_process_steps', 
+    name: 'Service Process Steps',
+    attributes: [
+      { key: 'number', type: 'string', size: 10, required: true },
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'description', type: 'string', size: 500, required: true },
+      { key: 'order_index', type: 'integer', required: false }
+    ]
+  },
+  { 
     id: 'projects', 
     name: 'Projects',
     attributes: [

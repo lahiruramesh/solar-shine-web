@@ -61,9 +61,7 @@ export const AdditionalServicesManager: React.FC = () => {
             setServices(sortedServices);
         } catch (error) {
             console.error('Error loading additional services:', error);
-            setTimeout(() => {
-                toast.error('Failed to load additional services');
-            }, 0);
+            toast.error('Failed to load additional services');
         } finally {
             setLoading(false);
         }
@@ -91,10 +89,10 @@ export const AdditionalServicesManager: React.FC = () => {
 
             if (editingService) {
                 await updateAdditionalService({ $id: editingService.$id, ...serviceData });
-                setTimeout(() => toast.success('Additional service updated successfully'), 0);
+                toast.success('Additional service updated successfully');
             } else {
                 await addAdditionalService(serviceData);
-                setTimeout(() => toast.success('Additional service created successfully'), 0);
+                toast.success('Additional service created successfully');
             }
 
             await loadServices();
@@ -140,11 +138,11 @@ export const AdditionalServicesManager: React.FC = () => {
                 }
             }
 
-            setTimeout(() => toast.success('Additional service deleted successfully'), 0);
+            toast.success('Additional service deleted successfully');
             await loadServices();
         } catch (error) {
             console.error('Error deleting additional service:', error);
-            setTimeout(() => toast.error('Failed to delete additional service'), 0);
+            toast.error('Failed to delete additional service');
         }
     };
 
@@ -171,10 +169,10 @@ export const AdditionalServicesManager: React.FC = () => {
             }
 
             await loadServices();
-            setTimeout(() => toast.success('Service order updated'), 0);
+            toast.success('Service order updated');
         } catch (error) {
             console.error('Error reordering service:', error);
-            setTimeout(() => toast.error('Failed to reorder service'), 0);
+            toast.error('Failed to reorder service');
         }
     };
 

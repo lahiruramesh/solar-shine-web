@@ -33,6 +33,8 @@ export const COLLECTIONS = {
   SERVICE_CARDS: 'service_cards',
   SERVICES_BANNER: 'services_banner',
   ADDITIONAL_SERVICES: 'additional_services',
+  SERVICE_PROCESS: 'service_process',
+  SERVICE_PROCESS_STEPS: 'service_process_steps',
   SPECIALIZED_AREAS: 'specialized_areas',
   PROJECTS: 'projects',
   TESTIMONIALS: 'testimonials',
