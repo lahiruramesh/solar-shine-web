@@ -77,13 +77,17 @@ export const BlogManager: React.FC = () => {
       errors.slug = 'Slug can only contain lowercase letters, numbers, and hyphens';
     }
 
-    // Validate categories and tags format
+    // Validate categories and tags format and limits
     if (formData.categories && !Array.isArray(formData.categories)) {
       errors.categories = 'Categories must be an array';
+    } else if (Array.isArray(formData.categories) && formData.categories.length > 1) {
+      errors.categories = 'Only 1 category is allowed';
     }
 
     if (formData.tags && !Array.isArray(formData.tags)) {
       errors.tags = 'Tags must be an array';
+    } else if (Array.isArray(formData.tags) && formData.tags.length > 3) {
+      errors.tags = 'Maximum 3 tags are allowed';
     }
 
     setFormErrors(errors);
@@ -454,7 +458,7 @@ export const BlogManager: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="categories" className="text-sm font-medium">Categories</Label>
+                <Label htmlFor="categories" className="text-sm font-medium">Category</Label>
                 <Input
                   id="categories"
                   value={categoriesInput}
@@ -464,19 +468,29 @@ export const BlogManager: React.FC = () => {
                   onBlur={(e) => {
                     // Process the final value when user leaves the field
                     const inputValue = e.target.value;
-                    // Normalize categories: split by comma, trim, convert to lowercase, remove duplicates
+                    // Normalize categories: split by comma, trim, convert to lowercase, remove duplicates, limit to 1
                     const categories = inputValue
                       .split(',')
                       .map(cat => cat.trim())
                       .filter(cat => cat)
                       .map(cat => cat.toLowerCase())
-                      .filter((cat, index, arr) => arr.indexOf(cat) === index); // Remove duplicates
+                      .filter((cat, index, arr) => arr.indexOf(cat) === index) // Remove duplicates
+                      .slice(0, 1); // Limit to 1 category
+
+                    // Update input field to show only the first category
+                    const firstCategory = categories[0] || '';
+                    setCategoriesInput(firstCategory);
                     setFormData(prev => ({ ...prev, categories }));
+
+                    // Show warning if user tried to enter more than 1 category
+                    if (inputValue.split(',').filter(cat => cat.trim()).length > 1) {
+                      toast.warning("Only 1 category is allowed. The first category has been selected.");
+                    }
                   }}
-                  placeholder="Category 1, Category 2, Category 3"
+                  placeholder="Enter a single category"
                   className="w-full"
                 />
-                <p className="text-xs text-muted-foreground">Separate multiple categories with commas. Categories will be automatically normalized and duplicates removed.</p>
+                <p className="text-xs text-muted-foreground">Enter only 1 category. It will be automatically normalized.</p>
                 {Array.isArray(formData.categories) && formData.categories.length > 0 && (
                   <div className="mt-2">
                     <p className="text-xs text-muted-foreground mb-2">Preview (normalized):</p>
@@ -503,19 +517,34 @@ export const BlogManager: React.FC = () => {
                   onBlur={(e) => {
                     // Process the final value when user leaves the field
                     const inputValue = e.target.value;
-                    // Normalize tags: split by comma, trim, convert to lowercase, remove duplicates
+                    // Normalize tags: split by comma, trim, convert to lowercase, remove duplicates, limit to 3
                     const tags = inputValue
                       .split(',')
                       .map(tag => tag.trim())
                       .filter(tag => tag)
                       .map(tag => tag.toLowerCase())
-                      .filter((tag, index, arr) => arr.indexOf(tag) === index); // Remove duplicates
+                      .filter((tag, index, arr) => arr.indexOf(tag) === index) // Remove duplicates
+                      .slice(0, 3); // Limit to 3 tags
+
+                    // Update input field to show only the first 3 tags
+                    const firstThreeTags = tags.join(', ');
+                    setTagsInput(firstThreeTags);
                     setFormData(prev => ({ ...prev, tags }));
+
+                    // Show warning if user tried to enter more than 3 tags
+                    if (inputValue.split(',').filter(tag => tag.trim()).length > 3) {
+                      toast.warning("Maximum 3 tags allowed. Only the first 3 tags have been selected.");
+                    }
                   }}
                   placeholder="Tag 1, Tag 2, Tag 3"
                   className="w-full"
                 />
-                <p className="text-xs text-muted-foreground">Separate multiple tags with commas. Tags will be automatically normalized and duplicates removed.</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Separate multiple tags with commas. Maximum 3 tags allowed. Tags will be automatically normalized and duplicates removed.</p>
+                  <span className={`text-xs ${Array.isArray(formData.tags) && formData.tags.length >= 3 ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
+                    {Array.isArray(formData.tags) ? formData.tags.length : 0}/3
+                  </span>
+                </div>
                 {Array.isArray(formData.tags) && formData.tags.length > 0 && (
                   <div className="mt-2">
                     <p className="text-xs text-muted-foreground mb-2">Preview (normalized):</p>
@@ -610,7 +639,7 @@ export const BlogManager: React.FC = () => {
               <TableRow>
                 <TableHead>Title</TableHead>
                 <TableHead>Author</TableHead>
-                <TableHead>Categories</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>Tags</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
