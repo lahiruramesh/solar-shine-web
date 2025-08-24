@@ -142,7 +142,12 @@ export const ServicesManager: React.FC = () => {
       features: service.features || []
     });
     // Set the image preview to the actual image URL for display
-    setServiceImagePreview(service.image || '');
+    if (service.image) {
+      const imageUrl = getImageUrl(service.image);
+      setServiceImagePreview(imageUrl || '');
+    } else {
+      setServiceImagePreview('');
+    }
     setIsDialogOpen(true);
   };
 
@@ -255,9 +260,18 @@ export const ServicesManager: React.FC = () => {
 
       // Get the direct file URL from Appwrite storage
       const fileUrl = storage.getFileView(STORAGE_BUCKET_ID, imageId);
-      return (fileUrl as any).href || fileUrl.toString();
+
+      if (!fileUrl) return null;
+
+      // Try to get the href property if it exists, otherwise use toString
+      if (typeof fileUrl === 'object' && 'href' in fileUrl) {
+        return (fileUrl as any).href;
+      }
+
+      // At this point, fileUrl is guaranteed to be non-null due to the check above
+      return fileUrl!.toString();
     } catch (error) {
-      console.error('Error getting image URL:', error);
+      console.error('Error getting image URL for ID:', imageId, error);
       return null;
     }
   };
@@ -810,33 +824,19 @@ export const ServicesManager: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     {service.image ? (
-                      <div className="w-20 h-20 rounded-lg overflow-hidden border shadow-sm relative">
+                      <div className="w-20 h-20 rounded-lg overflow-hidden border shadow-sm">
                         <img
                           src={getImageUrl(service.image) || ''}
                           alt={service.title}
-                          className="w-full h-full object-cover transition-opacity duration-200"
-                          onLoad={(e) => {
-                            // Hide loading state when image loads
-                            const target = e.target as HTMLImageElement;
-                            target.style.opacity = '1';
-                            const loading = target.previousElementSibling as HTMLElement;
-                            if (loading) loading.style.display = 'none';
-                          }}
+                          className="w-full h-full object-cover"
                           onError={(e) => {
                             // If image fails to load, show fallback
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
                             const fallback = target.nextElementSibling as HTMLElement;
                             if (fallback) fallback.style.display = 'flex';
-                            const loading = target.previousElementSibling as HTMLElement;
-                            if (loading) loading.style.display = 'none';
                           }}
-                          style={{ opacity: 0 }}
                         />
-                        {/* Loading state */}
-                        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                        </div>
                         {/* Fallback for failed images */}
                         <div
                           className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-400 text-xs hidden"
