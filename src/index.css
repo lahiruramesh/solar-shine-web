@@ -137,7 +137,7 @@
     overflow: hidden;
   }
 
-  /* Blog-specific styles */
+  /* Enhanced Prose Styles for Blog Content */
   .prose {
     @apply text-gray-800 leading-relaxed;
   }
@@ -158,35 +158,107 @@
     @apply text-xl;
   }
 
+  .prose h4 {
+    @apply text-lg;
+  }
+
+  .prose h5, .prose h6 {
+    @apply text-base;
+  }
+
   .prose p {
-    @apply mb-4 leading-relaxed;
+    @apply mb-6 text-gray-700 leading-7 text-base;
   }
 
   .prose ul, .prose ol {
-    @apply mb-4 pl-6;
+    @apply mb-6 ml-6;
   }
 
   .prose li {
-    @apply mb-2;
+    @apply mb-2 text-gray-700 leading-6;
+  }
+
+  .prose ul li {
+    @apply list-disc;
+  }
+
+  .prose ol li {
+    @apply list-decimal;
   }
 
   .prose blockquote {
-    @apply border-l-4 border-primary bg-gray-50 p-4 italic text-gray-700 my-6;
+    @apply border-l-4 border-primary bg-gray-50 pl-6 py-4 my-6 italic text-gray-700;
   }
 
-  .prose a {
-    @apply text-primary hover:text-primary/80 underline;
+  .prose strong {
+    @apply font-semibold text-gray-900;
   }
 
-  .prose img {
-    @apply rounded-lg shadow-md my-6;
+  .prose em {
+    @apply italic text-gray-700;
   }
 
   .prose code {
-    @apply bg-gray-100 px-2 py-1 rounded text-sm font-mono;
+    @apply bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800;
   }
 
   .prose pre {
-    @apply bg-gray-900 text-white p-4 rounded-lg overflow-x-auto my-6;
+    @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-6;
+  }
+
+  .prose pre code {
+    @apply bg-transparent text-inherit p-0;
+  }
+
+  .prose a {
+    @apply text-primary hover:text-primary/80 underline decoration-primary/30 hover:decoration-primary/60 transition-all duration-200;
+  }
+
+  .prose img {
+    @apply rounded-lg shadow-md my-6 max-w-full h-auto;
+  }
+
+  .prose hr {
+    @apply border-gray-200 my-8;
+  }
+
+  /* Blog Post Specific Styles */
+  .blog-content {
+    @apply max-w-4xl mx-auto;
+  }
+
+  .blog-content .prose {
+    @apply text-base sm:text-lg;
+  }
+
+  .blog-content .prose h1:first-child {
+    @apply mt-0;
+  }
+
+  .blog-content .prose p:first-of-type {
+    @apply text-lg text-gray-600 leading-8;
+  }
+
+  /* Responsive Typography */
+  @media (max-width: 640px) {
+    .prose h1 {
+      @apply text-2xl;
+    }
+    
+    .prose h2 {
+      @apply text-xl;
+    }
+    
+    .prose h3 {
+      @apply text-lg;
+    }
+    
+    .prose p {
+      @apply text-sm leading-6;
+    }
+    
+    .prose ul, .prose ol {
+      @apply ml-4;
+    }
   }
 }

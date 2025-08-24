@@ -216,24 +216,112 @@ const BlogPostPage: React.FC = () => {
               <Separator className="my-8" />
 
               {/* Article Content */}
-              <motion.div
-                className="prose prose-lg max-w-none"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
-              >
+              <div className="blog-content prose prose-lg max-w-none text-gray-800 leading-relaxed">
                 {post.content ? (
-                  <div
-                    className="text-gray-800 leading-relaxed space-y-6"
-                    dangerouslySetInnerHTML={{ __html: post.content }}
-                  />
+                  <>
+                    {/* Add proper spacing and formatting for content */}
+                    {(() => {
+                      const lines = post.content.split('\n');
+                      const elements: JSX.Element[] = [];
+                      let currentList: string[] = [];
+                      let isInList = false;
+                      let listType: 'ul' | 'ol' = 'ul';
+
+                      const flushList = () => {
+                        if (currentList.length > 0) {
+                          const ListTag = listType === 'ul' ? 'ul' : 'ol';
+                          elements.push(
+                            <ListTag key={`list-${elements.length}`} className="mb-6 ml-6">
+                              {currentList.map((item, idx) => (
+                                <li key={idx} className="mb-2 text-gray-700 leading-6">
+                                  {item}
+                                </li>
+                              ))}
+                            </ListTag>
+                          );
+                          currentList = [];
+                        }
+                        isInList = false;
+                      };
+
+                      lines.forEach((line, index) => {
+                        const trimmedLine = line.trim();
+
+                        // Skip empty lines
+                        if (!trimmedLine) {
+                          if (isInList) {
+                            flushList();
+                          }
+                          return;
+                        }
+
+                        // Check if it's a heading (starts with #)
+                        if (trimmedLine.startsWith('#')) {
+                          flushList();
+                          const level = trimmedLine.match(/^#+/)?.[0].length || 1;
+                          const text = trimmedLine.replace(/^#+\s*/, '');
+                          const HeadingTag = `h${Math.min(level, 6)}` as keyof JSX.IntrinsicElements;
+
+                          elements.push(
+                            <HeadingTag
+                              key={index}
+                              className={`font-bold text-gray-900 mb-4 mt-8 first:mt-0 ${level === 1 ? 'text-3xl' :
+                                  level === 2 ? 'text-2xl' :
+                                    level === 3 ? 'text-xl' :
+                                      level === 4 ? 'text-lg' : 'text-base'
+                                }`}
+                            >
+                              {text}
+                            </HeadingTag>
+                          );
+                          return;
+                        }
+
+                        // Check if it's a list item
+                        const bulletMatch = trimmedLine.match(/^[-*]\s(.+)/);
+                        const numberMatch = trimmedLine.match(/^\d+\.\s(.+)/);
+
+                        if (bulletMatch || numberMatch) {
+                          const itemText = bulletMatch ? bulletMatch[1] : numberMatch![1];
+                          const newListType = bulletMatch ? 'ul' : 'ol';
+
+                          // If we're starting a new list or switching list types
+                          if (!isInList || listType !== newListType) {
+                            flushList();
+                            listType = newListType;
+                            isInList = true;
+                          }
+
+                          currentList.push(itemText);
+                          return;
+                        }
+
+                        // If we were in a list but this line isn't a list item, flush the list
+                        if (isInList) {
+                          flushList();
+                        }
+
+                        // Regular paragraph
+                        elements.push(
+                          <p key={index} className="mb-6 text-gray-700 leading-7 text-base">
+                            {trimmedLine}
+                          </p>
+                        );
+                      });
+
+                      // Don't forget to flush any remaining list
+                      flushList();
+
+                      return elements;
+                    })()}
+                  </>
                 ) : (
                   <div className="text-center py-12">
                     <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500">No content available for this article.</p>
                   </div>
                 )}
-              </motion.div>
+              </div>
 
               {/* Article Footer */}
               <motion.div
