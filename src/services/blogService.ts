@@ -39,7 +39,6 @@ export async function fetchBlogPosts(): Promise<BlogPost[]> {
       Query.orderDesc('publishDate')
     ]);
     const posts = response.documents.map(mapDocumentToBlogPost);
-    console.log('Fetched blog posts:', posts.map(p => ({ id: p.$id, title: p.title, published: p.published })));
     return posts;
   } catch (error) {
     console.error('Error fetching blog posts:', error);
@@ -94,7 +93,6 @@ export async function createBlogPost(postData: Partial<Omit<BlogPost, '$id' | 'f
             }
         });
 
-        console.log('Creating blog post with data:', dataToSave);
         const response = await databases.createDocument(DATABASE_ID, COLLECTIONS.BLOG_POSTS, ID.unique(), dataToSave);
         return response.$id;
     } catch (error) {
@@ -134,7 +132,6 @@ export async function updateBlogPost(id: string, postData: Partial<Omit<BlogPost
       }
     }
 
-    console.log('Updating blog post with data:', dataToUpdate);
     await databases.updateDocument(DATABASE_ID, COLLECTIONS.BLOG_POSTS, id, dataToUpdate);
     return true;
   } catch (error) {

@@ -8,13 +8,7 @@ export async function fetchProjects(): Promise<Project[]> {
       Query.orderDesc('$createdAt')
     ]);
     
-    console.log('Raw projects response:', response.documents);
-    
     return response.documents.map(doc => {
-      console.log('Processing project doc:', doc);
-      console.log('Category from DB:', doc.category);
-      console.log('Image URL from DB:', doc.image_url);
-      
       // Handle image URL construction
       let imageUrl: string | undefined;
       
@@ -23,13 +17,11 @@ export async function fetchProjects(): Promise<Project[]> {
         if (doc.image_url.startsWith('http')) {
           // It's already a full URL, use it as is
           imageUrl = doc.image_url;
-          console.log('Using existing URL:', imageUrl);
         } else {
           // It's a file ID, construct the full URL
           try {
             const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID || '685bcfb7001103824569';
             imageUrl = `https://fra.cloud.appwrite.io/v1/storage/buckets/${STORAGE_BUCKET_ID}/files/${doc.image_url}/view?project=${projectId}`;
-            console.log('Constructed URL:', imageUrl);
           } catch (error) {
             console.warn('Failed to construct image URL:', error);
           }
@@ -46,7 +38,6 @@ export async function fetchProjects(): Promise<Project[]> {
         completion_date: doc.completion_date || doc.completionDate || null,
       };
       
-      console.log('Final project object:', result);
       return result;
     });
   } catch (error) {

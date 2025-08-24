@@ -57,15 +57,24 @@ export const ServicesManager: React.FC = () => {
     loadBannerData();
   }, []);
 
+  // Show success toast when services are loaded
+  useEffect(() => {
+    if (!loading && services.length > 0) {
+      toast.success('Services loaded successfully');
+    }
+  }, [loading, services.length]);
+
   const loadServices = async () => {
     try {
       setLoading(true);
       const servicesData = await fetchServiceCards();
       setServices(servicesData);
-      toast.success('Services loaded successfully');
     } catch (error) {
       console.error('Error loading services:', error);
-      toast.error('Failed to load services');
+      // Show error toast in next tick to avoid render phase updates
+      setTimeout(() => {
+        toast.error('Failed to load services');
+      }, 0);
     } finally {
       setLoading(false);
     }
@@ -102,10 +111,10 @@ export const ServicesManager: React.FC = () => {
 
       if (editingService) {
         await updateServiceCard({ $id: editingService.$id, ...serviceData });
-        toast.success('Service updated successfully');
+        setTimeout(() => toast.success('Service updated successfully'), 0);
       } else {
         await addServiceCard({ ...serviceData, order_index: services.length });
-        toast.success('Service created successfully');
+        setTimeout(() => toast.success('Service created successfully'), 0);
       }
 
       await loadServices();
@@ -113,7 +122,7 @@ export const ServicesManager: React.FC = () => {
       setIsDialogOpen(false);
     } catch (error) {
       console.error('Error saving service:', error);
-      toast.error('Failed to save service');
+      setTimeout(() => toast.error('Failed to save service'), 0);
     } finally {
       setSaving(false);
     }
@@ -130,6 +139,7 @@ export const ServicesManager: React.FC = () => {
       benefits: service.benefits || [],
       features: service.features || []
     });
+    // Set the image preview to the actual image URL for display
     setServiceImagePreview(service.image || '');
     setIsDialogOpen(true);
   };
@@ -138,11 +148,11 @@ export const ServicesManager: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this service?')) return;
     try {
       await deleteServiceCard(serviceId);
-      toast.success('Service deleted successfully');
+      setTimeout(() => toast.success('Service deleted successfully'), 0);
       await loadServices();
     } catch (error) {
       console.error('Error deleting service:', error);
-      toast.error('Failed to delete service');
+      setTimeout(() => toast.error('Failed to delete service'), 0);
     }
   };
 
@@ -163,10 +173,10 @@ export const ServicesManager: React.FC = () => {
       await updateServiceCard({ $id: otherService.$id, order_index: serviceToMove.order_index });
 
       await loadServices();
-      toast.success('Service order updated');
+      setTimeout(() => toast.success('Service order updated'), 0);
     } catch (error) {
       console.error('Error reordering service:', error);
-      toast.error('Failed to reorder service');
+      setTimeout(() => toast.error('Failed to reorder service'), 0);
     }
   };
 
@@ -230,6 +240,25 @@ export const ServicesManager: React.FC = () => {
       ...prev,
       features: prev.features?.filter((_, i) => i !== index) || []
     }));
+  };
+
+  // Helper function to get image URL from Appwrite storage
+  const getImageUrl = (imageId: string | null | undefined): string | null => {
+    if (!imageId) return null;
+
+    try {
+      // If it's already a full URL, return it as is
+      if (imageId.startsWith('http')) {
+        return imageId;
+      }
+
+      // Get the direct file URL from Appwrite storage
+      const fileUrl = storage.getFileView(STORAGE_BUCKET_ID, imageId);
+      return (fileUrl as any).href || fileUrl.toString();
+    } catch (error) {
+      console.error('Error getting image URL:', error);
+      return null;
+    }
   };
 
   const handleServiceImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -316,14 +345,14 @@ export const ServicesManager: React.FC = () => {
       });
 
       if (success) {
-        toast.success('Services banner updated successfully');
+        setTimeout(() => toast.success('Services banner updated successfully'), 0);
         await loadBannerData();
         setBackgroundImageFile(null);
       } else {
-        toast.error('Failed to update services banner');
+        setTimeout(() => toast.error('Failed to update services banner'), 0);
       }
     } catch (error) {
-      toast.error('An unexpected error occurred');
+      setTimeout(() => toast.error('An unexpected error occurred'), 0);
     } finally {
       setIsSavingBanner(false);
     }
@@ -441,13 +470,31 @@ export const ServicesManager: React.FC = () => {
               <div className="space-y-4">
                 <h3 className="text-lg font-medium border-b pb-2">Service Image</h3>
 
-                {serviceImagePreview && (
+                {/* Show preview if there's an image (either new upload or existing) */}
+                {(serviceImagePreview || formData.image) && (
                   <div className="relative">
                     <img
-                      src={serviceImagePreview}
+                      src={serviceImagePreview || getImageUrl(formData.image) || ''}
                       alt="Service preview"
                       className="w-full h-32 object-cover rounded-lg border"
+                      onError={(e) => {
+                        // If image fails to load, show fallback
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
                     />
+                    {/* Fallback for failed images */}
+                    <div
+                      className="w-full h-32 bg-gray-100 rounded-lg border flex items-center justify-center text-gray-400 hidden"
+                      style={{ display: 'none' }}
+                    >
+                      <div className="text-center">
+                        <div className="text-lg mb-1">📷</div>
+                        <div className="text-sm">Image Preview</div>
+                      </div>
+                    </div>
                     <Button
                       type="button"
                       variant="destructive"
@@ -480,6 +527,9 @@ export const ServicesManager: React.FC = () => {
                       Browse
                     </Button>
                   </div>
+                  <p className="text-sm text-muted-foreground">
+                    Recommended size: 400x300px. Max file size: 5MB.
+                  </p>
                 </div>
               </div>
 
@@ -733,7 +783,6 @@ export const ServicesManager: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Order</TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Icon</TableHead>
                 <TableHead>Order</TableHead>
@@ -750,19 +799,77 @@ export const ServicesManager: React.FC = () => {
                   <TableCell>
                     <span className="text-2xl">{service.icon}</span>
                   </TableCell>
-                  <TableCell>{service.order_index}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{service.order_index}</Badge>
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleReorder(service.$id!, 'up')}
+                          disabled={index === 0}
+                          className="h-6 w-6 p-0"
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleReorder(service.$id!, 'down')}
+                          disabled={index === services.length - 1}
+                          className="h-6 w-6 p-0"
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     {service.image ? (
-                      <div className="w-16 h-16 rounded overflow-hidden">
+                      <div className="w-20 h-20 rounded-lg overflow-hidden border shadow-sm relative">
                         <img
-                          src={service.image}
+                          src={getImageUrl(service.image) || ''}
                           alt={service.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-opacity duration-200"
+                          onLoad={(e) => {
+                            // Hide loading state when image loads
+                            const target = e.target as HTMLImageElement;
+                            target.style.opacity = '1';
+                            const loading = target.previousElementSibling as HTMLElement;
+                            if (loading) loading.style.display = 'none';
+                          }}
+                          onError={(e) => {
+                            // If image fails to load, show fallback
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
+                            const loading = target.previousElementSibling as HTMLElement;
+                            if (loading) loading.style.display = 'none';
+                          }}
+                          style={{ opacity: 0 }}
                         />
+                        {/* Loading state */}
+                        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                        </div>
+                        {/* Fallback for failed images */}
+                        <div
+                          className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-400 text-xs hidden"
+                          style={{ display: 'none' }}
+                        >
+                          <div className="text-center">
+                            <div className="text-lg mb-1">📷</div>
+                            <div>Image</div>
+                          </div>
+                        </div>
                       </div>
                     ) : (
-                      <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-400">
-                        No Image
+                      <div className="w-20 h-20 bg-gray-100 rounded-lg border flex items-center justify-center text-gray-400">
+                        <div className="text-center">
+                          <div className="text-lg mb-1">📷</div>
+                          <div className="text-xs">No Image</div>
+                        </div>
                       </div>
                     )}
                   </TableCell>
