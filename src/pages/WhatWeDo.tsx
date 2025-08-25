@@ -391,11 +391,7 @@ const WhatWeDo: React.FC = () => {
                         <div className="text-sm text-brand-black/80">{stat.label || 'Stat label'}</div>
                       </div>
                     ))
-                  ) : (
-                    <div className="col-span-2 text-center text-muted-foreground">
-                      <p>No impact statistics available.</p>
-                    </div>
-                  )}
+                  ) : null}
                 </div>
               </motion.div>
             </div>
