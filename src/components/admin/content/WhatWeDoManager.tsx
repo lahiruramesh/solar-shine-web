@@ -18,10 +18,12 @@ import {
     Settings,
     Users,
     ChevronDown,
-    ChevronRight
+    ChevronRight,
+    X,
+    Upload
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { whatWeDoService, WhatWeDoContent, WhatWeDoHero, ApproachStep, ExpertiseArea, Benefit, ImpactStat } from '@/services/whatWeDoService';
+import { whatWeDoService, WhatWeDoContent } from '@/services/whatWeDoService';
 import { fileUploadService } from '@/services/appwriteService';
 
 const AVAILABLE_ICONS = [
@@ -32,10 +34,8 @@ const AVAILABLE_ICONS = [
 ];
 
 export const WhatWeDoManager: React.FC = () => {
-    console.log('WhatWeDoManager: Component rendering');
-
     const [content, setContent] = useState<WhatWeDoContent>({
-        hero: { title: '', subtitle: '' },
+        hero: { title: '', subtitle: '', image: '' },
         approach: { title: '', description: '', steps: [] },
         expertise: { title: '', description: '', areas: [] },
         benefits: { title: '', items: [] },
@@ -53,6 +53,21 @@ export const WhatWeDoManager: React.FC = () => {
     });
     const { toast } = useToast();
 
+    // Helper function to get image URL (handles both file IDs and URLs)
+    const getImageUrl = async (imageValue: string) => {
+        if (!imageValue) return '';
+
+        if (imageValue.startsWith('http')) {
+            return imageValue;
+        }
+
+        try {
+            return await fileUploadService.getFileUrl(imageValue);
+        } catch (error) {
+            return '';
+        }
+    };
+
     const toggleSection = (section: string) => {
         setExpandedSections(prev => ({
             ...prev,
@@ -61,25 +76,44 @@ export const WhatWeDoManager: React.FC = () => {
     };
 
     useEffect(() => {
-        console.log('WhatWeDoManager: useEffect triggered');
         loadContent();
     }, []);
 
+    useEffect(() => {
+        const convertFileIdsToUrls = async () => {
+            if (content.hero.image && !content.hero.image.startsWith('http')) {
+                try {
+                    const imageUrl = await getImageUrl(content.hero.image);
+                    if (imageUrl) {
+                        handleHeroChange('image', imageUrl);
+                    }
+                } catch (error) {
+                    // Auto-conversion failed silently
+                }
+            }
+        };
+
+        if (content.hero.image) {
+            convertFileIdsToUrls();
+        }
+    }, [content.hero.image]);
+
     const loadContent = async () => {
         try {
-            console.log('WhatWeDoManager: Loading content...');
             setLoading(true);
             setError(null);
 
             const existingContent = await whatWeDoService.fetchWhatWeDoContent();
-            console.log('WhatWeDoManager: Existing content:', existingContent);
 
             if (existingContent) {
                 setContent(existingContent);
             } else {
-                // Set default content structure
                 const defaultContent = {
-                    hero: { title: 'What We Do', subtitle: 'Delivering comprehensive solar energy solutions tailored to your specific needs' },
+                    hero: {
+                        title: 'What We Do',
+                        subtitle: 'Delivering comprehensive solar energy solutions tailored to your specific needs',
+                        image: ''
+                    },
                     approach: {
                         title: 'Our Approach',
                         description: 'We believe in a comprehensive, consultative approach that ensures each solar solution is perfectly tailored to our clients\' specific energy needs, property characteristics, and budget considerations.',
@@ -101,10 +135,8 @@ export const WhatWeDoManager: React.FC = () => {
                     }
                 };
                 setContent(defaultContent);
-                console.log('WhatWeDoManager: Set default content');
             }
         } catch (error) {
-            console.error('WhatWeDoManager: Error loading content:', error);
             setError(error instanceof Error ? error.message : 'Unknown error occurred');
             toast({
                 title: "Error",
@@ -118,12 +150,10 @@ export const WhatWeDoManager: React.FC = () => {
 
     const handleSave = async () => {
         try {
-            console.log('WhatWeDoManager: Saving content...');
             setSaving(true);
             setError(null);
 
             const success = await whatWeDoService.updateWhatWeDoContent(content);
-            console.log('WhatWeDoManager: Save result:', success);
 
             if (success) {
                 toast({
@@ -138,11 +168,48 @@ export const WhatWeDoManager: React.FC = () => {
                 });
             }
         } catch (error) {
-            console.error('WhatWeDoManager: Error saving content:', error);
             setError(error instanceof Error ? error.message : 'Unknown error occurred');
             toast({
                 title: "Error",
                 description: "Failed to save content",
+                variant: "destructive"
+            });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleHeroChange = (field: 'title' | 'subtitle' | 'image', value: string) => {
+        setContent(prev => ({
+            ...prev,
+            hero: { ...prev.hero, [field]: value }
+        }));
+    };
+
+    const handleSaveHero = async () => {
+        try {
+            setSaving(true);
+            setError(null);
+
+            const success = await whatWeDoService.updateWhatWeDoContent(content);
+
+            if (success) {
+                toast({
+                    title: "Success",
+                    description: "Hero section saved successfully",
+                });
+            } else {
+                toast({
+                    title: "Error",
+                    description: "Failed to save hero section",
+                    variant: "destructive"
+                });
+            }
+        } catch (error) {
+            setError(error instanceof Error ? error.message : 'Unknown error occurred');
+            toast({
+                title: "Error",
+                description: "Failed to save hero section",
                 variant: "destructive"
             });
         } finally {
@@ -180,7 +247,6 @@ export const WhatWeDoManager: React.FC = () => {
     }
 
     if (loading) {
-        console.log('WhatWeDoManager: Rendering loading state');
         return (
             <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -189,7 +255,6 @@ export const WhatWeDoManager: React.FC = () => {
         );
     }
 
-    console.log('WhatWeDoManager: Rendering main content');
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -208,6 +273,7 @@ export const WhatWeDoManager: React.FC = () => {
                 </Button>
             </div>
 
+            {/* Hero Section */}
             <Card>
                 <CardHeader
                     className="cursor-pointer hover:bg-muted/50 transition-colors duration-200"
@@ -225,39 +291,104 @@ export const WhatWeDoManager: React.FC = () => {
                 </CardHeader>
                 {expandedSections.hero && (
                     <CardContent>
-                        <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-4">
                             <div>
-                                <Label>Title</Label>
+                                <Label htmlFor="hero-title">Title</Label>
                                 <Input
-                                    value={content.hero.title}
-                                    onChange={(e) => setContent(prev => ({
-                                        ...prev,
-                                        hero: { ...prev.hero, title: e.target.value }
-                                    }))}
+                                    id="hero-title"
+                                    value={content.hero.title || ''}
+                                    onChange={(e) => handleHeroChange('title', e.target.value)}
                                     placeholder="Enter hero title"
                                 />
                             </div>
+
                             <div>
-                                <Label>Subtitle</Label>
+                                <Label htmlFor="hero-subtitle">Subtitle</Label>
                                 <Textarea
-                                    value={content.hero.subtitle}
-                                    onChange={(e) => setContent(prev => ({
-                                        ...prev,
-                                        hero: { ...prev.hero, subtitle: e.target.value }
-                                    }))}
+                                    id="hero-subtitle"
+                                    value={content.hero.subtitle || ''}
+                                    onChange={(e) => handleHeroChange('subtitle', e.target.value)}
                                     placeholder="Enter hero subtitle"
+                                    rows={3}
                                 />
                             </div>
-                        </div>
 
-                        {/* Section Save Button */}
-                        <div className="flex justify-end pt-4 border-t">
-                            <Button
-                                onClick={() => handleSave()}
-                                size="sm"
-                                className="px-6"
-                            >
-                                <Save className="mr-2 h-4 w-4" />
+                            <div>
+                                <Label>Hero Image</Label>
+                                <div className="mt-2 space-y-3">
+                                    {content.hero.image && (
+                                        <div className="relative">
+                                            <img
+                                                src={content.hero.image.startsWith('http') ? content.hero.image : ''}
+                                                alt="Hero preview"
+                                                className="w-full h-48 object-cover rounded-lg border"
+                                                onError={async (e) => {
+                                                    // If the image fails to load and it's a file ID, try to get the URL
+                                                    if (!content.hero.image.startsWith('http')) {
+                                                        try {
+                                                            const imageUrl = await getImageUrl(content.hero.image);
+                                                            if (imageUrl) {
+                                                                handleHeroChange('image', imageUrl);
+                                                            }
+                                                        } catch (error) {
+                                                            // Auto-conversion failed silently
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="destructive"
+                                                size="sm"
+                                                className="absolute top-2 right-2"
+                                                onClick={() => handleHeroChange('image', '')}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            value={content.hero.image || ''}
+                                            onChange={(e) => handleHeroChange('image', e.target.value)}
+                                            placeholder="Enter image URL or upload a file"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => document.getElementById('hero-image-upload')?.click()}
+                                        >
+                                            <Upload className="h-4 w-4 mr-2" />
+                                            Upload
+                                        </Button>
+                                        <input
+                                            id="hero-image-upload"
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    try {
+                                                        const fileId = await fileUploadService.uploadFile(file);
+                                                        const imageUrl = await fileUploadService.getFileUrl(fileId);
+                                                        handleHeroChange('image', imageUrl);
+                                                    } catch (error) {
+                                                        toast({
+                                                            title: "Upload Failed",
+                                                            description: "Failed to upload image. Please try again.",
+                                                            variant: "destructive",
+                                                        });
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Button onClick={handleSaveHero} className="w-full">
                                 Save Hero Section
                             </Button>
                         </div>
@@ -311,7 +442,7 @@ export const WhatWeDoManager: React.FC = () => {
                                 <Label className="text-base font-semibold">Approach Steps</Label>
                                 <Button
                                     onClick={() => {
-                                        const newStep: ApproachStep = {
+                                        const newStep: any = {
                                             number: `${content.approach.steps.length + 1}`,
                                             title: '',
                                             description: '',
@@ -484,7 +615,7 @@ export const WhatWeDoManager: React.FC = () => {
                                 <Label className="text-base font-semibold">Expertise Areas</Label>
                                 <Button
                                     onClick={() => {
-                                        const newArea: ExpertiseArea = {
+                                        const newArea: any = {
                                             title: '',
                                             description: '',
                                             icon: 'Sun',
@@ -525,7 +656,6 @@ export const WhatWeDoManager: React.FC = () => {
                                                                             alt={area.title || 'Expertise area image'}
                                                                             className="w-full max-w-64 h-auto object-cover rounded-lg border border-border shadow-md"
                                                                             onError={(e) => {
-                                                                                console.error('Image failed to load:', area.image);
                                                                                 e.currentTarget.style.display = 'none';
                                                                             }}
                                                                         />
@@ -576,12 +706,12 @@ export const WhatWeDoManager: React.FC = () => {
                                                                         if (file) {
                                                                             try {
                                                                                 const fileId = await fileUploadService.uploadFile(file);
-                                                                                const fileUrl = await fileUploadService.getFileUrl(fileId);
+                                                                                const imageUrl = await fileUploadService.getFileUrl(fileId);
 
                                                                                 const updatedAreas = [...content.expertise.areas];
                                                                                 updatedAreas[index] = {
                                                                                     ...updatedAreas[index],
-                                                                                    image: fileUrl,
+                                                                                    image: imageUrl,
                                                                                     image_id: fileId
                                                                                 };
 
@@ -598,11 +728,10 @@ export const WhatWeDoManager: React.FC = () => {
                                                                                     description: "Image uploaded successfully",
                                                                                 });
                                                                             } catch (error) {
-                                                                                console.error('Error uploading image:', error);
                                                                                 toast({
-                                                                                    title: "Error",
-                                                                                    description: "Failed to upload image",
-                                                                                    variant: "destructive"
+                                                                                    title: "Upload Failed",
+                                                                                    description: "Failed to upload image. Please try again.",
+                                                                                    variant: "destructive",
                                                                                 });
                                                                             }
                                                                         }
@@ -822,7 +951,7 @@ export const WhatWeDoManager: React.FC = () => {
                                     <Label className="text-base font-semibold">Benefit Items</Label>
                                     <Button
                                         onClick={() => {
-                                            const newBenefit: Benefit = {
+                                            const newBenefit: any = {
                                                 text: '',
                                                 order_index: content.benefits.items.length
                                             };
