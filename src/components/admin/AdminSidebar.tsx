@@ -23,7 +23,8 @@ import {
   LogOut,
   Menu,
   X,
-  Link
+  Link,
+  BadgeCheck
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -52,6 +53,7 @@ const sidebarItems = [
       { id: 'testimonials', label: 'Testimonials', icon: MessageSquare },
       { id: 'blog', label: 'Blog Posts', icon: BookOpen },
       { id: 'about', label: 'About Content', icon: Info },
+      { id: 'what-we-do', label: 'What We Do', icon: BadgeCheck },
     ]
   },
   {

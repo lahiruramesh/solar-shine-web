@@ -123,8 +123,12 @@ export const fileUploadService = {
 
   async getFileUrl(fileId: string): Promise<string> {
     try {
+      // In Appwrite v18+, getFileView returns a URL object
       const response = storage.getFileView(STORAGE_BUCKET_ID, fileId);
-      return response.toString();
+      // Convert the URL object to string
+      const urlString = response.toString();
+      console.log('Generated file URL:', urlString);
+      return urlString;
     } catch (error) {
       console.error('Error getting file URL:', error);
       throw error;

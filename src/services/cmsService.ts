@@ -10,3 +10,4 @@ export * from './settingsService';
 export * from './testimonialService';
 export * from './specializedAreaService';
 export * from './seoService';
+export * from './whatWeDoService';
