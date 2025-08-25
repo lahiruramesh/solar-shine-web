@@ -23,6 +23,7 @@ const Admin: React.FC = () => {
       case 'testimonials':
       case 'blog':
       case 'about':
+      case 'what-we-do':
       case 'company-info':
       case 'social-links':
       case 'footer-links':

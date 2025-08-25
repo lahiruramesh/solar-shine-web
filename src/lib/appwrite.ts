@@ -48,6 +48,7 @@ export const COLLECTIONS = {
   AVAILABLE_TIME_SLOTS: 'available_time_slots',
   SEO_SETTINGS: 'seo_settings',
   PAGE_SEO: 'page_seo',
+  WHAT_WE_DO: 'what_we_do',
 };
 
 export { client, account, databases, storage, Permission, Role, ID, Query };

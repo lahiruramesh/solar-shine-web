@@ -6,6 +6,7 @@ import { BlogManager } from './BlogManager';
 import { TestimonialsManager } from './TestimonialsManager';
 import { SpecializedAreasManager } from './SpecializedAreasManager';
 import { AboutContentManager } from './AboutContentManager';
+import { WhatWeDoManager } from './WhatWeDoManager';
 import { CompanyInfoManager } from './CompanyInfoManager';
 import { SocialLinksManager } from './SocialLinksManager';
 import { FooterLinksManager } from './FooterLinksManager';
@@ -34,6 +35,8 @@ export const ContentManager: React.FC<ContentManagerProps> = ({ activeSection })
         return <TestimonialsManager />;
       case 'about':
         return <AboutContentManager />;
+      case 'what-we-do':
+        return <WhatWeDoManager />;
       case 'company-info':
         return <CompanyInfoManager />;
       case 'social-links':
