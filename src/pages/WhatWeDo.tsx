@@ -5,6 +5,7 @@ import Footer from '@/components/layout/Footer';
 import { motion } from 'framer-motion';
 import { Sun, BarChart3, Settings, Users, BadgeCheck, ArrowRight } from 'lucide-react';
 import { whatWeDoService, WhatWeDoContent } from '@/services/whatWeDoService';
+import { fileUploadService } from '@/services/appwriteService';
 
 // Fallback data in case the service fails
 const fallbackData = {
@@ -116,6 +117,7 @@ const WhatWeDo: React.FC = () => {
   const [content, setContent] = useState<WhatWeDoContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [heroImageUrl, setHeroImageUrl] = useState<string>('');
 
   useEffect(() => {
     const loadContent = async () => {
@@ -141,8 +143,49 @@ const WhatWeDo: React.FC = () => {
     loadContent();
   }, []);
 
+  // Convert file IDs to URLs when content loads
+  useEffect(() => {
+    const convertHeroImage = async () => {
+      if (content?.hero?.image) {
+        const imageUrl = await getImageUrl(content.hero.image);
+        if (imageUrl) {
+          setHeroImageUrl(imageUrl);
+        }
+      }
+    };
+
+    if (content) {
+      convertHeroImage();
+    }
+  }, [content]);
+
   // Use content if available, otherwise use fallback
   const whatWeDoData = content || fallbackData;
+
+  // Helper function to get image URL (handles both file IDs and URLs)
+  const getImageUrl = async (imageValue: string) => {
+    if (!imageValue) return '';
+
+    if (imageValue.startsWith('http')) {
+      return imageValue;
+    }
+
+    try {
+      return await fileUploadService.getFileUrl(imageValue);
+    } catch (error) {
+      console.error('Error getting file URL:', error);
+      return '';
+    }
+  };
+
+  // Debug: Log the hero data being used
+  console.log('WhatWeDo page - Hero data:', {
+    title: whatWeDoData.hero.title,
+    subtitle: whatWeDoData.hero.subtitle,
+    image: whatWeDoData.hero.image,
+    hasContent: !!content,
+    isUsingFallback: !content
+  });
 
   // Helper function to get icon component
   const getIconComponent = (iconName: string) => {
@@ -169,10 +212,26 @@ const WhatWeDo: React.FC = () => {
         <section className="relative h-[50vh] md:h-[60vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40 z-10" />
+            {!heroImageUrl && whatWeDoData.hero.image && !whatWeDoData.hero.image.startsWith('http') && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+                <div className="text-white text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
+                  <p>Loading hero image...</p>
+                </div>
+              </div>
+            )}
             <img
-              src={whatWeDoData.hero.image || "https://images.unsplash.com/photo-1611365892117-baa49276e05b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"}
+              src={heroImageUrl || whatWeDoData.hero.image || "https://images.unsplash.com/photo-1611365892117-baa49276e05b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"}
               alt="Solar installation"
               className="w-full h-full object-cover"
+              onError={(e) => {
+                console.log('Hero image failed to load:', whatWeDoData.hero.image);
+                // Fallback to default image if admin image fails
+                e.currentTarget.src = "https://images.unsplash.com/photo-1611365892117-baa49276e05b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80";
+              }}
+              onLoad={() => {
+                console.log('Hero image loaded successfully:', heroImageUrl || whatWeDoData.hero.image);
+              }}
             />
           </div>
           <div className="container-custom relative z-20 text-center text-white">
